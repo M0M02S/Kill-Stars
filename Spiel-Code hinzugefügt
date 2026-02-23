@@ -2,26 +2,32 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BRAWL STARS - FIXED</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>KILL STARS - Mobile Arena</title>
     <style>
         * {
             box-sizing: border-box;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
+            margin: 0;
+            padding: 0;
         }
         body {
             margin: 0;
             overflow: hidden;
-            font-family: Arial, sans-serif;
-            background: #1f4d2b;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1a3b2e;
             touch-action: none;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
         }
         #gameCanvas {
             display: block;
-            width: 100vw;
-            height: 100vh;
-            background: #5aa45a;
+            width: 100%;
+            height: 100%;
+            background: #4caf7a;
+            touch-action: none;
         }
         /* Lobby */
         #lobby {
@@ -36,55 +42,63 @@
             color: white;
             text-shadow: 4px 4px 0 #00000080;
             backdrop-filter: blur(8px);
+            padding: 20px;
         }
         #lobby h1 {
-            font-size: 64px;
+            font-size: min(15vw, 80px);
             margin-bottom: 10px;
             color: #ffe484;
+            text-shadow: 5px 5px 0 #b45f06;
+            text-align: center;
         }
         .menu-buttons {
             display: flex;
-            gap: 30px;
+            gap: min(5vw, 30px);
             margin: 40px 0;
+            flex-wrap: wrap;
+            justify-content: center;
         }
         .menu-btn {
             background: #f9b81b;
-            border: 5px solid #fff;
+            border: 4px solid #fff;
             border-radius: 60px;
-            padding: 20px 50px;
-            font-size: 40px;
+            padding: min(4vw, 20px) min(10vw, 50px);
+            font-size: min(8vw, 40px);
             font-weight: bold;
             color: #3d2b1a;
-            box-shadow: 0 15px 0 #a05f00, 0 20px 20px black;
-            transition: 0.07s;
+            text-shadow: 2px 2px 0 #fff;
+            box-shadow: 0 10px 0 #a05f00, 0 20px 20px black;
+            transition: 0.07s ease;
             cursor: pointer;
             touch-action: manipulation;
         }
         .menu-btn:active {
-            transform: translateY(10px);
+            transform: translateY(8px);
             box-shadow: 0 5px 0 #a05f00, 0 15px 15px black;
         }
         #brawlerSelectScreen {
             background: #2a4a3a;
-            border-radius: 60px;
-            padding: 30px;
+            border-radius: 40px;
+            padding: 20px;
             display: none;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 30px;
-            max-width: 90%;
+            gap: 20px;
+            max-width: 95%;
             border: 5px solid #ffd966;
-            margin-top: 30px;
+            margin-top: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
         }
         .brawler-card {
             background: #3d5e4a;
-            padding: 20px;
-            border-radius: 40px;
-            width: 200px;
+            padding: 15px;
+            border-radius: 30px;
+            width: min(200px, 40vw);
             text-align: center;
             border: 4px solid #aaa;
             transition: 0.2s;
-            box-shadow: 0 10px 0 #1a2e22;
+            box-shadow: 0 8px 0 #1a2e22;
         }
         .brawler-card.selected {
             border-color: #ffd966;
@@ -92,15 +106,15 @@
             box-shadow: 0 0 30px gold;
         }
         .brawler-emoji {
-            font-size: 80px;
+            font-size: min(80px, 15vw);
             filter: drop-shadow(5px 10px 0 #00000070);
         }
         .brawler-name {
-            font-size: 28px;
+            font-size: min(28px, 6vw);
             font-weight: bold;
         }
         .brawler-stats {
-            font-size: 16px;
+            font-size: min(16px, 4vw);
             background: #1f2e25;
             padding: 8px;
             border-radius: 20px;
@@ -122,37 +136,39 @@
             justify-content: space-between;
             color: white;
             text-shadow: 3px 3px 0 #000;
-            font-size: 28px;
+            font-size: min(28px, 6vw);
             font-weight: bold;
             z-index: 10;
-            background: #00000060;
-            padding: 15px 30px;
-            border-radius: 60px;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border-radius: 50px;
             backdrop-filter: blur(6px);
-            border: 3px solid gold;
+            border: 2px solid gold;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         #wave {
             background: #2f5575;
-            padding: 10px 30px;
+            padding: 8px 20px;
             border-radius: 40px;
         }
         #score {
             background: #8b5a2b;
-            padding: 10px 30px;
+            padding: 8px 20px;
             border-radius: 40px;
         }
         #hpBar {
             display: flex;
             align-items: center;
-            gap: 15px;
-            background: #00000060;
-            padding: 5px 25px;
+            gap: 10px;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 20px;
             border-radius: 40px;
         }
         #hpFill {
-            width: 150px;
-            height: 25px;
+            width: min(150px, 30vw);
+            height: 20px;
             background: #c0392b;
             border-radius: 20px;
             overflow: hidden;
@@ -166,8 +182,8 @@
         /* Joysticks */
         .joystick {
             position: absolute;
-            width: 140px;
-            height: 140px;
+            width: min(140px, 30vw);
+            height: min(140px, 30vw);
             background: rgba(30,30,30,0.7);
             border-radius: 50%;
             touch-action: none;
@@ -177,37 +193,38 @@
             box-shadow: 0 0 30px black;
         }
         #leftJoystick {
-            bottom: 30px;
-            left: 30px;
+            bottom: min(30px, 5vh);
+            left: min(30px, 5vw);
         }
         #rightJoystick {
-            bottom: 30px;
-            right: 160px;
+            bottom: min(30px, 5vh);
+            right: min(30px, 5vw);
         }
         .joystickKnob {
             position: absolute;
-            width: 70px;
-            height: 70px;
+            width: 60%;
+            height: 60%;
             background: radial-gradient(circle at 30% 30%, #fff, #ccc);
             border-radius: 50%;
-            top: 35px;
-            left: 35px;
+            top: 20%;
+            left: 20%;
             pointer-events: none;
             box-shadow: 0 5px 15px black;
             border: 3px solid #ffd966;
+            transition: 0.02s;
         }
         #specialButton {
             position: absolute;
-            bottom: 30px;
-            right: 30px;
-            width: 110px;
-            height: 110px;
+            bottom: min(30px, 5vh);
+            right: min(30px, 5vw);
+            width: min(110px, 25vw);
+            height: min(110px, 25vw);
             border-radius: 50%;
             background: #444;
-            border: 6px solid #fff;
+            border: 5px solid #fff;
             color: white;
             font-weight: bold;
-            font-size: 18px;
+            font-size: min(18px, 4vw);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -218,7 +235,7 @@
             text-shadow: 2px 2px 0 #000;
         }
         #specialButton .special-charge {
-            font-size: 26px;
+            font-size: min(26px, 6vw);
             font-weight: bold;
         }
         #specialButton.ready {
@@ -232,37 +249,48 @@
         #gameOver {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: #000000dd;
+            background: rgba(0,0,0,0.9);
             z-index: 50;
             display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 60px;
+            font-size: min(60px, 12vw);
             backdrop-filter: blur(10px);
+            text-align: center;
+            padding: 20px;
         }
         #gameOver button {
             background: gold;
             border: none;
-            padding: 20px 60px;
-            font-size: 40px;
+            padding: min(20px, 5vw) min(60px, 15vw);
+            font-size: min(40px, 8vw);
             border-radius: 60px;
             margin: 30px;
             font-weight: bold;
+            touch-action: manipulation;
+        }
+        /* Responsive Anpassungen */
+        @media (orientation: portrait) {
+            #hud {
+                flex-direction: column;
+                align-items: flex-start;
+            }
         }
     </style>
 </head>
 <body>
     <div id="lobby">
-        <h1>BRAWL STARS</h1>
+        <h1>KILL STARS</h1>
         <div class="menu-buttons">
             <div class="menu-btn" id="playBtn">⚔️ KÄMPFEN</div>
-            <div class="menu-btn" id="brawlerMenuBtn">🦸 BRAWLER</div>
+            <div class="menu-btn" id="brawlerMenuBtn">🦸 KÄMPFER</div>
         </div>
         <div id="brawlerSelectScreen"></div>
         <div class="menu-btn back-btn" id="backToMain" style="display: none;">🔙 ZURÜCK</div>
     </div>
+
     <div id="gameOver">
         <div>💀 GAME OVER 💀</div>
         <div id="finalScore"></div>
@@ -284,9 +312,11 @@
 
     <script>
         (function() {
-            // ----- Canvas & UI -----
+            // Canvas und Context
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d');
+
+            // UI-Elemente
             const lobby = document.getElementById('lobby');
             const brawlerSelectScreen = document.getElementById('brawlerSelectScreen');
             const backToMain = document.getElementById('backToMain');
@@ -300,60 +330,59 @@
             const hpCurrent = document.getElementById('hpCurrent');
             const specialBtn = document.getElementById('specialButton');
 
-            // Joystick-Elemente
+            // Joysticks
             const leftJoystick = document.getElementById('leftJoystick');
             const rightJoystick = document.getElementById('rightJoystick');
             const leftKnob = document.getElementById('leftKnob');
             const rightKnob = document.getElementById('rightKnob');
 
-            // ----- Spielvariablen -----
+            // Spielzustand
             let gameActive = false;
             let player = null;
             let enemies = [];
             let projectiles = [];
+            let coins = [];
             let damageNumbers = [];
+            let effects = [];
             let lastShot = 0;
-            const SHOT_COOLDOWN = 300; // ms
-
+            const SHOT_COOLDOWN = 300;
             let specialCharge = 0;
             const MAX_SPECIAL = 100;
             let specialReady = false;
-
             let wave = 1;
             let score = 0;
             let enemiesThisWave = 0;
             let enemiesSpawned = 0;
             const BASE_ENEMIES = 3;
-
             let selectedBrawler = 'Shelly';
 
-            // Joystick-Zustände (vereinfacht, ohne Touch-ID, aber mit Flaggen)
-            let leftStick = { active: false, dir: { x: 0, y: 0 } };
-            let rightStick = { active: false, dir: { x: 0, y: 0 }, tap: false };
+            // Joystick-Zustände (mit Touch-IDs für Multi-Touch)
+            let leftStick = { active: false, id: null, dir: { x: 0, y: 0 } };
+            let rightStick = { active: false, id: null, dir: { x: 0, y: 0 }, tap: false, startX: 0, startY: 0 };
 
-            // ----- Brawler-Daten -----
+            // Brawler-Daten
             const brawlers = {
                 Shelly: {
-                    name: 'Shelly', color: '#e67e22', speed: 3.2, hp: 100, maxHp: 100, emoji: '🔫',
-                    attackDamage: 20, attackSpeed: 8, attackRange: 350, attackSpread: 5,
+                    name: 'Shelly', color: '#e67e22', colorLight: '#f39c12', speed: 3.2,
+                    hp: 100, maxHp: 100, emoji: '🔫', hat: '🧢',
+                    attackDamage: 20, attackSpeed: 8, attackRange: 350, attackSpread: 5, attackCooldown: 300,
                     specialDamage: 40, specialSpeed: 12, specialRange: 450, specialSpread: 9,
-                    attackCooldown: 300
                 },
                 Colt: {
-                    name: 'Colt', color: '#3498db', speed: 4.0, hp: 80, maxHp: 80, emoji: '🔫🔫',
-                    attackDamage: 30, attackSpeed: 14, attackRange: 600, attackSpread: 1,
+                    name: 'Colt', color: '#3498db', colorLight: '#5dade2', speed: 4.0,
+                    hp: 80, maxHp: 80, emoji: '🔫🔫', hat: '🤠',
+                    attackDamage: 30, attackSpeed: 14, attackRange: 600, attackSpread: 1, attackCooldown: 250,
                     specialDamage: 25, specialSpeed: 16, specialRange: 700, specialSpread: 8,
-                    attackCooldown: 250
                 },
                 Bull: {
-                    name: 'Bull', color: '#c0392b', speed: 2.5, hp: 130, maxHp: 130, emoji: '🐂',
-                    attackDamage: 50, attackSpeed: 9, attackRange: 220, attackSpread: 1,
+                    name: 'Bull', color: '#c0392b', colorLight: '#e74c3c', speed: 2.5,
+                    hp: 130, maxHp: 130, emoji: '🐂', hat: '⛑️',
+                    attackDamage: 50, attackSpeed: 9, attackRange: 220, attackSpread: 1, attackCooldown: 350,
                     specialDamage: 90, specialSpeed: 22, specialRange: 300, specialSpread: 1,
-                    attackCooldown: 350
                 }
             };
 
-            // ----- Brawler-Karten erstellen -----
+            // Brawler-Karten erstellen
             function buildBrawlerCards() {
                 brawlerSelectScreen.innerHTML = '';
                 for (let key in brawlers) {
@@ -376,7 +405,7 @@
             }
             buildBrawlerCards();
 
-            // ----- Menü-Navigation -----
+            // Menü-Navigation
             playBtn.addEventListener('click', () => {
                 lobby.style.display = 'none';
                 startGame();
@@ -394,7 +423,7 @@
                 brawlerMenuBtn.style.display = 'inline-block';
             });
 
-            // ----- Spiel starten -----
+            // Spiel starten
             function startGame() {
                 let b = brawlers[selectedBrawler];
                 player = {
@@ -412,6 +441,8 @@
                 specialBtn.classList.remove('ready');
                 enemies = [];
                 projectiles = [];
+                coins = [];
+                effects = [];
                 damageNumbers = [];
                 updateUI();
                 startWave();
@@ -429,107 +460,136 @@
                 if (!gameActive) return;
                 if (enemiesSpawned < enemiesThisWave) {
                     let angle = Math.random() * 2 * Math.PI;
-                    let distance = 500;
+                    let distance = Math.max(canvas.width, canvas.height) * 0.5;
                     let x = player.x + Math.cos(angle) * distance;
                     let y = player.y + Math.sin(angle) * distance;
-                    x = Math.min(canvas.width - 40, Math.max(40, x));
-                    y = Math.min(canvas.height - 40, Math.max(40, y));
+                    x = Math.min(canvas.width - 50, Math.max(50, x));
+                    y = Math.min(canvas.height - 50, Math.max(50, y));
                     enemies.push({
                         x, y,
                         hp: 40 + wave * 8,
                         maxHp: 40 + wave * 8,
                         speed: 1.2 + wave * 0.1,
-                        damage: 3 + wave, // DEUTLICH REDUZIERT
+                        damage: 3 + wave, // Fairer Schaden
                         radius: 25,
-                        color: '#c13b3b'
+                        color: '#c13b3b',
+                        eyeColor: '#ff0000'
                     });
                     enemiesSpawned++;
                     setTimeout(spawnEnemies, 700);
                 }
             }
 
-            // ----- Joystick Events (einfach, ohne Touch-ID, aber mit unabhängigen Handlern) -----
-            function setupJoystick(joystick, knob, isRight) {
-                let active = false;
-                let dir = { x: 0, y: 0 };
-
-                const handleStart = (e) => {
-                    e.preventDefault();
-                    const touch = e.touches[0];
-                    if (!touch) return;
-                    active = true;
-                    if (isRight) {
+            // Joystick-Event-Handler mit Multi-Touch
+            function handleTouchStart(e, isRight) {
+                e.preventDefault();
+                const touches = e.changedTouches;
+                for (let touch of touches) {
+                    if (isRight && !rightStick.active) {
                         rightStick.active = true;
-                        rightStick.tap = true; // möglicher Tap
-                    } else {
+                        rightStick.id = touch.identifier;
+                        rightStick.startX = touch.clientX;
+                        rightStick.startY = touch.clientY;
+                        rightStick.tap = true;
+                        rightStick.dir = { x: 0, y: 0 };
+                        rightKnob.style.left = '35px';
+                        rightKnob.style.top = '35px';
+                        break;
+                    } else if (!isRight && !leftStick.active) {
                         leftStick.active = true;
+                        leftStick.id = touch.identifier;
+                        leftStick.dir = { x: 0, y: 0 };
+                        leftKnob.style.left = '35px';
+                        leftKnob.style.top = '35px';
+                        break;
                     }
-                };
+                }
+            }
 
-                const handleMove = (e) => {
-                    e.preventDefault();
-                    if (!active) return;
-                    const touch = e.touches[0];
-                    if (!touch) return;
-                    const rect = joystick.getBoundingClientRect();
-                    const centerX = rect.left + rect.width / 2;
-                    const centerY = rect.top + rect.height / 2;
-                    let dx = touch.clientX - centerX;
-                    let dy = touch.clientY - centerY;
-                    const distance = Math.sqrt(dx*dx + dy*dy);
-                    const maxDist = rect.width / 2;
-                    if (distance > maxDist) {
-                        dx = (dx / distance) * maxDist;
-                        dy = (dy / distance) * maxDist;
-                    }
-                    knob.style.left = (35 + dx) + 'px';
-                    knob.style.top = (35 + dy) + 'px';
-                    const normX = dx / maxDist;
-                    const normY = dy / maxDist;
-                    if (isRight) {
+            function handleTouchMove(e, isRight) {
+                e.preventDefault();
+                const touches = e.touches;
+                for (let touch of touches) {
+                    if (isRight && rightStick.active && touch.identifier === rightStick.id) {
+                        const rect = rightJoystick.getBoundingClientRect();
+                        const centerX = rect.left + rect.width / 2;
+                        const centerY = rect.top + rect.height / 2;
+                        let dx = touch.clientX - centerX;
+                        let dy = touch.clientY - centerY;
+                        const distance = Math.sqrt(dx*dx + dy*dy);
+                        const maxDist = rect.width / 2;
+                        if (distance > maxDist) {
+                            dx = (dx / distance) * maxDist;
+                            dy = (dy / distance) * maxDist;
+                        }
+                        rightKnob.style.left = (35 + dx) + 'px';
+                        rightKnob.style.top = (35 + dy) + 'px';
+                        const normX = dx / maxDist;
+                        const normY = dy / maxDist;
                         rightStick.dir = { x: normX, y: normY };
-                        if (distance > 5) rightStick.tap = false; // Bewegung -> kein Tap
-                    } else {
-                        leftStick.dir = { x: normX, y: normY };
+                        if (distance > 10) rightStick.tap = false;
+                        break;
+                    } else if (!isRight && leftStick.active && touch.identifier === leftStick.id) {
+                        const rect = leftJoystick.getBoundingClientRect();
+                        const centerX = rect.left + rect.width / 2;
+                        const centerY = rect.top + rect.height / 2;
+                        let dx = touch.clientX - centerX;
+                        let dy = touch.clientY - centerY;
+                        const distance = Math.sqrt(dx*dx + dy*dy);
+                        const maxDist = rect.width / 2;
+                        if (distance > maxDist) {
+                            dx = (dx / distance) * maxDist;
+                            dy = (dy / distance) * maxDist;
+                        }
+                        leftKnob.style.left = (35 + dx) + 'px';
+                        leftKnob.style.top = (35 + dy) + 'px';
+                        leftStick.dir = { x: dx / maxDist, y: dy / maxDist };
+                        break;
                     }
-                };
+                }
+            }
 
-                const handleEnd = (e) => {
-                    e.preventDefault();
-                    if (!active) return;
-                    active = false;
-                    if (isRight) {
+            function handleTouchEnd(e, isRight) {
+                e.preventDefault();
+                const touches = e.changedTouches;
+                for (let touch of touches) {
+                    if (isRight && rightStick.active && touch.identifier === rightStick.id) {
                         if (rightStick.tap) {
-                            // Kurzes Antippen: automatisch schießen
                             autoShoot();
                         } else {
-                            // In die Richtung schießen
                             if (rightStick.dir.x !== 0 || rightStick.dir.y !== 0) {
                                 shootInDirection(rightStick.dir);
                             }
                         }
                         rightStick.active = false;
+                        rightStick.id = null;
                         rightStick.dir = { x: 0, y: 0 };
-                        knob.style.left = '35px';
-                        knob.style.top = '35px';
-                    } else {
+                        rightKnob.style.left = '35px';
+                        rightKnob.style.top = '35px';
+                        break;
+                    } else if (!isRight && leftStick.active && touch.identifier === leftStick.id) {
                         leftStick.active = false;
+                        leftStick.id = null;
                         leftStick.dir = { x: 0, y: 0 };
-                        knob.style.left = '35px';
-                        knob.style.top = '35px';
+                        leftKnob.style.left = '35px';
+                        leftKnob.style.top = '35px';
+                        break;
                     }
-                };
-
-                joystick.addEventListener('touchstart', handleStart, { passive: false });
-                joystick.addEventListener('touchmove', handleMove, { passive: false });
-                joystick.addEventListener('touchend', handleEnd);
-                joystick.addEventListener('touchcancel', handleEnd);
+                }
             }
 
-            setupJoystick(leftJoystick, leftKnob, false);
-            setupJoystick(rightJoystick, rightKnob, true);
+            // Event-Listener für Joysticks
+            leftJoystick.addEventListener('touchstart', (e) => handleTouchStart(e, false), { passive: false });
+            leftJoystick.addEventListener('touchmove', (e) => handleTouchMove(e, false), { passive: false });
+            leftJoystick.addEventListener('touchend', (e) => handleTouchEnd(e, false));
+            leftJoystick.addEventListener('touchcancel', (e) => handleTouchEnd(e, false));
 
-            // ----- Schieß-Funktionen -----
+            rightJoystick.addEventListener('touchstart', (e) => handleTouchStart(e, true), { passive: false });
+            rightJoystick.addEventListener('touchmove', (e) => handleTouchMove(e, true), { passive: false });
+            rightJoystick.addEventListener('touchend', (e) => handleTouchEnd(e, true));
+            rightJoystick.addEventListener('touchcancel', (e) => handleTouchEnd(e, true));
+
+            // Schießfunktionen
             function autoShoot() {
                 if (!player || !gameActive) return;
                 let closest = null;
@@ -569,7 +629,7 @@
                         range: player.attackRange,
                         owner: 'player',
                         size: 8,
-                        color: '#ff0'
+                        color: '#ffcc44'
                     });
                 } else {
                     for (let i = -Math.floor(spread/2); i <= Math.floor(spread/2); i++) {
@@ -582,14 +642,14 @@
                             range: player.attackRange,
                             owner: 'player',
                             size: 6,
-                            color: '#fc0'
+                            color: '#ffaa00'
                         });
                     }
                 }
                 projectiles.push(...bullets);
             }
 
-            // ----- Spezial -----
+            // Spezial
             function useSpecial() {
                 if (!specialReady || !player || !gameActive) return;
                 let dir;
@@ -627,7 +687,7 @@
                         range: player.specialRange,
                         owner: 'player',
                         size: 12,
-                        color: '#f60'
+                        color: '#ff5500'
                     });
                 }
                 projectiles.push(...bullets);
@@ -641,7 +701,18 @@
                 useSpecial();
             });
 
-            // ----- UI aktualisieren -----
+            // Hilfsfunktionen
+            function addDamageNumber(x, y, amount) {
+                damageNumbers.push({ x, y: y-20, value: amount, life: 60 });
+            }
+            function addCoin(x, y) {
+                coins.push({ x, y, value: 50, life: 300 });
+            }
+            function addEffect(x, y) {
+                effects.push({ x, y, life: 20, maxLife: 20 });
+            }
+
+            // UI aktualisieren
             function updateUI() {
                 if (!player) return;
                 waveDisplay.innerHTML = `🌊 Welle ${wave}`;
@@ -655,21 +726,16 @@
                 }
             }
 
-            // ----- Hilfsfunktionen -----
-            function addDamageNumber(x, y, amount) {
-                damageNumbers.push({ x, y: y-20, value: amount, life: 60 });
-            }
-
-            // ----- Update-Loop -----
+            // Update-Loop
             function update() {
                 if (!gameActive || !player) return;
 
-                // Bewegung
+                // Bewegung (linker Stick)
                 if (leftStick.active) {
                     player.x += leftStick.dir.x * player.speed;
                     player.y += leftStick.dir.y * player.speed;
-                    player.x = Math.min(canvas.width - 35, Math.max(35, player.x));
-                    player.y = Math.min(canvas.height - 35, Math.max(35, player.y));
+                    player.x = Math.min(canvas.width - 40, Math.max(40, player.x));
+                    player.y = Math.min(canvas.height - 40, Math.max(40, player.y));
                 }
 
                 // Gegner bewegen
@@ -708,6 +774,7 @@
                             if (d < e.radius + 5) {
                                 e.hp -= p.damage;
                                 addDamageNumber(e.x, e.y, p.damage);
+                                addEffect(p.x, p.y);
                                 specialCharge += 10;
                                 if (specialCharge > MAX_SPECIAL) specialCharge = MAX_SPECIAL;
                                 projectiles.splice(i, 1);
@@ -715,6 +782,7 @@
                                     score += 100;
                                     specialCharge += 20;
                                     if (specialCharge > MAX_SPECIAL) specialCharge = MAX_SPECIAL;
+                                    addCoin(e.x, e.y);
                                     enemies.splice(j, 1);
                                 }
                                 break;
@@ -723,13 +791,14 @@
                     }
                 }
 
-                // Gegner-Schaden (reduziert)
+                // Gegner-Schaden am Spieler
                 for (let i = 0; i < enemies.length; i++) {
                     let e = enemies[i];
                     let d = Math.hypot(player.x - e.x, player.y - e.y);
                     if (d < 35 + e.radius) {
                         player.hp -= e.damage;
                         addDamageNumber(player.x, player.y, e.damage);
+                        addEffect(player.x, player.y);
                         if (player.hp <= 0) {
                             gameActive = false;
                             gameOverDiv.style.display = 'flex';
@@ -739,13 +808,32 @@
                     }
                 }
 
+                // Münzen einsammeln
+                for (let i = coins.length - 1; i >= 0; i--) {
+                    let c = coins[i];
+                    let d = Math.hypot(player.x - c.x, player.y - c.y);
+                    if (d < 40 + 15) {
+                        score += c.value;
+                        addEffect(c.x, c.y);
+                        coins.splice(i, 1);
+                    }
+                }
+
                 // Nächste Welle
                 if (enemies.length === 0 && enemiesSpawned >= enemiesThisWave) {
                     wave++;
                     startWave();
                 }
 
-                // Damage-Numbers Leben
+                // Lebensdauer von Effekten und Münzen
+                for (let i = effects.length - 1; i >= 0; i--) {
+                    effects[i].life--;
+                    if (effects[i].life <= 0) effects.splice(i, 1);
+                }
+                for (let i = coins.length - 1; i >= 0; i--) {
+                    coins[i].life--;
+                    if (coins[i].life <= 0) coins.splice(i, 1);
+                }
                 for (let i = damageNumbers.length - 1; i >= 0; i--) {
                     damageNumbers[i].life--;
                     if (damageNumbers[i].life <= 0) damageNumbers.splice(i, 1);
@@ -754,22 +842,32 @@
                 updateUI();
             }
 
-            // ----- Zeichnen -----
+            // Zeichnen
             function draw() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
                 // Hintergrund
                 ctx.fillStyle = '#5aa45a';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
+                // Gras-Muster
+                ctx.fillStyle = '#6fb56f';
+                for (let i = 0; i < 30; i++) {
+                    ctx.beginPath();
+                    ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, 20, 0, 2*Math.PI);
+                    ctx.globalAlpha = 0.15;
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
                 ctx.strokeStyle = '#3d8c5c';
                 ctx.lineWidth = 2;
-                for (let i = 0; i < canvas.width; i += 60) {
+                for (let i = 0; i < canvas.width; i += 70) {
                     ctx.beginPath();
                     ctx.moveTo(i, 0);
                     ctx.lineTo(i, canvas.height);
+                    ctx.strokeStyle = '#3d8c5c';
                     ctx.stroke();
                 }
-                for (let i = 0; i < canvas.height; i += 60) {
+                for (let i = 0; i < canvas.height; i += 70) {
                     ctx.beginPath();
                     ctx.moveTo(0, i);
                     ctx.lineTo(canvas.width, i);
@@ -785,52 +883,107 @@
                     ctx.beginPath();
                     ctx.moveTo(player.x, player.y);
                     ctx.lineTo(endX, endY);
-                    ctx.strokeStyle = 'white';
-                    ctx.lineWidth = 5;
+                    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+                    ctx.lineWidth = 6;
                     ctx.stroke();
                     ctx.beginPath();
-                    ctx.arc(endX, endY, 12, 0, 2*Math.PI);
-                    ctx.fillStyle = '#f00';
+                    ctx.arc(endX, endY, 15, 0, 2*Math.PI);
+                    ctx.fillStyle = 'rgba(255,0,0,0.7)';
                     ctx.fill();
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
                 }
+
+                // Effekte (Explosionen)
+                effects.forEach(e => {
+                    let progress = e.life / e.maxLife;
+                    ctx.beginPath();
+                    ctx.arc(e.x, e.y, 30 * (1 - progress), 0, 2*Math.PI);
+                    ctx.fillStyle = `rgba(255, 150, 0, ${progress})`;
+                    ctx.fill();
+                });
+
+                // Münzen
+                coins.forEach(c => {
+                    ctx.save();
+                    ctx.shadowColor = 'gold';
+                    ctx.shadowBlur = 20;
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.arc(c.x, c.y, 15, 0, 2*Math.PI);
+                    ctx.fill();
+                    ctx.fillStyle = '#B8860B';
+                    ctx.font = '20px Arial';
+                    ctx.fillText('💰', c.x-12, c.y+8);
+                    ctx.restore();
+                });
 
                 // Projektile
                 projectiles.forEach(p => {
+                    ctx.save();
+                    ctx.shadowColor = 'yellow';
+                    ctx.shadowBlur = 15;
                     ctx.fillStyle = p.color;
                     ctx.beginPath();
                     ctx.arc(p.x, p.y, p.size, 0, 2*Math.PI);
                     ctx.fill();
+                    ctx.restore();
                 });
 
                 // Gegner
                 enemies.forEach(e => {
+                    ctx.save();
+                    ctx.shadowColor = 'black';
+                    ctx.shadowBlur = 15;
+                    // Körper
                     ctx.fillStyle = e.color;
                     ctx.beginPath();
                     ctx.arc(e.x, e.y, e.radius, 0, 2*Math.PI);
                     ctx.fill();
+                    ctx.strokeStyle = '#5a3a2a';
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
                     // Augen
                     ctx.fillStyle = 'white';
                     ctx.beginPath();
-                    ctx.arc(e.x-10, e.y-8, 6, 0, 2*Math.PI);
+                    ctx.arc(e.x-10, e.y-8, 7, 0, 2*Math.PI);
                     ctx.fill();
                     ctx.beginPath();
-                    ctx.arc(e.x+10, e.y-8, 6, 0, 2*Math.PI);
+                    ctx.arc(e.x+10, e.y-8, 7, 0, 2*Math.PI);
                     ctx.fill();
-                    ctx.fillStyle = 'red';
+                    ctx.fillStyle = '#ff0000';
                     ctx.beginPath();
-                    ctx.arc(e.x-10, e.y-8, 3, 0, 2*Math.PI);
+                    ctx.arc(e.x-10, e.y-8, 4, 0, 2*Math.PI);
                     ctx.fill();
                     ctx.beginPath();
-                    ctx.arc(e.x+10, e.y-8, 3, 0, 2*Math.PI);
+                    ctx.arc(e.x+10, e.y-8, 4, 0, 2*Math.PI);
                     ctx.fill();
+                    // Augenbrauen
+                    ctx.beginPath();
+                    ctx.moveTo(e.x-18, e.y-20);
+                    ctx.lineTo(e.x-6, e.y-16);
+                    ctx.lineWidth = 4;
+                    ctx.strokeStyle = 'black';
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(e.x+18, e.y-20);
+                    ctx.lineTo(e.x+6, e.y-16);
+                    ctx.stroke();
                     // Lebensbalken
+                    ctx.shadowBlur = 0;
                     ctx.fillStyle = '#c0392b';
                     ctx.fillRect(e.x-25, e.y-40, 50, 6);
                     ctx.fillStyle = '#2ecc71';
                     ctx.fillRect(e.x-25, e.y-40, 50 * (e.hp/e.maxHp), 6);
+                    ctx.restore();
                 });
 
                 // Spieler
+                ctx.save();
+                ctx.shadowColor = 'white';
+                ctx.shadowBlur = 25;
+                // Körper
                 ctx.fillStyle = player.color;
                 ctx.beginPath();
                 ctx.arc(player.x, player.y, 30, 0, 2*Math.PI);
@@ -838,19 +991,47 @@
                 ctx.strokeStyle = 'gold';
                 ctx.lineWidth = 5;
                 ctx.stroke();
+                // Augen
                 ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(player.x-12, player.y-10, 8, 0, 2*Math.PI);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(player.x+12, player.y-10, 8, 0, 2*Math.PI);
+                ctx.fill();
+                ctx.fillStyle = '#2c3e50';
+                ctx.beginPath();
+                ctx.arc(player.x-12, player.y-10, 4, 0, 2*Math.PI);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(player.x+12, player.y-10, 4, 0, 2*Math.PI);
+                ctx.fill();
+                // Hut / Accessoire
                 ctx.font = '30px Arial';
-                ctx.fillText(player.emoji, player.x-20, player.y-40);
+                ctx.fillStyle = 'white';
+                ctx.shadowBlur = 10;
+                ctx.fillText(player.hat, player.x-15, player.y-50);
+                // Emoji
+                ctx.font = '30px Arial';
+                ctx.fillText(player.emoji, player.x-20, player.y-80);
+                ctx.restore();
 
                 // Schadenszahlen
+                ctx.save();
+                ctx.font = 'bold 26px Arial';
+                ctx.textAlign = 'center';
                 damageNumbers.forEach(d => {
-                    ctx.fillStyle = 'red';
-                    ctx.font = 'bold 24px Arial';
+                    let alpha = d.life / 60;
+                    ctx.fillStyle = `rgba(255, 50, 50, ${alpha})`;
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 3;
+                    ctx.strokeText('-' + d.value, d.x, d.y);
                     ctx.fillText('-' + d.value, d.x, d.y);
                 });
+                ctx.restore();
             }
 
-            // ----- GameLoop -----
+            // GameLoop
             function gameLoop() {
                 update();
                 draw();
@@ -873,8 +1054,8 @@
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
                 if (player) {
-                    player.x = Math.min(canvas.width-35, Math.max(35, player.x));
-                    player.y = Math.min(canvas.height-35, Math.max(35, player.y));
+                    player.x = Math.min(canvas.width-40, Math.max(40, player.x));
+                    player.y = Math.min(canvas.height-40, Math.max(40, player.y));
                 }
             }
             window.addEventListener('resize', resizeCanvas);
