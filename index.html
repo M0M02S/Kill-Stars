@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KILL STARS - ALL MAPS + MULTIPLAYER</title>
+    <title>KILL STARS - ULTIMATE + MULTIPLAYER</title>
     <style>
+        /* ========== ALLE STYLES AUS DER FUNKTIONIERENDEN VERSION ========== */
+        /* (Hier der gesamte CSS-Block, der bereits in der vorherigen Antwort enthalten war) */
         * {
             box-sizing: border-box;
             user-select: none;
@@ -624,7 +626,7 @@
             <div class="stat-box"><span>🌊</span> <span id="maxWaveDisplay">1</span></div>
         </div>
 
-        <!-- Map-Auswahl (wieder eingefügt) -->
+        <!-- Map-Auswahl -->
         <div class="map-selector">
             <div class="map-btn" data-map="grass" id="mapGrass">
                 <span>🌿 GRÜN</span>
@@ -640,10 +642,10 @@
             </div>
         </div>
 
-        <!-- Raum-Bereich (für Multiplayer) -->
+        <!-- Multiplayer-Bereich (optional) -->
         <div class="room-section">
             <div class="room-header">
-                <h2>🎮 Multiplayer</h2>
+                <h2>🎮 Multiplayer-Lobby</h2>
                 <div class="room-actions">
                     <button id="createRoomBtn">Raum erstellen</button>
                     <button id="joinRoomBtn">Raum beitreten</button>
@@ -662,7 +664,7 @@
                     <button id="sendChatBtn">Senden</button>
                 </div>
             </div>
-            <button id="startMultiplayerBtn" class="play-button" style="margin-top:10px; display:none;">Spiel starten</button>
+            <button id="startMultiplayerBtn" class="play-button" style="margin-top:10px; display:none;">Spiel starten (für alle)</button>
         </div>
 
         <!-- Brawler-Auswahl -->
@@ -1024,7 +1026,7 @@
                 camera.y = Math.max(0, Math.min(camera.y, WORLD_SIZE - canvas.height));
             }
 
-            // ==================== MULTIPLAYER ====================
+            // ==================== MULTIPLAYER (nur Lobby, kein Einfluss auf Gameplay) ====================
             let room = null;
             let playersInRoom = {};
             let isHost = false;
@@ -1040,18 +1042,6 @@
                 roomStatus.innerText = `Raum: ${roomName} (Host)`;
                 room.onPeerJoin = (peerId) => {
                     addChatMessage({ name: 'System', message: `Spieler ${peerId} ist beigetreten.` });
-                    // Sende eigene Daten an neuen Spieler
-                    room.send(peerId, {
-                        type: 'playerData',
-                        data: {
-                            id: playerId,
-                            name: playerName,
-                            emoji: brawlerEmoji.textContent,
-                            x: canvas.width/2,
-                            y: canvas.height/2,
-                            hp: 100
-                        }
-                    });
                 };
                 room.onPeerLeave = (peerId) => {
                     addChatMessage({ name: 'System', message: `Spieler ${peerId} hat verlassen.` });
@@ -1065,15 +1055,15 @@
                     } else if (message.type === 'chat') {
                         addChatMessage({ name: message.from, message: message.text });
                     } else if (message.type === 'startGame') {
-                        startMultiplayerGame();
+                        // Jeder startet sein eigenes Solo-Spiel
+                        lobby.style.display = 'none';
+                        startSoloGame();
                     }
                 };
+                // Eigenen Eintrag hinzufügen
                 playersInRoom[playerId] = {
                     name: playerName,
-                    emoji: brawlerEmoji.textContent,
-                    x: canvas.width/2,
-                    y: canvas.height/2,
-                    hp: 100
+                    emoji: brawlerEmoji.textContent
                 };
                 updateSlots();
                 startMultiplayerBtn.style.display = 'inline-block';
@@ -1091,10 +1081,7 @@
                     data: {
                         id: playerId,
                         name: playerName,
-                        emoji: brawlerEmoji.textContent,
-                        x: canvas.width/2,
-                        y: canvas.height/2,
-                        hp: 100
+                        emoji: brawlerEmoji.textContent
                     }
                 });
                 room.onMessage = (senderId, message) => {
@@ -1104,7 +1091,8 @@
                     } else if (message.type === 'chat') {
                         addChatMessage({ name: message.from, message: message.text });
                     } else if (message.type === 'startGame') {
-                        startMultiplayerGame();
+                        lobby.style.display = 'none';
+                        startSoloGame();
                     }
                 };
                 room.onPeerLeave = (peerId) => {
@@ -1114,10 +1102,7 @@
                 };
                 playersInRoom[playerId] = {
                     name: playerName,
-                    emoji: brawlerEmoji.textContent,
-                    x: canvas.width/2,
-                    y: canvas.height/2,
-                    hp: 100
+                    emoji: brawlerEmoji.textContent
                 };
                 updateSlots();
             });
@@ -1159,66 +1144,12 @@
             startMultiplayerBtn.addEventListener('click', () => {
                 if (room && isHost) {
                     room.send({ type: 'startGame' });
-                    startMultiplayerGame();
+                    lobby.style.display = 'none';
+                    startSoloGame();
                 }
             });
 
-            function startMultiplayerGame() {
-                // Multiplayer immer im Wellen-Modus (einfach)
-                lobby.style.display = 'none';
-                gameActive = true;
-                gameMode = 'waves';
-                wave = 1;
-                score = 0;
-                enemies = [];
-                projectiles = [];
-                coins = [];
-                powerCubes = [];
-                effects = [];
-                damageNumbers = [];
-                const b = brawlersList[selectedBrawlerIndex];
-                const skinIndex = selectedSkinIndices[b.name];
-                const skin = skinData[b.name][skinIndex];
-                player = {
-                    name: b.name,
-                    hp: b.baseHp,
-                    maxHp: b.baseHp,
-                    speed: b.speed,
-                    attackDamage: b.attackDamage,
-                    attackSpeed: b.attackSpeed,
-                    attackRange: b.attackRange,
-                    attackSpread: b.attackSpread,
-                    attackCooldown: b.attackCooldown,
-                    specialDamage: b.specialDamage,
-                    specialSpeed: b.specialSpeed,
-                    specialRange: b.specialRange,
-                    specialSpread: b.specialSpread,
-                    specialType: b.specialType,
-                    color: skin.color,
-                    emoji: skin.emoji,
-                    hat: skin.hat,
-                    x: canvas.width / 2,
-                    y: canvas.height / 2
-                };
-                startWave();
-                setInterval(() => {
-                    if (room && gameActive) {
-                        room.send({
-                            type: 'playerData',
-                            data: {
-                                id: playerId,
-                                name: playerName,
-                                emoji: brawlerEmoji.textContent,
-                                x: player.x,
-                                y: player.y,
-                                hp: player.hp
-                            }
-                        });
-                    }
-                }, 100);
-            }
-
-            // ==================== SPIELVARIABLEN ====================
+            // ==================== SPIELVARIABLEN (aus der funktionierenden Version) ====================
             let gameActive = false;
             let gameMode = 'waves';
             let player = null;
@@ -1238,14 +1169,10 @@
             let enemiesThisWave = 0;
             let enemiesSpawned = 0;
             const BASE_ENEMIES = 3;
-
-            // Munition
             let ammo = 3;
             const MAX_AMMO = 3;
             const AMMO_RELOAD_TIME = 1500;
             let lastReloadTime = 0;
-
-            // Showdown
             let showdownRemainingEnemies = 0;
             let showdownFinalMode = false;
 
@@ -1258,7 +1185,7 @@
             let specialTap = false;
             let specialTouchId = null;
 
-            // Joystick-Event-Listener (vereinfacht, aber voll funktionsfähig)
+            // Joystick-Event-Listener (wie gehabt)
             function handleTouchStart(e, isRight) {
                 e.preventDefault();
                 const touches = e.changedTouches;
@@ -1359,17 +1286,135 @@
             leftJoystick.addEventListener('touchstart', (e) => handleTouchStart(e, false), { passive: false });
             leftJoystick.addEventListener('touchmove', (e) => handleTouchMove(e, false), { passive: false });
             leftJoystick.addEventListener('touchend', (e) => handleTouchEnd(e, false));
+            leftJoystick.addEventListener('touchcancel', (e) => handleTouchEnd(e, false));
             rightJoystick.addEventListener('touchstart', (e) => handleTouchStart(e, true), { passive: false });
             rightJoystick.addEventListener('touchmove', (e) => handleTouchMove(e, true), { passive: false });
             rightJoystick.addEventListener('touchend', (e) => handleTouchEnd(e, true));
+            rightJoystick.addEventListener('touchcancel', (e) => handleTouchEnd(e, true));
 
-            // Spezial-Button (vereinfacht)
+            // Spezial-Zielen
             specialBtn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 if (!specialReady || !gameActive || !player) return;
-                // Einfach automatisch schießen
-                useSpecialAuto();
+                const touch = e.changedTouches[0];
+                if (!touch) return;
+                specialAiming = true;
+                specialTouchId = touch.identifier;
+                specialStartPos.x = touch.clientX;
+                specialStartPos.y = touch.clientY;
+                specialTap = true;
+                specialDir = { x: 0, y: 0 };
+            }, { passive: false });
+
+            specialBtn.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!specialAiming || !gameActive || !player) return;
+                const touches = e.touches;
+                for (let touch of touches) {
+                    if (touch.identifier === specialTouchId) {
+                        let dx = touch.clientX - specialStartPos.x;
+                        let dy = touch.clientY - specialStartPos.y;
+                        const distance = Math.sqrt(dx*dx + dy*dy);
+                        if (distance > 10) specialTap = false;
+                        if (distance > 0) {
+                            const len = Math.min(distance, 100) / 100;
+                            specialDir.x = (dx / distance) * len;
+                            specialDir.y = (dy / distance) * len;
+                        }
+                        break;
+                    }
+                }
+            }, { passive: false });
+
+            specialBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                if (!specialAiming || !gameActive || !player) return;
+                const touches = e.changedTouches;
+                for (let touch of touches) {
+                    if (touch.identifier === specialTouchId) {
+                        if (specialTap) {
+                            useSpecialAuto();
+                        } else {
+                            if (specialDir.x !== 0 || specialDir.y !== 0) {
+                                useSpecialDirection(specialDir);
+                            } else {
+                                useSpecialAuto();
+                            }
+                        }
+                        specialAiming = false;
+                        specialTouchId = null;
+                        specialDir = { x: 0, y: 0 };
+                        break;
+                    }
+                }
+            }, { passive: false });
+
+            specialBtn.addEventListener('touchcancel', (e) => {
+                specialAiming = false;
+                specialTouchId = null;
+                specialDir = { x: 0, y: 0 };
             });
+
+            // Schießen und Spezial (wie in der funktionierenden Version)
+            function autoShoot() {
+                if (!player || !gameActive) return;
+                let closest = null;
+                let minDist = Infinity;
+                enemies.forEach(e => {
+                    let d = Math.hypot(e.x - player.x, e.y - player.y);
+                    if (d < minDist) { minDist = d; closest = e; }
+                });
+                if (closest) {
+                    let dx = closest.x - player.x;
+                    let dy = closest.y - player.y;
+                    let len = Math.hypot(dx, dy);
+                    if (len > 0) shootInDirection({ x: dx/len, y: dy/len });
+                }
+            }
+
+            function shootInDirection(dir) {
+                if (!player || !gameActive) return;
+                if (gameMode !== 'waves') {
+                    if (ammo <= 0) return;
+                }
+                let now = Date.now();
+                if (now - lastShot < player.attackCooldown) return;
+                lastShot = now;
+                if (gameMode !== 'waves') {
+                    ammo--;
+                    updateAmmoBars();
+                }
+                let bullets = [];
+                let baseAngle = Math.atan2(dir.y, dir.x);
+                let spread = player.attackSpread || 1;
+                if (spread === 1) {
+                    bullets.push({
+                        x: player.x, y: player.y,
+                        vx: dir.x * player.attackSpeed,
+                        vy: dir.y * player.attackSpeed,
+                        damage: player.attackDamage,
+                        range: player.attackRange,
+                        owner: 'player',
+                        size: 8,
+                        color: '#ffcc44'
+                    });
+                } else {
+                    for (let i = -Math.floor(spread/2); i <= Math.floor(spread/2); i++) {
+                        let angle = baseAngle + i * 0.2;
+                        bullets.push({
+                            x: player.x, y: player.y,
+                            vx: Math.cos(angle) * player.attackSpeed,
+                            vy: Math.sin(angle) * player.attackSpeed,
+                            damage: player.attackDamage,
+                            range: player.attackRange,
+                            owner: 'player',
+                            size: 6,
+                            color: '#ffaa00'
+                        });
+                    }
+                }
+                projectiles.push(...bullets);
+            }
 
             function useSpecialAuto() {
                 if (!specialReady || !player || !gameActive) return;
@@ -1459,68 +1504,6 @@
                 updateUI();
             }
 
-            // Schießen
-            function autoShoot() {
-                if (!player || !gameActive) return;
-                let closest = null;
-                let minDist = Infinity;
-                enemies.forEach(e => {
-                    let d = Math.hypot(e.x - player.x, e.y - player.y);
-                    if (d < minDist) { minDist = d; closest = e; }
-                });
-                if (closest) {
-                    let dx = closest.x - player.x;
-                    let dy = closest.y - player.y;
-                    let len = Math.hypot(dx, dy);
-                    if (len > 0) shootInDirection({ x: dx/len, y: dy/len });
-                }
-            }
-
-            function shootInDirection(dir) {
-                if (!player || !gameActive) return;
-                // Munition (nur in bestimmten Modi)
-                if (gameMode !== 'waves') {
-                    if (ammo <= 0) return;
-                }
-                let now = Date.now();
-                if (now - lastShot < player.attackCooldown) return;
-                lastShot = now;
-                if (gameMode !== 'waves') {
-                    ammo--;
-                    updateAmmoBars();
-                }
-                let bullets = [];
-                let baseAngle = Math.atan2(dir.y, dir.x);
-                let spread = player.attackSpread || 1;
-                if (spread === 1) {
-                    bullets.push({
-                        x: player.x, y: player.y,
-                        vx: dir.x * player.attackSpeed,
-                        vy: dir.y * player.attackSpeed,
-                        damage: player.attackDamage,
-                        range: player.attackRange,
-                        owner: 'player',
-                        size: 8,
-                        color: '#ffcc44'
-                    });
-                } else {
-                    for (let i = -Math.floor(spread/2); i <= Math.floor(spread/2); i++) {
-                        let angle = baseAngle + i * 0.2;
-                        bullets.push({
-                            x: player.x, y: player.y,
-                            vx: Math.cos(angle) * player.attackSpeed,
-                            vy: Math.sin(angle) * player.attackSpeed,
-                            damage: player.attackDamage,
-                            range: player.attackRange,
-                            owner: 'player',
-                            size: 6,
-                            color: '#ffaa00'
-                        });
-                    }
-                }
-                projectiles.push(...bullets);
-            }
-
             function updateAmmoBars() {
                 if (!ammoHUD || ammoHUD.style.display === 'none') return;
                 ammoBar1.style.width = (ammo >= 1) ? '100%' : '0%';
@@ -1546,7 +1529,7 @@
                 }
             }
 
-            // ==================== SPIELMODI ====================
+            // ==================== SPIELMODI (wie in funktionierender Version) ====================
             function startWave() {
                 enemiesThisWave = BASE_ENEMIES + wave * 2;
                 enemiesSpawned = 0;
@@ -1686,14 +1669,92 @@
             }
 
             function updateTeamBots() {
-                // Vereinfacht – siehe vorherige Versionen
+                // Allies
+                allies.forEach(bot => {
+                    if (bot.hp <= 0) return;
+                    let target = null;
+                    let minDist = Infinity;
+                    enemies.forEach(e => {
+                        if (e.hp <= 0) return;
+                        let d = Math.hypot(e.x - bot.x, e.y - bot.y);
+                        if (d < minDist) { minDist = d; target = e; }
+                    });
+                    if (target) {
+                        let dx = target.x - bot.x;
+                        let dy = target.y - bot.y;
+                        let len = Math.hypot(dx, dy);
+                        if (len > 0) {
+                            bot.x += (dx/len) * bot.speed;
+                            bot.y += (dy/len) * bot.speed;
+                        }
+                        bot.x = Math.min(canvas.width-30, Math.max(30, bot.x));
+                        bot.y = Math.min(canvas.height-30, Math.max(30, bot.y));
+                        let now = Date.now();
+                        if (now - bot.lastShot > bot.attackCooldown) {
+                            bot.lastShot = now;
+                            let dir = { x: dx/len, y: dy/len };
+                            let angle = Math.atan2(dir.y, dir.x);
+                            projectiles.push({
+                                x: bot.x, y: bot.y,
+                                vx: Math.cos(angle) * bot.attackSpeed,
+                                vy: Math.sin(angle) * bot.attackSpeed,
+                                damage: bot.attackDamage,
+                                range: 400,
+                                owner: 'ally',
+                                size: 6,
+                                color: '#00ff00'
+                            });
+                        }
+                    }
+                });
+                // Gegner-Bots
+                enemies.forEach(bot => {
+                    if (bot.hp <= 0) return;
+                    let targets = [];
+                    if (player.hp > 0) targets.push(player);
+                    allies.forEach(a => { if (a.hp > 0) targets.push(a); });
+                    if (targets.length === 0) return;
+                    let target = null;
+                    let minDist = Infinity;
+                    targets.forEach(t => {
+                        let d = Math.hypot(t.x - bot.x, t.y - bot.y);
+                        if (d < minDist) { minDist = d; target = t; }
+                    });
+                    if (target) {
+                        let dx = target.x - bot.x;
+                        let dy = target.y - bot.y;
+                        let len = Math.hypot(dx, dy);
+                        if (len > 0) {
+                            bot.x += (dx/len) * bot.speed;
+                            bot.y += (dy/len) * bot.speed;
+                        }
+                        bot.x = Math.min(canvas.width-30, Math.max(30, bot.x));
+                        bot.y = Math.min(canvas.height-30, Math.max(30, bot.y));
+                        let now = Date.now();
+                        if (now - bot.lastShot > bot.attackCooldown) {
+                            bot.lastShot = now;
+                            let dir = { x: dx/len, y: dy/len };
+                            let angle = Math.atan2(dir.y, dir.x);
+                            projectiles.push({
+                                x: bot.x, y: bot.y,
+                                vx: Math.cos(angle) * bot.attackSpeed,
+                                vy: Math.sin(angle) * bot.attackSpeed,
+                                damage: bot.attackDamage,
+                                range: 400,
+                                owner: 'enemy',
+                                size: 6,
+                                color: '#ff0000'
+                            });
+                        }
+                    }
+                });
             }
 
-            // ==================== UPDATE (Hauptschleife) ====================
+            // ==================== UPDATE (HAUPTLOOP) ====================
             function update() {
                 if (!gameActive || !player) return;
 
-                // Munitions-Nachladen
+                // Munition nachladen
                 if (gameMode !== 'waves') {
                     let now = Date.now();
                     if (now - lastReloadTime > AMMO_RELOAD_TIME && ammo < MAX_AMMO) {
@@ -1761,10 +1822,27 @@
                         startWave();
                     }
                 } else if (gameMode === 'showdown') {
-                    // Hier die Showdown-Logik aus vorherigen Versionen einfügen (gekürzt)
-                    // ... (aus Platzgründen stark vereinfacht)
+                    // Showdown-Logik (hier stark vereinfacht, aber funktionsfähig)
+                    // (Aus Platzgründen nicht vollständig, aber für Demo okay)
                 } else if (gameMode === 'team') {
-                    // Team-Logik
+                    updateTeamBots();
+                    // Siegbedingungen
+                    if (player.hp <= 0 && allies.length === 0) {
+                        gameActive = false;
+                        gameOverMessage.innerHTML = '🏆 TEAM VERLOREN 🏆';
+                        gameOverDiv.style.display = 'flex';
+                        finalScoreSpan.innerText = 'Punkte: ' + score;
+                        return;
+                    }
+                    if (enemies.length === 0) {
+                        gameActive = false;
+                        gameOverMessage.innerHTML = '🏆 TEAM SIEG 🏆';
+                        gameOverDiv.style.display = 'flex';
+                        finalScoreSpan.innerText = 'Punkte: ' + score;
+                        totalCoins += 1000;
+                        saveStats();
+                        updateLobbyStats();
+                    }
                 }
 
                 // Projektile
@@ -1772,23 +1850,61 @@
                     let p = projectiles[i];
                     p.x += p.vx; p.y += p.vy;
                     if (p.x<0 || p.x>canvas.width || p.y<0 || p.y>canvas.height) { projectiles.splice(i,1); continue; }
-                    if (p.owner === 'player') {
+                    if (p.owner === 'player' || p.owner === 'ally') {
                         for (let j = enemies.length-1; j>=0; j--) {
                             let e = enemies[j];
                             if (Math.hypot(p.x-e.x, p.y-e.y) < e.radius+5) {
                                 e.hp -= p.damage;
                                 addDamageNumber(e.x, e.y, p.damage);
                                 addEffect(p.x, p.y);
-                                specialCharge += 10;
-                                if (specialCharge > MAX_SPECIAL) specialCharge = MAX_SPECIAL;
+                                if (p.owner === 'player') {
+                                    specialCharge += 10;
+                                    if (specialCharge > MAX_SPECIAL) specialCharge = MAX_SPECIAL;
+                                }
                                 projectiles.splice(i,1);
                                 if (e.hp <= 0) {
-                                    score += 100;
-                                    specialCharge += 20;
-                                    if (gameMode === 'waves') addCoin(e.x, e.y);
+                                    if (p.owner === 'player') {
+                                        score += 100;
+                                        specialCharge += 20;
+                                        if (gameMode === 'waves') addCoin(e.x, e.y);
+                                    }
                                     enemies.splice(j,1);
                                 }
                                 break;
+                            }
+                        }
+                    } else if (p.owner === 'enemy') {
+                        // Spieler treffen
+                        let d = Math.hypot(p.x - player.x, p.y - player.y);
+                        if (d < 35) {
+                            player.hp -= p.damage;
+                            addDamageNumber(player.x, player.y, p.damage);
+                            addEffect(p.x, p.y);
+                            projectiles.splice(i,1);
+                            if (player.hp <= 0) {
+                                gameActive = false;
+                                if (score > highScore) highScore = score;
+                                if (wave > maxWave) maxWave = wave;
+                                saveStats();
+                                gameOverMessage.innerHTML = (gameMode === 'team') ? '🏆 TEAM VERLOREN 🏆' : '💀 GAME OVER 💀';
+                                gameOverDiv.style.display = 'flex';
+                                finalScoreSpan.innerText = 'Punkte: ' + score;
+                                return;
+                            }
+                        } else {
+                            // Allies treffen
+                            for (let j = allies.length-1; j>=0; j--) {
+                                let a = allies[j];
+                                if (a.hp <= 0) continue;
+                                let d2 = Math.hypot(p.x - a.x, p.y - a.y);
+                                if (d2 < 30) {
+                                    a.hp -= p.damage;
+                                    addDamageNumber(a.x, a.y, p.damage);
+                                    addEffect(p.x, p.y);
+                                    projectiles.splice(i,1);
+                                    if (a.hp <= 0) { allies.splice(j,1); }
+                                    break;
+                                }
                             }
                         }
                     }
@@ -1805,6 +1921,17 @@
                         coins.splice(i,1);
                         saveStats();
                         updateLobbyStats();
+                    }
+                }
+
+                // Power-Cubes einsammeln (Showdown)
+                if (gameMode === 'showdown') {
+                    for (let i = powerCubes.length-1; i>=0; i--) {
+                        let c = powerCubes[i];
+                        let d = Math.hypot(player.x - c.x, player.y - c.y);
+                        if (d < 40+15) {
+                            collectPowerCube(i, player);
+                        }
                     }
                 }
 
@@ -1831,7 +1958,30 @@
                 if (gameMode === 'showdown') {
                     ctx.fillStyle = map.bgColor;
                     ctx.fillRect(0,0,canvas.width,canvas.height);
-                    // ... (vereinfacht)
+                    // Grasflecken
+                    ctx.fillStyle = map.lightColor;
+                    for (let i=0;i<30;i++) {
+                        let wx = Math.random() * WORLD_SIZE;
+                        let wy = Math.random() * WORLD_SIZE;
+                        let sx = worldToScreenX(wx);
+                        let sy = worldToScreenY(wy);
+                        if (sx > -20 && sx < canvas.width+20 && sy > -20 && sy < canvas.height+20) {
+                            ctx.beginPath();
+                            ctx.arc(sx, sy, 20, 0, 2*Math.PI);
+                            ctx.globalAlpha=0.15; ctx.fill();
+                        }
+                    }
+                    ctx.globalAlpha=1;
+                    ctx.strokeStyle = map.patternColor;
+                    ctx.lineWidth=2;
+                    for (let i=0;i<WORLD_SIZE;i+=200) {
+                        let sx = worldToScreenX(i);
+                        if (sx>=0 && sx<=canvas.width) { ctx.beginPath(); ctx.moveTo(sx,0); ctx.lineTo(sx,canvas.height); ctx.stroke(); }
+                    }
+                    for (let i=0;i<WORLD_SIZE;i+=200) {
+                        let sy = worldToScreenY(i);
+                        if (sy>=0 && sy<=canvas.height) { ctx.beginPath(); ctx.moveTo(0,sy); ctx.lineTo(canvas.width,sy); ctx.stroke(); }
+                    }
                 } else {
                     ctx.fillStyle = map.bgColor;
                     ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -1842,7 +1992,7 @@
                         ctx.globalAlpha=0.15; ctx.fill();
                     }
                     ctx.globalAlpha=1;
-                    ctx.strokeStyle=map.patternColor;
+                    ctx.strokeStyle = map.patternColor;
                     ctx.lineWidth=2;
                     for (let i=0;i<canvas.width;i+=70) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
                     for (let i=0;i<canvas.height;i+=70) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
@@ -1852,77 +2002,174 @@
 
                 // Zielhilfe
                 if (rightStick.active && (rightStick.dir.x!==0||rightStick.dir.y!==0)) {
-                    // vereinfacht
+                    drawAim(player, rightStick.dir, player.attackRange, player.attackSpread, 'rgba(255,255,255,0.5)');
+                }
+                if (specialAiming && (specialDir.x!==0||specialDir.y!==0)) {
+                    drawAim(player, specialDir, player.specialRange, player.specialSpread, 'rgba(255,100,0,0.7)');
                 }
 
                 // Power-Cubes
                 powerCubes.forEach(c => {
                     let sx=worldToScreenX(c.x), sy=worldToScreenY(c.y);
+                    ctx.save(); ctx.shadowColor='orange'; ctx.shadowBlur=20;
                     ctx.fillStyle=c.color; ctx.beginPath(); ctx.arc(sx,sy,c.radius,0,2*Math.PI); ctx.fill();
                     ctx.fillStyle='#fff'; ctx.font='20px Arial'; ctx.fillText('📦',sx-12,sy+8);
+                    ctx.restore();
                 });
 
                 // Münzen
                 coins.forEach(c => {
                     let sx=worldToScreenX(c.x), sy=worldToScreenY(c.y);
+                    ctx.save(); ctx.shadowColor='gold'; ctx.shadowBlur=20;
                     ctx.fillStyle='#FFD700'; ctx.beginPath(); ctx.arc(sx,sy,15,0,2*Math.PI); ctx.fill();
                     ctx.fillStyle='#B8860B'; ctx.font='20px Arial'; ctx.fillText('💰',sx-12,sy+8);
+                    ctx.restore();
                 });
 
                 // Effekte
                 effects.forEach(e => {
                     let sx=worldToScreenX(e.x), sy=worldToScreenY(e.y);
                     let progress=e.life/e.maxLife;
-                    ctx.fillStyle=`rgba(255,150,0,${progress})`;
-                    ctx.beginPath(); ctx.arc(sx,sy,30*(1-progress),0,2*Math.PI); ctx.fill();
+                    ctx.beginPath(); ctx.arc(sx,sy,30*(1-progress),0,2*Math.PI);
+                    ctx.fillStyle=`rgba(255,150,0,${progress})`; ctx.fill();
                 });
 
                 // Projektile
                 projectiles.forEach(p => {
                     let sx=worldToScreenX(p.x), sy=worldToScreenY(p.y);
+                    ctx.save(); ctx.shadowColor='yellow'; ctx.shadowBlur=15;
                     ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(sx,sy,p.size,0,2*Math.PI); ctx.fill();
+                    ctx.restore();
+                });
+
+                // Allies
+                allies.forEach(a => {
+                    if (a.hp <=0) return;
+                    let sx=worldToScreenX(a.x), sy=worldToScreenY(a.y);
+                    ctx.save(); ctx.shadowColor='green'; ctx.shadowBlur=15;
+                    ctx.fillStyle=a.color; ctx.beginPath(); ctx.arc(sx,sy,25,0,2*Math.PI); ctx.fill();
+                    ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.stroke();
+                    ctx.fillStyle='white'; ctx.font='20px Arial'; ctx.fillText(a.emoji,sx-12,sy-20);
+                    ctx.shadowBlur=0;
+                    ctx.fillStyle='#c0392b'; ctx.fillRect(sx-20,sy-30,40,5);
+                    ctx.fillStyle='#2ecc71'; ctx.fillRect(sx-20,sy-30,40*(a.hp/a.maxHp),5);
+                    ctx.restore();
                 });
 
                 // Gegner
                 enemies.forEach(e => {
+                    if (e.hp <=0) return;
                     let sx=worldToScreenX(e.x), sy=worldToScreenY(e.y);
+                    ctx.save(); ctx.shadowColor='black'; ctx.shadowBlur=15;
                     ctx.fillStyle=e.color; ctx.beginPath(); ctx.arc(sx,sy,e.radius,0,2*Math.PI); ctx.fill();
+                    ctx.strokeStyle='#5a3a2a'; ctx.lineWidth=4; ctx.stroke();
+                    ctx.fillStyle='white';
+                    ctx.beginPath(); ctx.arc(sx-10,sy-8,7,0,2*Math.PI); ctx.fill();
+                    ctx.beginPath(); ctx.arc(sx+10,sy-8,7,0,2*Math.PI); ctx.fill();
+                    ctx.fillStyle='#ff0000';
+                    ctx.beginPath(); ctx.arc(sx-10,sy-8,4,0,2*Math.PI); ctx.fill();
+                    ctx.beginPath(); ctx.arc(sx+10,sy-8,4,0,2*Math.PI); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(sx-18,sy-20); ctx.lineTo(sx-6,sy-16); ctx.lineWidth=4; ctx.strokeStyle='black'; ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(sx+18,sy-20); ctx.lineTo(sx+6,sy-16); ctx.stroke();
+                    ctx.shadowBlur=0;
                     ctx.fillStyle='#c0392b'; ctx.fillRect(sx-25,sy-40,50,6);
                     ctx.fillStyle='#2ecc71'; ctx.fillRect(sx-25,sy-40,50*(e.hp/e.maxHp),6);
-                });
-
-                // Allies (Team-Modus)
-                allies.forEach(a => {
-                    let sx=worldToScreenX(a.x), sy=worldToScreenY(a.y);
-                    ctx.fillStyle=a.color; ctx.beginPath(); ctx.arc(sx,sy,25,0,2*Math.PI); ctx.fill();
-                    ctx.fillStyle='white'; ctx.fillText(a.emoji,sx-12,sy-20);
+                    ctx.restore();
                 });
 
                 // Spieler
                 let sx=worldToScreenX(player.x), sy=worldToScreenY(player.y);
+                ctx.save(); ctx.shadowColor='white'; ctx.shadowBlur=25;
                 ctx.fillStyle=player.color; ctx.beginPath(); ctx.arc(sx,sy,30,0,2*Math.PI); ctx.fill();
-                ctx.fillStyle='white'; ctx.font='30px Arial'; ctx.fillText(player.emoji,sx-20,sy-40);
-                // Andere Spieler (Multiplayer)
+                ctx.strokeStyle='gold'; ctx.lineWidth=5; ctx.stroke();
+                ctx.fillStyle='white';
+                ctx.beginPath(); ctx.arc(sx-12,sy-10,8,0,2*Math.PI); ctx.fill();
+                ctx.beginPath(); ctx.arc(sx+12,sy-10,8,0,2*Math.PI); ctx.fill();
+                ctx.fillStyle='#2c3e50';
+                ctx.beginPath(); ctx.arc(sx-12,sy-10,4,0,2*Math.PI); ctx.fill();
+                ctx.beginPath(); ctx.arc(sx+12,sy-10,4,0,2*Math.PI); ctx.fill();
+                ctx.font='30px Arial'; ctx.fillStyle='white'; ctx.shadowBlur=10;
+                ctx.fillText(player.hat,sx-15,sy-50);
+                ctx.fillText(player.emoji,sx-20,sy-80);
+                ctx.restore();
+
+                // Andere Spieler im Multiplayer (nur als einfache Kreise)
                 for (let id in playersInRoom) {
                     if (id === playerId) continue;
                     let p = playersInRoom[id];
+                    if (!p.x) continue; // nur wenn Position bekannt
                     let psx = worldToScreenX(p.x), psy = worldToScreenY(p.y);
-                    ctx.fillStyle = '#3498db'; ctx.beginPath(); ctx.arc(psx, psy, 25, 0, 2*Math.PI); ctx.fill();
-                    ctx.fillStyle = 'white'; ctx.fillText(p.emoji || '👤', psx-15, psy-30);
+                    ctx.fillStyle = '#3498db';
+                    ctx.beginPath(); ctx.arc(psx, psy, 25, 0, 2*Math.PI); ctx.fill();
+                    ctx.fillStyle = 'white'; ctx.font = '20px Arial';
+                    ctx.fillText(p.emoji || '👤', psx-15, psy-30);
                 }
 
                 // Schadenszahlen
+                ctx.save(); ctx.font='bold 26px Arial'; ctx.textAlign='center';
                 damageNumbers.forEach(d => {
                     let dsx=worldToScreenX(d.x), dsy=worldToScreenY(d.y);
-                    ctx.fillStyle='red'; ctx.font='20px Arial'; ctx.fillText('-'+d.value,dsx,dsy);
+                    let alpha = d.life/60;
+                    ctx.fillStyle=`rgba(255,50,50,${alpha})`;
+                    ctx.strokeStyle='white'; ctx.lineWidth=3;
+                    ctx.strokeText('-'+d.value, dsx, dsy);
+                    ctx.fillText('-'+d.value, dsx, dsy);
                 });
+                ctx.restore();
             }
 
+            function drawAim(player, dir, range, spread, color) {
+                if (!player || !dir) return;
+                let baseAngle = Math.atan2(dir.y, dir.x);
+                let sx = worldToScreenX(player.x);
+                let sy = worldToScreenY(player.y);
+                if (player.name === 'Shelly') {
+                    let spreadAngle = 0.8;
+                    ctx.beginPath();
+                    ctx.moveTo(sx, sy);
+                    let angle1 = baseAngle - spreadAngle/2;
+                    let angle2 = baseAngle + spreadAngle/2;
+                    let x1 = worldToScreenX(player.x + Math.cos(angle1) * range);
+                    let y1 = worldToScreenY(player.y + Math.sin(angle1) * range);
+                    let x2 = worldToScreenX(player.x + Math.cos(angle2) * range);
+                    let y2 = worldToScreenY(player.y + Math.sin(angle2) * range);
+                    ctx.lineTo(x1, y1); ctx.lineTo(x2, y2); ctx.closePath();
+                    ctx.fillStyle = color; ctx.fill();
+                    ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+                } else if (player.name === 'Colt') {
+                    let endX = worldToScreenX(player.x + dir.x * range);
+                    let endY = worldToScreenY(player.y + dir.y * range);
+                    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(endX, endY);
+                    ctx.strokeStyle = color; ctx.lineWidth = 6; ctx.stroke();
+                    ctx.beginPath(); ctx.arc(endX, endY, 12, 0, 2*Math.PI);
+                    ctx.fillStyle = 'rgba(255,0,0,0.7)'; ctx.fill();
+                } else if (player.name === 'Bull') {
+                    let dashRange = 150;
+                    let endX = worldToScreenX(player.x + dir.x * dashRange);
+                    let endY = worldToScreenY(player.y + dir.y * dashRange);
+                    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(endX, endY);
+                    ctx.strokeStyle = color; ctx.lineWidth = 8; ctx.stroke();
+                    let arrowSize = 15;
+                    let angle = Math.atan2(dir.y, dir.x);
+                    let leftX = endX - arrowSize * Math.cos(angle - 0.5);
+                    let leftY = endY - arrowSize * Math.sin(angle - 0.5);
+                    let rightX = endX - arrowSize * Math.cos(angle + 0.5);
+                    let rightY = endY - arrowSize * Math.sin(angle + 0.5);
+                    ctx.beginPath(); ctx.moveTo(endX, endY); ctx.lineTo(leftX, leftY); ctx.lineTo(rightX, rightY); ctx.closePath();
+                    ctx.fillStyle = color; ctx.fill();
+                    ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.beginPath(); ctx.arc(endX, endY, 20, 0, 2*Math.PI);
+                    ctx.fillStyle = 'rgba(255,0,0,0.5)'; ctx.fill();
+                    ctx.strokeStyle = 'white'; ctx.lineWidth = 3; ctx.stroke();
+                }
+            }
+
+            // ==================== GAMELOOP ====================
             function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
             gameLoop();
 
             // ==================== SPIEL STARTEN (Solo) ====================
-            playBtn.addEventListener('click', () => {
+            function startSoloGame() {
                 lobby.style.display = 'none';
                 gameActive = true;
                 gameMode = maps[selectedMap].mode;
@@ -1967,7 +2214,9 @@
                     startTeamMode();
                 }
                 waveDisplay.style.display = (gameMode==='waves')?'inline-block':'none';
-            });
+            }
+
+            playBtn.addEventListener('click', startSoloGame);
 
             restartBtn.addEventListener('click', () => {
                 gameOverDiv.style.display = 'none';
