@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KILL STARS - Final Fix</title>
+    <title>KILL STARS - TRIPLE MODE</title>
     <style>
-        /* Hier kommt das gleiche CSS wie vorher – ich füge es der Vollständigkeit halber ein */
         * {
             box-sizing: border-box;
             user-select: none;
@@ -30,6 +29,7 @@
             background: #4caf7a;
             touch-action: none;
         }
+        /* Lobby */
         #lobby {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -81,8 +81,8 @@
             background: #3d5e4a;
             border: 3px solid gold;
             border-radius: 30px;
-            padding: 10px 20px;
-            font-size: min(20px, 4vw);
+            padding: 15px 25px;
+            font-size: min(24px, 5vw);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -99,6 +99,10 @@
         .map-btn:active {
             transform: translateY(5px);
             box-shadow: 0 0 0 #1a2e22;
+        }
+        .map-desc {
+            font-size: min(14px, 3vw);
+            color: #ccc;
         }
         .brawler-showcase {
             display: flex;
@@ -312,6 +316,7 @@
             margin: 30px;
             cursor: pointer;
         }
+        /* HUD */
         #hud {
             position: absolute;
             top: 15px; left: 15px; right: 15px;
@@ -361,6 +366,14 @@
             height: 100%;
             width: 100%;
             background: #2ecc71;
+        }
+        #powerCubesHUD {
+            background: #b8860b;
+            padding: 8px 20px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
         .joystick {
             position: absolute;
@@ -454,6 +467,14 @@
             font-weight: bold;
             touch-action: manipulation;
         }
+        .victory-screen {
+            background: gold;
+            color: black;
+            font-size: 60px;
+            padding: 30px;
+            border-radius: 60px;
+            margin: 30px;
+        }
         @media (orientation: portrait) {
             #hud {
                 flex-direction: column;
@@ -463,7 +484,7 @@
     </style>
 </head>
 <body>
-    <!-- Lobby (unverändert) -->
+    <!-- Lobby -->
     <div id="lobby">
         <h1>KILL STARS</h1>
         <div class="stats-container">
@@ -472,9 +493,18 @@
             <div class="stat-box"><span>🌊</span> <span id="maxWaveDisplay">1</span></div>
         </div>
         <div class="map-selector">
-            <div class="map-btn" data-map="grass" id="mapGrass">🌿 Grün</div>
-            <div class="map-btn" data-map="desert" id="mapDesert">🏜️ Wüste</div>
-            <div class="map-btn" data-map="ice" id="mapIce">❄️ Eis</div>
+            <div class="map-btn" data-map="grass" id="mapGrass">
+                <span>🌿 GRÜN</span>
+                <span class="map-desc">Wellen-Modus</span>
+            </div>
+            <div class="map-btn" data-map="desert" id="mapDesert">
+                <span>🏜️ WÜSTE</span>
+                <span class="map-desc">Showdown (Power-Cubes)</span>
+            </div>
+            <div class="map-btn" data-map="ice" id="mapIce">
+                <span>❄️ EIS</span>
+                <span class="map-desc">3vs3 Knockout</span>
+            </div>
         </div>
         <div class="brawler-showcase">
             <div class="arrow" id="prevBrawler">◀</div>
@@ -506,7 +536,7 @@
     </div>
 
     <div id="gameOver">
-        <div>💀 GAME OVER 💀</div>
+        <div id="gameOverMessage">💀 GAME OVER 💀</div>
         <div id="finalScore"></div>
         <button id="restartBtn">NEU STARTEN</button>
     </div>
@@ -519,6 +549,7 @@
             <div id="hpFill"><div id="hpCurrent"></div></div>
         </div>
         <div id="score">🏆 0</div>
+        <div id="powerCubesHUD" style="display: none;">📦 <span id="powerCubesCount">0</span></div>
     </div>
     <div id="leftJoystick" class="joystick"><div class="joystickKnob" id="leftKnob"></div></div>
     <div id="rightJoystick" class="joystick"><div class="joystickKnob" id="rightKnob"></div></div>
@@ -557,16 +588,19 @@
             const mapDesert = document.getElementById('mapDesert');
             const mapIce = document.getElementById('mapIce');
 
-            // GameOver
-            const gameOverDiv = document.getElementById('gameOver');
-            const finalScoreSpan = document.getElementById('finalScore');
-            const restartBtn = document.getElementById('restartBtn');
-
-            // HUD
+            // HUD-Elemente
             const waveDisplay = document.getElementById('wave');
             const scoreDisplay = document.getElementById('score');
             const hpCurrent = document.getElementById('hpCurrent');
             const specialBtn = document.getElementById('specialButton');
+            const powerCubesHUD = document.getElementById('powerCubesHUD');
+            const powerCubesCount = document.getElementById('powerCubesCount');
+
+            // GameOver
+            const gameOverDiv = document.getElementById('gameOver');
+            const gameOverMessage = document.getElementById('gameOverMessage');
+            const finalScoreSpan = document.getElementById('finalScore');
+            const restartBtn = document.getElementById('restartBtn');
 
             // Joysticks
             const leftJoystick = document.getElementById('leftJoystick');
@@ -575,11 +609,11 @@
             const rightKnob = document.getElementById('rightKnob');
 
             // ==================== DATEN ====================
-            const maps = [
-                { id: 'grass', name: 'Grün', bgColor: '#4caf7a', patternColor: '#3d8c5c', lightColor: '#6fb56f' },
-                { id: 'desert', name: 'Wüste', bgColor: '#c99b6b', patternColor: '#a87b4f', lightColor: '#dab07f' },
-                { id: 'ice', name: 'Eis', bgColor: '#a8d0e6', patternColor: '#7fa9c4', lightColor: '#c0e0ff' }
-            ];
+            const maps = {
+                grass: { id: 'grass', name: 'Grün', bgColor: '#4caf7a', patternColor: '#3d8c5c', lightColor: '#6fb56f', mode: 'waves' },
+                desert: { id: 'desert', name: 'Wüste', bgColor: '#c99b6b', patternColor: '#a87b4f', lightColor: '#dab07f', mode: 'showdown' },
+                ice: { id: 'ice', name: 'Eis', bgColor: '#a8d0e6', patternColor: '#7fa9c4', lightColor: '#c0e0ff', mode: 'team' }
+            };
             let selectedMap = 'grass';
 
             const skinData = {
@@ -707,7 +741,6 @@
                 skinNameSpan.textContent = skin.name;
             }
 
-            // Brawler wechseln
             prevBrawlerBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 selectedBrawlerIndex = (selectedBrawlerIndex - 1 + brawlersList.length) % brawlersList.length;
@@ -730,7 +763,6 @@
                 updateBrawlerDisplay();
             });
 
-            // Skin wechseln
             function cycleSkin(direction) {
                 const b = brawlersList[selectedBrawlerIndex];
                 const owned = ownedSkins[b.name];
@@ -845,10 +877,13 @@
 
             // ==================== SPIELVARIABLEN ====================
             let gameActive = false;
+            let gameMode = 'waves'; // waves, showdown, team
             let player = null;
             let enemies = [];
+            let allies = []; // für Team-Modus
             let projectiles = [];
             let coins = [];
+            let powerCubes = [];
             let damageNumbers = [];
             let effects = [];
             let lastShot = 0;
@@ -860,6 +895,12 @@
             let enemiesThisWave = 0;
             let enemiesSpawned = 0;
             const BASE_ENEMIES = 3;
+            let showdownRemainingEnemies = 0; // für Showdown: Anzahl Gegner zu Beginn
+            let showdownFinalMode = false; // 1vs1
+            let teamPlayerTeam = []; // Team-Mitglieder (inkl. Spieler)
+            let teamEnemyTeam = []; // Gegner-Team
+            let teamRounds = 3; // Best of 3? Eigentlich Knockout: jedes Team hat 3 Leben?
+            // Für Knockout: jedes Teammitglied hat eigenes Leben, Team verliert wenn alle tot.
 
             // Joystick-Zustände
             let leftStick = { active: false, id: null, dir: { x: 0, y: 0 } };
@@ -872,12 +913,13 @@
             let specialTap = false;
             let specialTouchId = null;
 
-            // ==================== SPIEL STARTEN (mit Positions-Setzung) ====================
+            // ==================== SPIEL STARTEN (modusabhängig) ====================
             function startGame() {
                 const b = brawlersList[selectedBrawlerIndex];
                 const skinIndex = selectedSkinIndices[b.name];
                 const skin = skinData[b.name][skinIndex];
                 
+                // Basis-Spieler-Objekt
                 player = {
                     name: b.name,
                     baseHp: b.baseHp,
@@ -898,24 +940,42 @@
                     color: skin.color,
                     emoji: skin.emoji,
                     hat: skin.hat,
-                    // WICHTIG: Startposition setzen!
                     x: canvas.width / 2,
-                    y: canvas.height / 2
+                    y: canvas.height / 2,
+                    powerCubes: 0 // für Showdown
                 };
                 
                 gameActive = true;
+                gameMode = maps[selectedMap].mode;
                 wave = 1;
                 score = 0;
                 specialCharge = 0;
                 specialReady = false;
                 specialBtn.classList.remove('ready');
                 enemies = [];
+                allies = [];
                 projectiles = [];
                 coins = [];
+                powerCubes = [];
                 effects = [];
                 damageNumbers = [];
-                updateUI();
-                startWave();
+                
+                // HUD anpassen
+                waveDisplay.style.display = (gameMode === 'waves') ? 'inline-block' : 'none';
+                powerCubesHUD.style.display = (gameMode === 'showdown') ? 'flex' : 'none';
+                if (gameMode === 'waves') waveDisplay.innerHTML = `🌊 Welle 1`;
+                if (gameMode === 'showdown') {
+                    powerCubesCount.textContent = '0';
+                    showdownRemainingEnemies = 5; // 5 Gegner zu Beginn
+                    showdownFinalMode = false;
+                    spawnShowdownEnemies();
+                    spawnPowerCubes(3); // 3 Power-Cubes auf der Map
+                } else if (gameMode === 'team') {
+                    startTeamMode();
+                } else {
+                    startWave();
+                }
+                
                 gameOverDiv.style.display = 'none';
                 lobby.style.display = 'none';
             }
@@ -926,7 +986,7 @@
                 startGame();
             });
 
-            // ==================== WELLEN ====================
+            // ==================== WELLEN-MODUS (wie bisher) ====================
             function startWave() {
                 enemiesThisWave = BASE_ENEMIES + wave * 2;
                 enemiesSpawned = 0;
@@ -935,7 +995,7 @@
             }
 
             function spawnEnemies() {
-                if (!gameActive) return;
+                if (!gameActive || gameMode !== 'waves') return;
                 if (enemiesSpawned < enemiesThisWave) {
                     let angle = Math.random() * 2 * Math.PI;
                     let distance = Math.max(canvas.width, canvas.height) * 0.5;
@@ -955,14 +1015,216 @@
                         radius: 25,
                         color: '#c13b3b',
                         eyeColor: '#ff0000',
-                        lastDamageTime: 0
+                        lastDamageTime: 0,
+                        type: 'normal'
                     });
                     enemiesSpawned++;
                     setTimeout(spawnEnemies, 700);
                 }
             }
 
-            // ==================== JOYSTICK-TOUCH (Multi-Touch) ====================
+            // ==================== SHOWDOWN-MODUS ====================
+            function spawnShowdownEnemies() {
+                if (!gameActive || gameMode !== 'showdown') return;
+                let count = showdownFinalMode ? 1 : showdownRemainingEnemies;
+                for (let i = 0; i < count; i++) {
+                    let angle = Math.random() * 2 * Math.PI;
+                    let distance = Math.max(canvas.width, canvas.height) * 0.4;
+                    let x = player.x + Math.cos(angle) * distance;
+                    let y = player.y + Math.sin(angle) * distance;
+                    x = Math.min(canvas.width - 50, Math.max(50, x));
+                    y = Math.min(canvas.height - 50, Math.max(50, y));
+                    
+                    enemies.push({
+                        x, y,
+                        hp: 80 + wave * 10,
+                        maxHp: 80 + wave * 10,
+                        speed: 1.5 + wave * 0.1,
+                        damage: 8 + wave,
+                        radius: 25,
+                        color: '#c13b3b',
+                        eyeColor: '#ff0000',
+                        lastDamageTime: 0,
+                        type: 'showdown',
+                        powerCubes: 0 // Gegner können auch Cubes haben?
+                    });
+                }
+            }
+
+            function spawnPowerCubes(count) {
+                for (let i = 0; i < count; i++) {
+                    let x = 100 + Math.random() * (canvas.width - 200);
+                    let y = 100 + Math.random() * (canvas.height - 200);
+                    powerCubes.push({
+                        x, y,
+                        radius: 15,
+                        color: '#b8860b'
+                    });
+                }
+            }
+
+            // Power-Cube einsammeln
+            function collectPowerCube(index) {
+                const cube = powerCubes[index];
+                if (!cube) return;
+                player.powerCubes = (player.powerCubes || 0) + 1;
+                player.maxHp += 10;
+                player.hp = Math.min(player.hp + 10, player.maxHp);
+                player.attackDamage += 2;
+                player.specialDamage += 4;
+                powerCubes.splice(index, 1);
+                powerCubesCount.textContent = player.powerCubes;
+                addEffect(cube.x, cube.y);
+            }
+
+            // ==================== TEAM-MODUS (3vs3 Knockout) ====================
+            function startTeamMode() {
+                // Spieler ist im Team A
+                allies = [];
+                enemies = [];
+                // Team A: Spieler + 2 KI
+                for (let i = 0; i < 2; i++) {
+                    allies.push(createTeamBot(true));
+                }
+                // Team B: 3 KI
+                for (let i = 0; i < 3; i++) {
+                    enemies.push(createTeamBot(false));
+                }
+                // Positionen verteilen
+                positionTeamMembers();
+            }
+
+            function createTeamBot(isAlly) {
+                // Zufälligen Brawler-Typ wählen (einfachheitshalber Shelly-ähnlich)
+                return {
+                    name: 'Bot',
+                    hp: 100,
+                    maxHp: 100,
+                    speed: 2.5,
+                    attackDamage: 15,
+                    attackSpeed: 8,
+                    attackRange: 300,
+                    attackSpread: 3,
+                    attackCooldown: 400,
+                    specialDamage: 30,
+                    specialSpeed: 10,
+                    specialRange: 400,
+                    specialSpread: 5,
+                    specialType: 'shotgun',
+                    color: isAlly ? '#2ecc71' : '#e74c3c',
+                    emoji: isAlly ? '🛡️' : '👾',
+                    hat: '',
+                    x: 0, y: 0,
+                    lastShot: 0,
+                    lastDamageTime: 0,
+                    isAlly: isAlly
+                };
+            }
+
+            function positionTeamMembers() {
+                // Team A (links)
+                let startX = 150;
+                let startY = canvas.height / 2;
+                player.x = startX;
+                player.y = startY - 50;
+                if (allies[0]) { allies[0].x = startX + 50; allies[0].y = startY + 50; }
+                if (allies[1]) { allies[1].x = startX + 100; allies[1].y = startY - 30; }
+                // Team B (rechts)
+                startX = canvas.width - 150;
+                enemies.forEach((e, i) => {
+                    e.x = startX - i * 60;
+                    e.y = startY + (i - 1) * 50;
+                });
+            }
+
+            // Team-KI: einfache Verhalten
+            function updateTeamBots() {
+                // Allies folgen dem Spieler? Oder einfach auf Gegner zulaufen
+                allies.forEach(bot => {
+                    if (bot.hp <= 0) return;
+                    // Finde nächsten Gegner
+                    let target = null;
+                    let minDist = Infinity;
+                    enemies.forEach(e => {
+                        if (e.hp <= 0) return;
+                        let d = Math.hypot(e.x - bot.x, e.y - bot.y);
+                        if (d < minDist) {
+                            minDist = d;
+                            target = e;
+                        }
+                    });
+                    if (target) {
+                        // Bewege auf Ziel zu
+                        let dx = target.x - bot.x;
+                        let dy = target.y - bot.y;
+                        let len = Math.hypot(dx, dy);
+                        if (len > 0) {
+                            bot.x += (dx / len) * bot.speed;
+                            bot.y += (dy / len) * bot.speed;
+                        }
+                        // Schießen (einfach)
+                        let now = Date.now();
+                        if (now - bot.lastShot > bot.attackCooldown) {
+                            bot.lastShot = now;
+                            let dir = { x: dx / len, y: dy / len };
+                            let angle = Math.atan2(dir.y, dir.x);
+                            projectiles.push({
+                                x: bot.x, y: bot.y,
+                                vx: Math.cos(angle) * bot.attackSpeed,
+                                vy: Math.sin(angle) * bot.attackSpeed,
+                                damage: bot.attackDamage,
+                                range: 400,
+                                owner: 'ally',
+                                size: 6,
+                                color: '#00ff00'
+                            });
+                        }
+                    }
+                });
+
+                // Gegner-Bots (Team B) verhalten sich ähnlich, greifen Allies an
+                enemies.forEach(bot => {
+                    if (bot.hp <= 0) return;
+                    // Finde Allies (Spieler + Allies)
+                    let targets = [player, ...allies].filter(t => t.hp > 0);
+                    let target = null;
+                    let minDist = Infinity;
+                    targets.forEach(t => {
+                        let d = Math.hypot(t.x - bot.x, t.y - bot.y);
+                        if (d < minDist) {
+                            minDist = d;
+                            target = t;
+                        }
+                    });
+                    if (target) {
+                        let dx = target.x - bot.x;
+                        let dy = target.y - bot.y;
+                        let len = Math.hypot(dx, dy);
+                        if (len > 0) {
+                            bot.x += (dx / len) * bot.speed;
+                            bot.y += (dy / len) * bot.speed;
+                        }
+                        let now = Date.now();
+                        if (now - bot.lastShot > bot.attackCooldown) {
+                            bot.lastShot = now;
+                            let dir = { x: dx / len, y: dy / len };
+                            let angle = Math.atan2(dir.y, dir.x);
+                            projectiles.push({
+                                x: bot.x, y: bot.y,
+                                vx: Math.cos(angle) * bot.attackSpeed,
+                                vy: Math.sin(angle) * bot.attackSpeed,
+                                damage: bot.attackDamage,
+                                range: 400,
+                                owner: 'enemy',
+                                size: 6,
+                                color: '#ff0000'
+                            });
+                        }
+                    }
+                });
+            }
+
+            // ==================== JOYSTICK-TOUCH (identisch) ====================
             function handleTouchStart(e, isRight) {
                 e.preventDefault();
                 const touches = e.changedTouches;
@@ -1133,16 +1395,18 @@
                 specialDir = { x: 0, y: 0 };
             });
 
-            // ==================== SPEZIAL AUSFÜHREN ====================
+            // ==================== SPEZIAL AUSFÜHREN (unverändert) ====================
             function useSpecialAuto() {
                 if (!specialReady || !player || !gameActive) return;
                 let closest = null;
                 let minDist = Infinity;
                 enemies.forEach(e => {
-                    let d = Math.hypot(e.x - player.x, e.y - player.y);
-                    if (d < minDist) {
-                        minDist = d;
-                        closest = e;
+                    if (e.hp > 0) {
+                        let d = Math.hypot(e.x - player.x, e.y - player.y);
+                        if (d < minDist) {
+                            minDist = d;
+                            closest = e;
+                        }
                     }
                 });
                 if (closest) {
@@ -1170,7 +1434,10 @@
                     player.x = Math.min(canvas.width - 40, Math.max(40, targetX));
                     player.y = Math.min(canvas.height - 40, Math.max(40, targetY));
                     
-                    enemies.forEach(e => {
+                    let targets = enemies;
+                    if (gameMode === 'team') targets = enemies; // Gegner sind enemies
+                    targets.forEach(e => {
+                        if (e.hp <= 0) return;
                         let d = Math.hypot(player.x - e.x, player.y - e.y);
                         if (d < 70) {
                             e.hp -= player.specialDamage;
@@ -1235,11 +1502,14 @@
                 if (!player || !gameActive) return;
                 let closest = null;
                 let minDist = Infinity;
-                enemies.forEach(e => {
-                    let d = Math.hypot(e.x - player.x, e.y - player.y);
-                    if (d < minDist) {
-                        minDist = d;
-                        closest = e;
+                let targets = (gameMode === 'team') ? enemies : enemies; // Im Team-Modus auf Gegner schießen
+                targets.forEach(e => {
+                    if (e.hp > 0) {
+                        let d = Math.hypot(e.x - player.x, e.y - player.y);
+                        if (d < minDist) {
+                            minDist = d;
+                            closest = e;
+                        }
                     }
                 });
                 if (closest) {
@@ -1303,7 +1573,13 @@
 
             function updateUI() {
                 if (!player) return;
-                waveDisplay.innerHTML = `🌊 Welle ${wave}`;
+                if (gameMode === 'waves') waveDisplay.innerHTML = `🌊 Welle ${wave}`;
+                if (gameMode === 'showdown') {
+                    // Keine Wellenanzeige
+                }
+                if (gameMode === 'team') {
+                    // Zeige Anzahl verbleibender Teammitglieder?
+                }
                 scoreDisplay.innerHTML = `🏆 ${score}`;
                 let percent = (player.hp / player.maxHp) * 100;
                 hpCurrent.style.width = percent + '%';
@@ -1326,108 +1602,46 @@
                     player.y = Math.min(canvas.height - 40, Math.max(40, player.y));
                 }
 
-                // Gegner bewegen
-                enemies.forEach(e => {
-                    let dx = player.x - e.x;
-                    let dy = player.y - e.y;
-                    let len = Math.hypot(dx, dy);
-                    if (len > 0) {
-                        e.vx = (dx / len) * e.speed;
-                        e.vy = (dy / len) * e.speed;
-                    }
-                    e.x += e.vx;
-                    e.y += e.vy;
-                    e.x = Math.min(canvas.width - 30, Math.max(30, e.x));
-                    e.y = Math.min(canvas.height - 30, Math.max(30, e.y));
-                });
+                // Modus-spezifisches Update
+                if (gameMode === 'waves') {
+                    updateWaves();
+                } else if (gameMode === 'showdown') {
+                    updateShowdown();
+                } else if (gameMode === 'team') {
+                    updateTeam();
+                }
 
-                // Projektile
-                for (let i = projectiles.length - 1; i >= 0; i--) {
-                    let p = projectiles[i];
-                    p.x += p.vx;
-                    p.y += p.vy;
-                    if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
-                        projectiles.splice(i, 1);
-                        continue;
-                    }
-                    let dist = Math.hypot(p.x - player.x, p.y - player.y);
-                    if (dist > p.range) {
-                        projectiles.splice(i, 1);
-                        continue;
-                    }
-                    if (p.owner === 'player') {
-                        for (let j = enemies.length - 1; j >= 0; j--) {
-                            let e = enemies[j];
-                            let d = Math.hypot(p.x - e.x, p.y - e.y);
-                            if (d < e.radius + 5) {
-                                e.hp -= p.damage;
-                                addDamageNumber(e.x, e.y, p.damage);
-                                addEffect(p.x, p.y);
-                                specialCharge += 10;
-                                if (specialCharge > MAX_SPECIAL) specialCharge = MAX_SPECIAL;
-                                projectiles.splice(i, 1);
-                                if (e.hp <= 0) {
-                                    score += 100;
-                                    specialCharge += 20;
-                                    if (specialCharge > MAX_SPECIAL) specialCharge = MAX_SPECIAL;
-                                    addCoin(e.x, e.y);
-                                    enemies.splice(j, 1);
-                                }
-                                break;
-                            }
+                // Projektile (für alle Modi gleich)
+                updateProjectiles();
+
+                // Münzen einsammeln (für Wellen-Modus)
+                if (gameMode === 'waves') {
+                    for (let i = coins.length - 1; i >= 0; i--) {
+                        let c = coins[i];
+                        let d = Math.hypot(player.x - c.x, player.y - c.y);
+                        if (d < 40 + 15) {
+                            score += c.value;
+                            totalCoins += c.value;
+                            addEffect(c.x, c.y);
+                            coins.splice(i, 1);
+                            saveStats();
+                            updateLobbyStats();
                         }
                     }
                 }
 
-                // Gegner-Schaden
-                const now = Date.now();
-                for (let i = 0; i < enemies.length; i++) {
-                    let e = enemies[i];
-                    let d = Math.hypot(player.x - e.x, player.y - e.y);
-                    if (d < 35 + e.radius) {
-                        if (now - e.lastDamageTime > 500) {
-                            player.hp -= e.damage;
-                            addDamageNumber(player.x, player.y, e.damage);
-                            addEffect(player.x, player.y);
-                            e.lastDamageTime = now;
-                            if (player.hp <= 0) {
-                                gameActive = false;
-                                if (score > highScore) {
-                                    highScore = score;
-                                }
-                                if (wave > maxWave) {
-                                    maxWave = wave;
-                                }
-                                saveStats();
-                                gameOverDiv.style.display = 'flex';
-                                finalScoreSpan.innerText = 'Punkte: ' + score;
-                                return;
-                            }
+                // Power-Cubes einsammeln (Showdown)
+                if (gameMode === 'showdown') {
+                    for (let i = powerCubes.length - 1; i >= 0; i--) {
+                        let c = powerCubes[i];
+                        let d = Math.hypot(player.x - c.x, player.y - c.y);
+                        if (d < 40 + 15) {
+                            collectPowerCube(i);
                         }
                     }
                 }
 
-                // Münzen
-                for (let i = coins.length - 1; i >= 0; i--) {
-                    let c = coins[i];
-                    let d = Math.hypot(player.x - c.x, player.y - c.y);
-                    if (d < 40 + 15) {
-                        score += c.value;
-                        totalCoins += c.value;
-                        addEffect(c.x, c.y);
-                        coins.splice(i, 1);
-                        saveStats();
-                        updateLobbyStats();
-                    }
-                }
-
-                // Nächste Welle
-                if (enemies.length === 0 && enemiesSpawned >= enemiesThisWave) {
-                    wave++;
-                    startWave();
-                }
-
-                // Lebensdauer
+                // Lebensdauer von Effekten
                 for (let i = effects.length - 1; i >= 0; i--) {
                     effects[i].life--;
                     if (effects[i].life <= 0) effects.splice(i, 1);
@@ -1444,12 +1658,234 @@
                 updateUI();
             }
 
+            function updateProjectiles() {
+                for (let i = projectiles.length - 1; i >= 0; i--) {
+                    let p = projectiles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
+                        projectiles.splice(i, 1);
+                        continue;
+                    }
+                    let dist = Math.hypot(p.x - player.x, p.y - player.y);
+                    if (dist > p.range) {
+                        projectiles.splice(i, 1);
+                        continue;
+                    }
+                    // Kollision mit Gegnern oder Allies
+                    if (p.owner === 'player' || p.owner === 'ally') {
+                        // Trifft Gegner (enemies)
+                        for (let j = enemies.length - 1; j >= 0; j--) {
+                            let e = enemies[j];
+                            if (e.hp <= 0) continue;
+                            let d = Math.hypot(p.x - e.x, p.y - e.y);
+                            if (d < e.radius + 5) {
+                                e.hp -= p.damage;
+                                addDamageNumber(e.x, e.y, p.damage);
+                                addEffect(p.x, p.y);
+                                if (p.owner === 'player') {
+                                    specialCharge += 10;
+                                    if (specialCharge > MAX_SPECIAL) specialCharge = MAX_SPECIAL;
+                                }
+                                projectiles.splice(i, 1);
+                                if (e.hp <= 0) {
+                                    if (p.owner === 'player') {
+                                        score += 100;
+                                        specialCharge += 20;
+                                        if (gameMode === 'waves') addCoin(e.x, e.y);
+                                        if (gameMode === 'showdown') {
+                                            // Im Showdown spawnen keine Münzen, aber vielleicht Punkte
+                                            totalCoins += 50;
+                                            saveStats();
+                                            updateLobbyStats();
+                                        }
+                                    }
+                                    enemies.splice(j, 1);
+                                }
+                                break;
+                            }
+                        }
+                    } else if (p.owner === 'enemy') {
+                        // Trifft Spieler oder Allies
+                        // Spieler
+                        let d = Math.hypot(p.x - player.x, p.y - player.y);
+                        if (d < 35) {
+                            player.hp -= p.damage;
+                            addDamageNumber(player.x, player.y, p.damage);
+                            addEffect(p.x, p.y);
+                            projectiles.splice(i, 1);
+                            if (player.hp <= 0) {
+                                gameActive = false;
+                                if (score > highScore) highScore = score;
+                                if (wave > maxWave) maxWave = wave;
+                                saveStats();
+                                gameOverMessage.innerHTML = (gameMode === 'team') ? '🏆 TEAM VERLOREN 🏆' : '💀 GAME OVER 💀';
+                                gameOverDiv.style.display = 'flex';
+                                finalScoreSpan.innerText = 'Punkte: ' + score;
+                                return;
+                            }
+                        } else {
+                            // Allies
+                            for (let j = allies.length - 1; j >= 0; j--) {
+                                let a = allies[j];
+                                if (a.hp <= 0) continue;
+                                let d2 = Math.hypot(p.x - a.x, p.y - a.y);
+                                if (d2 < 30) {
+                                    a.hp -= p.damage;
+                                    addDamageNumber(a.x, a.y, p.damage);
+                                    addEffect(p.x, p.y);
+                                    projectiles.splice(i, 1);
+                                    if (a.hp <= 0) {
+                                        allies.splice(j, 1);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            function updateWaves() {
+                // Gegner bewegen (Standard)
+                enemies.forEach(e => {
+                    if (e.hp <= 0) return;
+                    let dx = player.x - e.x;
+                    let dy = player.y - e.y;
+                    let len = Math.hypot(dx, dy);
+                    if (len > 0) {
+                        e.vx = (dx / len) * e.speed;
+                        e.vy = (dy / len) * e.speed;
+                    }
+                    e.x += e.vx;
+                    e.y += e.vy;
+                    e.x = Math.min(canvas.width - 30, Math.max(30, e.x));
+                    e.y = Math.min(canvas.height - 30, Math.max(30, e.y));
+                });
+
+                // Gegner-Schaden am Spieler
+                const now = Date.now();
+                for (let i = 0; i < enemies.length; i++) {
+                    let e = enemies[i];
+                    let d = Math.hypot(player.x - e.x, player.y - e.y);
+                    if (d < 35 + e.radius) {
+                        if (now - e.lastDamageTime > 500) {
+                            player.hp -= e.damage;
+                            addDamageNumber(player.x, player.y, e.damage);
+                            addEffect(player.x, player.y);
+                            e.lastDamageTime = now;
+                            if (player.hp <= 0) {
+                                gameActive = false;
+                                if (score > highScore) highScore = score;
+                                if (wave > maxWave) maxWave = wave;
+                                saveStats();
+                                gameOverDiv.style.display = 'flex';
+                                finalScoreSpan.innerText = 'Punkte: ' + score;
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                // Nächste Welle
+                if (enemies.length === 0 && enemiesSpawned >= enemiesThisWave) {
+                    wave++;
+                    startWave();
+                }
+            }
+
+            function updateShowdown() {
+                // Gegner bewegen
+                enemies.forEach(e => {
+                    if (e.hp <= 0) return;
+                    let dx = player.x - e.x;
+                    let dy = player.y - e.y;
+                    let len = Math.hypot(dx, dy);
+                    if (len > 0) {
+                        e.vx = (dx / len) * e.speed;
+                        e.vy = (dy / len) * e.speed;
+                    }
+                    e.x += e.vx;
+                    e.y += e.vy;
+                    e.x = Math.min(canvas.width - 30, Math.max(30, e.x));
+                    e.y = Math.min(canvas.height - 30, Math.max(30, e.y));
+                });
+
+                // Gegner-Schaden
+                const now = Date.now();
+                for (let i = 0; i < enemies.length; i++) {
+                    let e = enemies[i];
+                    let d = Math.hypot(player.x - e.x, player.y - e.y);
+                    if (d < 35 + e.radius) {
+                        if (now - e.lastDamageTime > 500) {
+                            player.hp -= e.damage;
+                            addDamageNumber(player.x, player.y, e.damage);
+                            addEffect(player.x, player.y);
+                            e.lastDamageTime = now;
+                            if (player.hp <= 0) {
+                                gameActive = false;
+                                if (score > highScore) highScore = score;
+                                saveStats();
+                                gameOverDiv.style.display = 'flex';
+                                finalScoreSpan.innerText = 'Punkte: ' + score;
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                // Wenn alle Gegner tot, Showdown gewonnen
+                if (enemies.length === 0) {
+                    if (showdownFinalMode) {
+                        // 1vs1 gewonnen
+                        gameActive = false;
+                        gameOverMessage.innerHTML = '🏆 SHOWDOWN SIEG 🏆';
+                        gameOverDiv.style.display = 'flex';
+                        finalScoreSpan.innerText = 'Punkte: ' + score;
+                        totalCoins += 500;
+                        saveStats();
+                        updateLobbyStats();
+                    } else {
+                        // Nächste Phase: 1vs1
+                        showdownFinalMode = true;
+                        showdownRemainingEnemies = 1;
+                        spawnShowdownEnemies();
+                    }
+                }
+            }
+
+            function updateTeam() {
+                // Bot-KI
+                updateTeamBots();
+
+                // Spieler-Gegner Kollision? (optional)
+
+                // Prüfe, ob Team A (Spieler + Allies) besiegt
+                if (player.hp <= 0 && allies.length === 0) {
+                    gameActive = false;
+                    gameOverMessage.innerHTML = '🏆 TEAM VERLOREN 🏆';
+                    gameOverDiv.style.display = 'flex';
+                    finalScoreSpan.innerText = 'Punkte: ' + score;
+                    return;
+                }
+                // Prüfe, ob Team B (enemies) besiegt
+                if (enemies.length === 0) {
+                    gameActive = false;
+                    gameOverMessage.innerHTML = '🏆 TEAM SIEG 🏆';
+                    gameOverDiv.style.display = 'flex';
+                    finalScoreSpan.innerText = 'Punkte: ' + score;
+                    totalCoins += 1000;
+                    saveStats();
+                    updateLobbyStats();
+                }
+            }
+
             // ==================== ZEICHNEN ====================
             function draw() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
                 // Map zeichnen
-                const map = maps.find(m => m.id === selectedMap);
+                const map = maps[selectedMap];
                 ctx.fillStyle = map.bgColor;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = map.lightColor;
@@ -1485,13 +1921,19 @@
                     drawAim(player, specialDir, player.specialRange, player.specialSpread, 'rgba(255,100,0,0.7)');
                 }
 
-                // Effekte
-                effects.forEach(e => {
-                    let progress = e.life / e.maxLife;
+                // Power-Cubes
+                powerCubes.forEach(c => {
+                    ctx.save();
+                    ctx.shadowColor = 'orange';
+                    ctx.shadowBlur = 20;
+                    ctx.fillStyle = c.color;
                     ctx.beginPath();
-                    ctx.arc(e.x, e.y, 30 * (1 - progress), 0, 2*Math.PI);
-                    ctx.fillStyle = `rgba(255, 150, 0, ${progress})`;
+                    ctx.arc(c.x, c.y, c.radius, 0, 2*Math.PI);
                     ctx.fill();
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '20px Arial';
+                    ctx.fillText('📦', c.x-12, c.y+8);
+                    ctx.restore();
                 });
 
                 // Münzen
@@ -1509,6 +1951,15 @@
                     ctx.restore();
                 });
 
+                // Effekte
+                effects.forEach(e => {
+                    let progress = e.life / e.maxLife;
+                    ctx.beginPath();
+                    ctx.arc(e.x, e.y, 30 * (1 - progress), 0, 2*Math.PI);
+                    ctx.fillStyle = `rgba(255, 150, 0, ${progress})`;
+                    ctx.fill();
+                });
+
                 // Projektile
                 projectiles.forEach(p => {
                     ctx.save();
@@ -1521,8 +1972,34 @@
                     ctx.restore();
                 });
 
+                // Allies (Team-Modus)
+                allies.forEach(a => {
+                    if (a.hp <= 0) return;
+                    ctx.save();
+                    ctx.shadowColor = 'green';
+                    ctx.shadowBlur = 15;
+                    ctx.fillStyle = a.color;
+                    ctx.beginPath();
+                    ctx.arc(a.x, a.y, 25, 0, 2*Math.PI);
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    ctx.fillStyle = 'white';
+                    ctx.font = '20px Arial';
+                    ctx.fillText(a.emoji, a.x-12, a.y-20);
+                    // Lebensbalken
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#c0392b';
+                    ctx.fillRect(a.x-20, a.y-30, 40, 5);
+                    ctx.fillStyle = '#2ecc71';
+                    ctx.fillRect(a.x-20, a.y-30, 40 * (a.hp/a.maxHp), 5);
+                    ctx.restore();
+                });
+
                 // Gegner
                 enemies.forEach(e => {
+                    if (e.hp <= 0) return;
                     ctx.save();
                     ctx.shadowColor = 'black';
                     ctx.shadowBlur = 15;
@@ -1601,6 +2078,13 @@
                 ctx.fillText(player.hat, player.x-15, player.y-50);
                 ctx.fillText(player.emoji, player.x-20, player.y-80);
                 ctx.restore();
+
+                // Power-Cube Anzeige am Spieler (falls Showdown)
+                if (gameMode === 'showdown' && player.powerCubes > 0) {
+                    ctx.fillStyle = '#b8860b';
+                    ctx.font = 'bold 20px Arial';
+                    ctx.fillText(`📦 ${player.powerCubes}`, player.x-20, player.y-100);
+                }
 
                 // Schadenszahlen
                 ctx.save();
@@ -1719,9 +2203,7 @@
             window.addEventListener('resize', resizeCanvas);
             resizeCanvas();
 
-            // Initiale Lobby anzeigen
-            updateBrowlerDisplay(); // Korrektur: updateBrawlerDisplay (war falsch geschrieben)
-            updateBrawlerDisplay(); // Korrekte Funktion
+            updateBrawlerDisplay();
         })();
     </script>
 </body>
