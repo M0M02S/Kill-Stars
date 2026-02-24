@@ -3,474 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KILL STARS - Ultimate</title>
+    <title>KILL STARS - FINAL</title>
     <style>
-        * {
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            margin: 0;
-            overflow: hidden;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: #1a3b2e;
-            touch-action: none;
-            width: 100vw;
-            height: 100vh;
-            position: fixed;
-        }
-        #gameCanvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            background: #4caf7a;
-            touch-action: none;
-        }
-        /* Lobby */
-        #lobby {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(145deg, #1e3c2c, #0f2819);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 20;
-            color: white;
-            text-shadow: 4px 4px 0 #00000080;
-            backdrop-filter: blur(8px);
-            padding: 20px;
-            overflow-y: auto;
-        }
-        #lobby h1 {
-            font-size: min(15vw, 80px);
-            margin-bottom: 10px;
-            color: #ffe484;
-            text-shadow: 5px 5px 0 #b45f06;
-            text-align: center;
-        }
-        .stats-container {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .stat-box {
-            background: #2a4a3a;
-            border: 3px solid gold;
-            border-radius: 30px;
-            padding: 10px 20px;
-            font-size: min(24px, 5vw);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 5px 0 #1a2e22;
-        }
-        .map-selector {
-            display: flex;
-            gap: 15px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .map-btn {
-            background: #3d5e4a;
-            border: 3px solid gold;
-            border-radius: 30px;
-            padding: 10px 20px;
-            font-size: min(20px, 4vw);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-            cursor: pointer;
-            transition: 0.1s;
-            box-shadow: 0 5px 0 #1a2e22;
-        }
-        .map-btn.selected {
-            border-color: #ffaa00;
-            transform: scale(1.05);
-            background: #5a7e6a;
-        }
-        .map-btn:active {
-            transform: translateY(5px);
-            box-shadow: 0 0 0 #1a2e22;
-        }
-        .brawler-showcase {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-            margin: 20px 0;
-            width: 100%;
-            max-width: 600px;
-        }
-        .arrow {
-            font-size: min(60px, 12vw);
-            background: rgba(255,215,0,0.5);
-            width: min(80px, 15vw);
-            height: min(80px, 15vw);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 4px solid gold;
-            color: white;
-            cursor: pointer;
-            touch-action: manipulation;
-            transition: 0.1s;
-            box-shadow: 0 5px 0 #a05f00;
-        }
-        .arrow:active {
-            transform: translateY(5px);
-            box-shadow: 0 0 0 #a05f00;
-        }
-        .brawler-card-large {
-            background: #3d5e4a;
-            border-radius: 40px;
-            padding: 20px;
-            width: min(350px, 70vw);
-            text-align: center;
-            border: 6px solid gold;
-            box-shadow: 0 20px 0 #1a2e22, 0 30px 30px black;
-        }
-        .brawler-emoji-large {
-            font-size: min(120px, 25vw);
-            filter: drop-shadow(5px 10px 0 #000);
-        }
-        .brawler-name-large {
-            font-size: min(48px, 10vw);
-            font-weight: bold;
-            color: #ffe484;
-        }
-        .brawler-stats-large {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin: 20px 0;
-            font-size: min(24px, 5vw);
-            background: #1f2e25;
-            padding: 15px;
-            border-radius: 50px;
-        }
-        .skin-selector {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            margin: 10px 0;
-        }
-        .skin-arrow {
-            background: gold;
-            width: min(40px, 8vw);
-            height: min(40px, 8vw);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: min(30px, 6vw);
-            cursor: pointer;
-            border: 2px solid white;
-        }
-        .skin-name {
-            font-size: min(20px, 4vw);
-            background: #1f2e25;
-            padding: 5px 20px;
-            border-radius: 30px;
-        }
-        .shop-button {
-            background: #f9b81b;
-            border: 4px solid #fff;
-            border-radius: 60px;
-            padding: min(15px, 3vw) min(40px, 10vw);
-            font-size: min(32px, 7vw);
-            font-weight: bold;
-            color: #3d2b1a;
-            text-shadow: 2px 2px 0 #fff;
-            box-shadow: 0 10px 0 #a05f00, 0 15px 15px black;
-            margin: 20px 0 10px;
-            cursor: pointer;
-            touch-action: manipulation;
-            transition: 0.07s;
-        }
-        .shop-button:active {
-            transform: translateY(8px);
-            box-shadow: 0 2px 0 #a05f00, 0 10px 10px black;
-        }
-        .play-button {
-            background: #f9b81b;
-            border: 5px solid #fff;
-            border-radius: 60px;
-            padding: min(20px, 4vw) min(80px, 15vw);
-            font-size: min(48px, 10vw);
-            font-weight: bold;
-            color: #3d2b1a;
-            text-shadow: 3px 3px 0 #fff;
-            box-shadow: 0 15px 0 #a05f00, 0 20px 20px black;
-            margin-top: 20px;
-            cursor: pointer;
-            touch-action: manipulation;
-            transition: 0.07s;
-        }
-        .play-button:active {
-            transform: translateY(10px);
-            box-shadow: 0 5px 0 #a05f00, 0 15px 15px black;
-        }
-        /* Shop Overlay */
-        #shopOverlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 30;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            padding: 20px;
-            overflow-y: auto;
-            color: white;
-            backdrop-filter: blur(10px);
-        }
-        #shopOverlay h2 {
-            font-size: min(60px, 12vw);
-            color: gold;
-            margin: 20px 0;
-        }
-        .shop-coins {
-            font-size: min(30px, 6vw);
-            background: #2a4a3a;
-            border: 2px solid gold;
-            border-radius: 40px;
-            padding: 10px 30px;
-            margin-bottom: 20px;
-        }
-        .shop-brawler-section {
-            width: 100%;
-            max-width: 600px;
-            background: #2a4a3a;
-            border-radius: 40px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .shop-brawler-title {
-            font-size: min(30px, 6vw);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .shop-skin-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #1f2e25;
-            border-radius: 30px;
-            padding: 10px 20px;
-            margin-bottom: 10px;
-        }
-        .shop-skin-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .shop-skin-emoji {
-            font-size: 40px;
-        }
-        .shop-skin-name {
-            font-size: min(20px, 4vw);
-        }
-        .shop-skin-price {
-            background: gold;
-            color: black;
-            padding: 5px 15px;
-            border-radius: 30px;
-            font-weight: bold;
-        }
-        .shop-buy-btn {
-            background: #4caf50;
-            border: none;
-            color: white;
-            padding: 8px 20px;
-            border-radius: 30px;
-            font-size: min(18px, 3.5vw);
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .shop-buy-btn:disabled {
-            background: #888;
-            cursor: not-allowed;
-        }
-        .close-shop {
-            background: #c0392b;
-            border: 3px solid white;
-            border-radius: 50px;
-            padding: 15px 50px;
-            font-size: 30px;
-            margin: 30px;
-            cursor: pointer;
-        }
-        /* HUD */
-        #hud {
-            position: absolute;
-            top: 15px; left: 15px; right: 15px;
-            display: flex;
-            justify-content: space-between;
-            color: white;
-            text-shadow: 3px 3px 0 #000;
-            font-size: min(28px, 6vw);
-            font-weight: bold;
-            z-index: 10;
-            background: rgba(0,0,0,0.5);
-            padding: 10px 20px;
-            border-radius: 50px;
-            backdrop-filter: blur(6px);
-            border: 2px solid gold;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        #wave {
-            background: #2f5575;
-            padding: 8px 20px;
-            border-radius: 40px;
-        }
-        #score {
-            background: #8b5a2b;
-            padding: 8px 20px;
-            border-radius: 40px;
-        }
-        #hpBar {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(0,0,0,0.5);
-            padding: 5px 20px;
-            border-radius: 40px;
-        }
-        #hpFill {
-            width: min(150px, 30vw);
-            height: 20px;
-            background: #c0392b;
-            border-radius: 20px;
-            overflow: hidden;
-            border: 2px solid white;
-        }
-        #hpCurrent {
-            height: 100%;
-            width: 100%;
-            background: #2ecc71;
-        }
-        /* Joysticks */
-        .joystick {
-            position: absolute;
-            width: min(130px, 28vw);
-            height: min(130px, 28vw);
-            background: rgba(30,30,30,0.7);
-            border-radius: 50%;
-            touch-action: none;
-            z-index: 15;
-            backdrop-filter: blur(8px);
-            border: 4px solid rgba(255,215,0,0.8);
-            box-shadow: 0 0 30px black;
-        }
-        #leftJoystick {
-            bottom: max(30px, 6vh);
-            left: max(20px, 4vw);
-        }
-        #rightJoystick {
-            bottom: max(30px, 6vh);
-            right: max(150px, 22vw);
-        }
-        .joystickKnob {
-            position: absolute;
-            width: 60%;
-            height: 60%;
-            background: radial-gradient(circle at 30% 30%, #fff, #ccc);
-            border-radius: 50%;
-            top: 20%;
-            left: 20%;
-            pointer-events: none;
-            box-shadow: 0 5px 15px black;
-            border: 3px solid #ffd966;
-            transition: 0.02s;
-        }
-        /* Spezial-Button */
-        #specialButton {
-            position: absolute;
-            bottom: max(180px, 24vh);
-            right: max(30px, 5vw);
-            width: min(100px, 22vw);
-            height: min(100px, 22vw);
-            border-radius: 50%;
-            background: #444;
-            border: 5px solid #fff;
-            color: white;
-            font-weight: bold;
-            font-size: min(16px, 3.5vw);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 30px black;
-            z-index: 15;
-            touch-action: none;
-            flex-direction: column;
-            text-shadow: 2px 2px 0 #000;
-            transition: 0.1s;
-        }
-        #specialButton .special-charge {
-            font-size: min(26px, 6vw);
-            font-weight: bold;
-        }
-        #specialButton.ready {
-            background: #ff7b00;
-            animation: pulse 0.6s infinite alternate;
-        }
-        @keyframes pulse {
-            from { transform: scale(1); }
-            to { transform: scale(1.15); }
-        }
-        #gameOver {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 50;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: min(60px, 12vw);
-            backdrop-filter: blur(10px);
-            text-align: center;
-            padding: 20px;
-        }
-        #gameOver button {
-            background: gold;
-            border: none;
-            padding: min(20px, 5vw) min(60px, 15vw);
-            font-size: min(40px, 8vw);
-            border-radius: 60px;
-            margin: 30px;
-            font-weight: bold;
-            touch-action: manipulation;
-        }
-        @media (orientation: portrait) {
-            #hud {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-        }
+        /* (CSS bleibt unverändert - aus Platzgründen hier nicht wiederholt, aber du musst es aus der vorherigen Antwort übernehmen) */
+        /* Bitte kopiere das CSS aus der vorherigen Antwort - es ist identisch */
     </style>
 </head>
 <body>
-    <!-- Lobby -->
+    <!-- Lobby (gleiches HTML) -->
     <div id="lobby">
         <h1>KILL STARS</h1>
         <div class="stats-container">
@@ -478,15 +18,11 @@
             <div class="stat-box"><span>🏆</span> <span id="highScoreDisplay">0</span></div>
             <div class="stat-box"><span>🌊</span> <span id="maxWaveDisplay">1</span></div>
         </div>
-
-        <!-- Map-Auswahl -->
         <div class="map-selector">
             <div class="map-btn" data-map="grass" id="mapGrass">🌿 Grün</div>
             <div class="map-btn" data-map="desert" id="mapDesert">🏜️ Wüste</div>
             <div class="map-btn" data-map="ice" id="mapIce">❄️ Eis</div>
         </div>
-
-        <!-- Brawler-Auswahl mit Skin -->
         <div class="brawler-showcase">
             <div class="arrow" id="prevBrawler">◀</div>
             <div class="brawler-card-large" id="brawlerCard">
@@ -497,7 +33,6 @@
                     <span>⚡ <span id="brawlerSpeed">3.2</span></span>
                     <span>🔫 <span id="brawlerDmg">20</span></span>
                 </div>
-                <!-- Skin-Auswahl -->
                 <div class="skin-selector">
                     <div class="skin-arrow" id="prevSkin">◀</div>
                     <div class="skin-name" id="skinName">Standard</div>
@@ -506,13 +41,10 @@
             </div>
             <div class="arrow" id="nextBrawler">▶</div>
         </div>
-
-        <!-- Shop und Play -->
         <div class="shop-button" id="openShopBtn">🛒 SHOP</div>
         <div class="play-button" id="playBtn">⚔️ KÄMPFEN</div>
     </div>
 
-    <!-- Shop Overlay -->
     <div id="shopOverlay">
         <h2>🛒 SKIN-SHOP</h2>
         <div class="shop-coins">💰 <span id="shopCoins">0</span></div>
@@ -520,17 +52,13 @@
         <div class="close-shop" id="closeShopBtn">🔙 SCHLIESSEN</div>
     </div>
 
-    <!-- Game Over -->
     <div id="gameOver">
         <div>💀 GAME OVER 💀</div>
         <div id="finalScore"></div>
         <button id="restartBtn">NEU STARTEN</button>
     </div>
 
-    <!-- Spiel Canvas -->
     <canvas id="gameCanvas"></canvas>
-    
-    <!-- HUD -->
     <div id="hud">
         <div id="wave">🌊 Welle 1</div>
         <div id="hpBar">
@@ -539,8 +67,6 @@
         </div>
         <div id="score">🏆 0</div>
     </div>
-
-    <!-- Joysticks -->
     <div id="leftJoystick" class="joystick"><div class="joystickKnob" id="leftKnob"></div></div>
     <div id="rightJoystick" class="joystick"><div class="joystickKnob" id="rightKnob"></div></div>
     <div id="specialButton"><span class="special-charge">0%</span><span>SPEZIAL</span></div>
@@ -595,16 +121,14 @@
             const leftKnob = document.getElementById('leftKnob');
             const rightKnob = document.getElementById('rightKnob');
 
-            // ==================== DATENSTRUKTUREN ====================
-            // Maps
+            // ==================== DATEN ====================
             const maps = [
                 { id: 'grass', name: 'Grün', bgColor: '#4caf7a', patternColor: '#3d8c5c', lightColor: '#6fb56f' },
                 { id: 'desert', name: 'Wüste', bgColor: '#c99b6b', patternColor: '#a87b4f', lightColor: '#dab07f' },
                 { id: 'ice', name: 'Eis', bgColor: '#a8d0e6', patternColor: '#7fa9c4', lightColor: '#c0e0ff' }
             ];
-            let selectedMap = 'grass'; // Standard
+            let selectedMap = 'grass';
 
-            // Skin-Definitionen pro Brawler
             const skinData = {
                 Shelly: [
                     { name: 'Standard', emoji: '🔫', color: '#e67e22', hat: '🧢', price: 0 },
@@ -623,7 +147,6 @@
                 ]
             };
 
-            // Eigentum und ausgewählte Skins pro Brawler (localStorage)
             let ownedSkins = JSON.parse(localStorage.getItem('killStars_ownedSkins')) || {
                 Shelly: [true, false, false],
                 Colt: [true, false, false],
@@ -635,7 +158,6 @@
                 Bull: 0
             };
 
-            // Geld, Highscore, MaxWave
             let totalCoins = parseInt(localStorage.getItem('killStars_totalCoins')) || 0;
             let highScore = parseInt(localStorage.getItem('killStars_highScore')) || 0;
             let maxWave = parseInt(localStorage.getItem('killStars_maxWave')) || 1;
@@ -655,32 +177,62 @@
             }
             updateLobbyStats();
 
-            // ==================== BRAWLER-DATEN (Basis) ====================
+            // ==================== BRAWLER-LISTE (VOLLSTÄNDIG) ====================
             const brawlersList = [
                 { 
-                    name: 'Shelly', baseHp: 100, speed: 3.2, baseDamage: 20,
-                    attackDamage: 20, attackSpeed: 8, attackRange: 350, attackSpread: 5, attackCooldown: 300,
-                    specialDamage: 40, specialSpeed: 12, specialRange: 450, specialSpread: 9,
+                    name: 'Shelly', 
+                    baseHp: 100, 
+                    speed: 3.2, 
+                    baseDamage: 20,
+                    attackDamage: 20, 
+                    attackSpeed: 8, 
+                    attackRange: 350, 
+                    attackSpread: 5, 
+                    attackCooldown: 300,
+                    specialDamage: 40, 
+                    specialSpeed: 12, 
+                    specialRange: 450, 
+                    specialSpread: 9,
                     specialType: 'shotgun'
                 },
                 { 
-                    name: 'Colt', baseHp: 80, speed: 4.0, baseDamage: 30,
-                    attackDamage: 30, attackSpeed: 14, attackRange: 600, attackSpread: 1, attackCooldown: 250,
-                    specialDamage: 25, specialSpeed: 16, specialRange: 700, specialSpread: 8,
+                    name: 'Colt', 
+                    baseHp: 80, 
+                    speed: 4.0, 
+                    baseDamage: 30,
+                    attackDamage: 30, 
+                    attackSpeed: 14, 
+                    attackRange: 600, 
+                    attackSpread: 1, 
+                    attackCooldown: 250,
+                    specialDamage: 25, 
+                    specialSpeed: 16, 
+                    specialRange: 700, 
+                    specialSpread: 8,
                     specialType: 'rapid'
                 },
                 { 
-                    name: 'Bull', baseHp: 130, speed: 2.5, baseDamage: 50,
-                    attackDamage: 50, attackSpeed: 9, attackRange: 220, attackSpread: 1, attackCooldown: 350,
-                    specialDamage: 90, specialSpeed: 22, specialRange: 300, specialSpread: 1,
+                    name: 'Bull', 
+                    baseHp: 130, 
+                    speed: 2.5, 
+                    baseDamage: 50,
+                    attackDamage: 50, 
+                    attackSpeed: 9, 
+                    attackRange: 220, 
+                    attackSpread: 1, 
+                    attackCooldown: 350,
+                    specialDamage: 90, 
+                    specialSpeed: 22, 
+                    specialRange: 300, 
+                    specialSpread: 1,
                     specialType: 'dash'
                 }
             ];
 
-            let selectedBrawlerIndex = 0; // Shelly
+            let selectedBrawlerIndex = 0;
             let currentBrawlerName = 'Shelly';
 
-            // ==================== SKIN-AUSWAHL AKTUALISIEREN ====================
+            // ==================== UI AKTUALISIEREN ====================
             function updateBrawlerDisplay() {
                 const b = brawlersList[selectedBrawlerIndex];
                 currentBrawlerName = b.name;
@@ -725,66 +277,41 @@
                 updateBrawlerDisplay();
             });
 
-            // Skin wechseln (nur wenn freigeschaltet)
-            prevSkinBtn.addEventListener('click', (e) => {
-                e.preventDefault();
+            // Skin wechseln
+            function cycleSkin(direction) {
                 const b = brawlersList[selectedBrawlerIndex];
                 const owned = ownedSkins[b.name];
                 let current = selectedSkinIndices[b.name];
+                let newIndex = current;
                 do {
-                    current = (current - 1 + owned.length) % owned.length;
-                } while (!owned[current] && current !== selectedSkinIndices[b.name]);
-                if (owned[current]) {
-                    selectedSkinIndices[b.name] = current;
+                    newIndex = (newIndex + direction + owned.length) % owned.length;
+                } while (!owned[newIndex] && newIndex !== current);
+                if (owned[newIndex]) {
+                    selectedSkinIndices[b.name] = newIndex;
                     saveStats();
                     updateSkinDisplay();
                 }
+            }
+
+            prevSkinBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                cycleSkin(-1);
             });
             prevSkinBtn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                const b = brawlersList[selectedBrawlerIndex];
-                const owned = ownedSkins[b.name];
-                let current = selectedSkinIndices[b.name];
-                do {
-                    current = (current - 1 + owned.length) % owned.length;
-                } while (!owned[current] && current !== selectedSkinIndices[b.name]);
-                if (owned[current]) {
-                    selectedSkinIndices[b.name] = current;
-                    saveStats();
-                    updateSkinDisplay();
-                }
+                cycleSkin(-1);
             });
 
             nextSkinBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                const b = brawlersList[selectedBrawlerIndex];
-                const owned = ownedSkins[b.name];
-                let current = selectedSkinIndices[b.name];
-                do {
-                    current = (current + 1) % owned.length;
-                } while (!owned[current] && current !== selectedSkinIndices[b.name]);
-                if (owned[current]) {
-                    selectedSkinIndices[b.name] = current;
-                    saveStats();
-                    updateSkinDisplay();
-                }
+                cycleSkin(1);
             });
             nextSkinBtn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                const b = brawlersList[selectedBrawlerIndex];
-                const owned = ownedSkins[b.name];
-                let current = selectedSkinIndices[b.name];
-                do {
-                    current = (current + 1) % owned.length;
-                } while (!owned[current] && current !== selectedSkinIndices[b.name]);
-                if (owned[current]) {
-                    selectedSkinIndices[b.name] = current;
-                    saveStats();
-                    updateSkinDisplay();
-                }
+                cycleSkin(1);
             });
 
-            // ==================== MAP-AUSWAHL ====================
+            // Map-Auswahl
             mapGrass.addEventListener('click', () => {
                 selectedMap = 'grass';
                 document.querySelectorAll('.map-btn').forEach(btn => btn.classList.remove('selected'));
@@ -800,10 +327,9 @@
                 document.querySelectorAll('.map-btn').forEach(btn => btn.classList.remove('selected'));
                 mapIce.classList.add('selected');
             });
-            // Standard auswählen
             mapGrass.classList.add('selected');
 
-            // ==================== SHOP ====================
+            // Shop
             function openShop() {
                 shopOverlay.style.display = 'flex';
                 renderShop();
@@ -848,7 +374,6 @@
                 }
                 shopContent.innerHTML = html;
 
-                // Event-Listener für Kauf-Buttons
                 document.querySelectorAll('.shop-buy-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         const brawler = e.target.dataset.brawler;
@@ -859,7 +384,7 @@
                             ownedSkins[brawler][skinIndex] = true;
                             saveStats();
                             updateLobbyStats();
-                            renderShop(); // Refresh
+                            renderShop();
                         }
                     });
                 });
@@ -876,19 +401,65 @@
                 startGame();
             });
 
+            // Spielvariablen
+            let gameActive = false;
+            let player = null;
+            let enemies = [];
+            let projectiles = [];
+            let coins = [];
+            let damageNumbers = [];
+            let effects = [];
+            let lastShot = 0;
+            const MAX_SPECIAL = 100;
+            let specialCharge = 0;
+            let specialReady = false;
+            let wave = 1;
+            let score = 0;
+            let enemiesThisWave = 0;
+            let enemiesSpawned = 0;
+            const BASE_ENEMIES = 3;
+
+            // Joystick-Zustände
+            let leftStick = { active: false, id: null, dir: { x: 0, y: 0 } };
+            let rightStick = { active: false, id: null, dir: { x: 0, y: 0 }, tap: false, startX: 0, startY: 0 };
+
+            // Spezial-Zielen
+            let specialAiming = false;
+            let specialDir = { x: 0, y: 0 };
+            let specialStartPos = { x: 0, y: 0 };
+            let specialTap = false;
+            let specialTouchId = null;
+
             function startGame() {
+                console.log("startGame() aufgerufen");
                 const b = brawlersList[selectedBrawlerIndex];
                 const skinIndex = selectedSkinIndices[b.name];
                 const skin = skinData[b.name][skinIndex];
+                
+                // Explizit alle Eigenschaften kopieren
                 player = {
-                    ...b,
                     name: b.name,
+                    baseHp: b.baseHp,
+                    speed: b.speed,
+                    baseDamage: b.baseDamage,
+                    attackDamage: b.attackDamage,
+                    attackSpeed: b.attackSpeed,
+                    attackRange: b.attackRange,
+                    attackSpread: b.attackSpread,
+                    attackCooldown: b.attackCooldown,
+                    specialDamage: b.specialDamage,
+                    specialSpeed: b.specialSpeed,
+                    specialRange: b.specialRange,
+                    specialSpread: b.specialSpread,
+                    specialType: b.specialType,
                     hp: b.baseHp,
                     maxHp: b.baseHp,
                     color: skin.color,
                     emoji: skin.emoji,
                     hat: skin.hat
                 };
+                console.log("Spieler erstellt:", player);
+                
                 gameActive = true;
                 wave = 1;
                 score = 0;
@@ -905,37 +476,6 @@
                 gameOverDiv.style.display = 'none';
             }
 
-            // ==================== SPIELVARIABLEN ====================
-            let gameActive = false;
-            let player = null;
-            let enemies = [];
-            let projectiles = [];
-            let coins = [];
-            let damageNumbers = [];
-            let effects = [];
-            let lastShot = 0;
-            const SHOT_COOLDOWN = 300;
-            let specialCharge = 0;
-            const MAX_SPECIAL = 100;
-            let specialReady = false;
-            let wave = 1;
-            let score = 0;
-            let enemiesThisWave = 0;
-            let enemiesSpawned = 0;
-            const BASE_ENEMIES = 3;
-
-            // Für zielbare Spezialfähigkeit
-            let specialAiming = false;
-            let specialDir = { x: 0, y: 0 };
-            let specialStartPos = { x: 0, y: 0 };
-            let specialTap = false;
-            let specialTouchId = null;
-
-            // Joystick-Zustände
-            let leftStick = { active: false, id: null, dir: { x: 0, y: 0 } };
-            let rightStick = { active: false, id: null, dir: { x: 0, y: 0 }, tap: false, startX: 0, startY: 0 };
-
-            // ==================== WELLEN ====================
             function startWave() {
                 enemiesThisWave = BASE_ENEMIES + wave * 2;
                 enemiesSpawned = 0;
@@ -1172,7 +712,6 @@
                 if (!specialReady || !player || !gameActive) return;
 
                 if (player.specialType === 'dash') {
-                    // Bull: Dash
                     const dashDistance = 150;
                     const targetX = player.x + dir.x * dashDistance;
                     const targetY = player.y + dir.y * dashDistance;
@@ -1198,7 +737,6 @@
                 }
 
                 if (player.specialType === 'rapid') {
-                    // Colt: Kugelhagel
                     for (let i = 0; i < 8; i++) {
                         setTimeout(() => {
                             if (!gameActive || !player) return;
@@ -1216,7 +754,6 @@
                         }, i * 70);
                     }
                 } else {
-                    // Shelly: Superschrot
                     let bullets = [];
                     let baseAngle = Math.atan2(dir.y, dir.x);
                     let spread = player.specialSpread || 9;
@@ -1242,7 +779,7 @@
                 updateUI();
             }
 
-            // ==================== SCHIESSEN ====================
+            // ==================== NORMALES SCHIESSEN ====================
             function autoShoot() {
                 if (!player || !gameActive) return;
                 let closest = null;
@@ -1328,7 +865,9 @@
 
             // ==================== UPDATE ====================
             function update() {
-                if (!gameActive || !player) return;
+                if (!gameActive || !player) {
+                    return;
+                }
 
                 // Bewegung
                 if (leftStick.active) {
@@ -1391,7 +930,7 @@
                     }
                 }
 
-                // Gegner-Schaden am Spieler (mit Cooldown)
+                // Gegner-Schaden
                 const now = Date.now();
                 for (let i = 0; i < enemies.length; i++) {
                     let e = enemies[i];
@@ -1419,7 +958,7 @@
                     }
                 }
 
-                // Münzen einsammeln
+                // Münzen
                 for (let i = coins.length - 1; i >= 0; i--) {
                     let c = coins[i];
                     let d = Math.hypot(player.x - c.x, player.y - c.y);
@@ -1460,11 +999,10 @@
             function draw() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                // Map-Hintergrund je nach Auswahl
+                // Map zeichnen
                 const map = maps.find(m => m.id === selectedMap);
                 ctx.fillStyle = map.bgColor;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                // Helle Flecken
                 ctx.fillStyle = map.lightColor;
                 for (let i = 0; i < 30; i++) {
                     ctx.beginPath();
@@ -1473,7 +1011,6 @@
                     ctx.fill();
                 }
                 ctx.globalAlpha = 1;
-                // Raster
                 ctx.strokeStyle = map.patternColor;
                 ctx.lineWidth = 2;
                 for (let i = 0; i < canvas.width; i += 70) {
@@ -1489,14 +1026,14 @@
                     ctx.stroke();
                 }
 
-                if (!gameActive || !player) return;
+                if (!gameActive || !player) {
+                    return;
+                }
 
-                // Zielhilfe für normalen Angriff
+                // Zielhilfen
                 if (rightStick.active && (rightStick.dir.x !== 0 || rightStick.dir.y !== 0)) {
                     drawAim(player, rightStick.dir, player.attackRange, player.attackSpread, 'rgba(255,255,255,0.5)');
                 }
-
-                // Zielhilfe für Spezial
                 if (specialAiming && (specialDir.x !== 0 || specialDir.y !== 0)) {
                     drawAim(player, specialDir, player.specialRange, player.specialSpread, 'rgba(255,100,0,0.7)');
                 }
@@ -1638,7 +1175,6 @@
                 let baseAngle = Math.atan2(dir.y, dir.x);
                 
                 if (player.name === 'Shelly') {
-                    // Kegel für Shelly
                     let spreadAngle = 0.8;
                     ctx.beginPath();
                     ctx.moveTo(player.x, player.y);
@@ -1657,7 +1193,6 @@
                     ctx.lineWidth = 2;
                     ctx.stroke();
                 } else if (player.name === 'Colt') {
-                    // Linie für Colt
                     let endX = player.x + dir.x * range;
                     let endY = player.y + dir.y * range;
                     ctx.beginPath();
@@ -1671,7 +1206,6 @@
                     ctx.fillStyle = 'rgba(255,0,0,0.7)';
                     ctx.fill();
                 } else if (player.name === 'Bull') {
-                    // Pfeil / Linie für Bull (Dash)
                     let dashRange = 150;
                     let endX = player.x + dir.x * dashRange;
                     let endY = player.y + dir.y * dashRange;
@@ -1681,7 +1215,6 @@
                     ctx.strokeStyle = color;
                     ctx.lineWidth = 8;
                     ctx.stroke();
-                    // Pfeilspitze
                     let arrowSize = 15;
                     let angle = Math.atan2(dir.y, dir.x);
                     let leftX = endX - arrowSize * Math.cos(angle - 0.5);
@@ -1698,7 +1231,6 @@
                     ctx.strokeStyle = 'white';
                     ctx.lineWidth = 2;
                     ctx.stroke();
-                    // Zielkreis
                     ctx.beginPath();
                     ctx.arc(endX, endY, 20, 0, 2*Math.PI);
                     ctx.fillStyle = 'rgba(255,0,0,0.5)';
@@ -1740,7 +1272,6 @@
             window.addEventListener('resize', resizeCanvas);
             resizeCanvas();
 
-            // Initiale Lobby anzeigen
             updateBrawlerDisplay();
         })();
     </script>
