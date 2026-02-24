@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>KILL STARS - Ultimate</title>
     <style>
+        /* (CSS bleibt unverändert - wie in der vorherigen Antwort) */
         * {
             box-sizing: border-box;
             user-select: none;
@@ -29,7 +30,6 @@
             background: #4caf7a;
             touch-action: none;
         }
-        /* Lobby */
         #lobby {
             position: absolute;
             top: 0;
@@ -148,7 +148,6 @@
             transform: translateY(10px);
             box-shadow: 0 5px 0 #a05f00, 0 15px 15px black;
         }
-        /* HUD */
         #hud {
             position: absolute;
             top: 15px; left: 15px; right: 15px;
@@ -199,7 +198,6 @@
             width: 100%;
             background: #2ecc71;
         }
-        /* Joysticks */
         .joystick {
             position: absolute;
             width: min(130px, 28vw);
@@ -233,7 +231,6 @@
             border: 3px solid #ffd966;
             transition: 0.02s;
         }
-        /* Spezial-Button - jetzt auch zielbar */
         #specialButton {
             position: absolute;
             bottom: max(180px, 24vh);
@@ -388,7 +385,7 @@
             const leftKnob = document.getElementById('leftKnob');
             const rightKnob = document.getElementById('rightKnob');
 
-            // ==================== LOKALE DATEN (localStorage) ====================
+            // ==================== LOKALE DATEN ====================
             let totalCoins = parseInt(localStorage.getItem('killStars_totalCoins')) || 0;
             let highScore = parseInt(localStorage.getItem('killStars_highScore')) || 0;
             let maxWave = parseInt(localStorage.getItem('killStars_maxWave')) || 1;
@@ -432,7 +429,7 @@
             let specialTap = false;
             let specialTouchId = null;
 
-            // Brawler-Liste für Lobby
+            // Brawler-Liste
             const brawlersList = [
                 { 
                     name: 'Shelly', emoji: '🔫', hp: 100, speed: 3.2, damage: 20, color: '#e67e22',
@@ -488,7 +485,6 @@
                 updateLobbyDisplay();
             });
 
-            // Spiel starten
             playBtn.addEventListener('click', () => {
                 lobby.style.display = 'none';
                 startGame();
@@ -561,7 +557,7 @@
                 }
             }
 
-            // ==================== JOYSTICK-TOUCH (Multi-Touch) ====================
+            // ==================== JOYSTICK-TOUCH ====================
             let leftStick = { active: false, id: null, dir: { x: 0, y: 0 } };
             let rightStick = { active: false, id: null, dir: { x: 0, y: 0 }, tap: false, startX: 0, startY: 0 };
 
@@ -672,7 +668,7 @@
             rightJoystick.addEventListener('touchend', (e) => handleTouchEnd(e, true));
             rightJoystick.addEventListener('touchcancel', (e) => handleTouchEnd(e, true));
 
-            // ==================== SPEZIAL-ZIELEN (NEU!) ====================
+            // ==================== SPEZIAL-ZIELEN ====================
             specialBtn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 if (!specialReady || !gameActive || !player) return;
@@ -692,14 +688,12 @@
                 const touches = e.touches;
                 for (let touch of touches) {
                     if (touch.identifier === specialTouchId) {
-                        // Richtung berechnen: Differenz zwischen aktueller Position und Startposition
                         let dx = touch.clientX - specialStartPos.x;
                         let dy = touch.clientY - specialStartPos.y;
                         const distance = Math.sqrt(dx*dx + dy*dy);
                         if (distance > 10) specialTap = false;
-                        // Normieren, aber begrenzen auf Länge 1
                         if (distance > 0) {
-                            const len = Math.min(distance, 100) / 100; // max 100px = volle Stärke
+                            const len = Math.min(distance, 100) / 100;
                             specialDir.x = (dx / distance) * len;
                             specialDir.y = (dy / distance) * len;
                         }
@@ -715,14 +709,12 @@
                 for (let touch of touches) {
                     if (touch.identifier === specialTouchId) {
                         if (specialTap) {
-                            // Kurzes Tippen: automatisches Zielen
                             useSpecialAuto();
                         } else {
-                            // In die berechnete Richtung schießen
                             if (specialDir.x !== 0 || specialDir.y !== 0) {
                                 useSpecialDirection(specialDir);
                             } else {
-                                useSpecialAuto(); // Fallback
+                                useSpecialAuto();
                             }
                         }
                         specialAiming = false;
@@ -769,21 +761,26 @@
                 if (!specialReady || !player || !gameActive) return;
 
                 if (player.specialType === 'dash') {
-                    // Bull: Dash
-                    const dashSpeed = 15;
-                    player.x += dir.x * dashSpeed * 5;
-                    player.y += dir.y * dashSpeed * 5;
-                    player.x = Math.min(canvas.width - 40, Math.max(40, player.x));
-                    player.y = Math.min(canvas.height - 40, Math.max(40, player.y));
+                    // Bull: Dash - Bewegung in die Richtung mit Schaden
+                    const dashDistance = 150; // Pixel
+                    const targetX = player.x + dir.x * dashDistance;
+                    const targetY = player.y + dir.y * dashDistance;
                     
+                    // Sanfte Bewegung (für Animation könnte man mehrere Schritte machen, aber hier direkt)
+                    player.x = Math.min(canvas.width - 40, Math.max(40, targetX));
+                    player.y = Math.min(canvas.height - 40, Math.max(40, targetY));
+                    
+                    // Schaden an Gegnern in der Nähe des Zielpunkts
                     enemies.forEach(e => {
                         let d = Math.hypot(player.x - e.x, player.y - e.y);
-                        if (d < 60) {
+                        if (d < 70) { // Explosionsradius
                             e.hp -= player.specialDamage;
                             addDamageNumber(e.x, e.y, player.specialDamage);
                             addEffect(e.x, e.y);
                         }
                     });
+                    // Auch Gegner auf dem Weg? Optional, aber wir machen es einfach.
+                    
                     enemies = enemies.filter(e => e.hp > 0);
                     
                     specialCharge = 0;
@@ -794,7 +791,7 @@
                 }
 
                 if (player.specialType === 'rapid') {
-                    // Colt: Kugelhagel - 8 Schüsse nacheinander
+                    // Colt: Kugelhagel
                     for (let i = 0; i < 8; i++) {
                         setTimeout(() => {
                             if (!gameActive || !player) return;
@@ -811,7 +808,7 @@
                             });
                         }, i * 70);
                     }
-                } else {
+                } else if (player.specialType === 'shotgun') {
                     // Shelly: Superschrot
                     let bullets = [];
                     let baseAngle = Math.atan2(dir.y, dir.x);
@@ -838,7 +835,7 @@
                 updateUI();
             }
 
-            // ==================== SCHIESSEN (normal) ====================
+            // ==================== SCHIESSEN ====================
             function autoShoot() {
                 if (!player || !gameActive) return;
                 let closest = null;
@@ -1000,7 +997,6 @@
                             e.lastDamageTime = now;
                             if (player.hp <= 0) {
                                 gameActive = false;
-                                // Highscore und Welle speichern
                                 if (score > highScore) {
                                     highScore = score;
                                 }
@@ -1022,10 +1018,10 @@
                     let d = Math.hypot(player.x - c.x, player.y - c.y);
                     if (d < 40 + 15) {
                         score += c.value;
-                        totalCoins += c.value; // Gesamtgeld erhöhen
+                        totalCoins += c.value;
                         addEffect(c.x, c.y);
                         coins.splice(i, 1);
-                        saveStats(); // Sofort speichern
+                        saveStats();
                         updateLobbyStats();
                     }
                 }
@@ -1230,7 +1226,9 @@
             function drawAim(player, dir, range, spread, color) {
                 if (!player || !dir) return;
                 let baseAngle = Math.atan2(dir.y, dir.x);
+                
                 if (player.name === 'Shelly') {
+                    // Kegel für Shelly
                     let spreadAngle = 0.8;
                     ctx.beginPath();
                     ctx.moveTo(player.x, player.y);
@@ -1249,6 +1247,7 @@
                     ctx.lineWidth = 2;
                     ctx.stroke();
                 } else if (player.name === 'Colt') {
+                    // Linie für Colt
                     let endX = player.x + dir.x * range;
                     let endY = player.y + dir.y * range;
                     ctx.beginPath();
@@ -1262,22 +1261,40 @@
                     ctx.fillStyle = 'rgba(255,0,0,0.7)';
                     ctx.fill();
                 } else if (player.name === 'Bull') {
-                    let spreadAngle = 0.4;
+                    // Pfeil / Linie für Bull (Dash)
+                    let dashRange = 150; // feste Dash-Reichweite
+                    let endX = player.x + dir.x * dashRange;
+                    let endY = player.y + dir.y * dashRange;
                     ctx.beginPath();
                     ctx.moveTo(player.x, player.y);
-                    let angle1 = baseAngle - spreadAngle/2;
-                    let angle2 = baseAngle + spreadAngle/2;
-                    let x1 = player.x + Math.cos(angle1) * range;
-                    let y1 = player.y + Math.sin(angle1) * range;
-                    let x2 = player.x + Math.cos(angle2) * range;
-                    let y2 = player.y + Math.sin(angle2) * range;
-                    ctx.lineTo(x1, y1);
-                    ctx.lineTo(x2, y2);
+                    ctx.lineTo(endX, endY);
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 8;
+                    ctx.stroke();
+                    // Pfeilspitze
+                    let arrowSize = 15;
+                    let angle = Math.atan2(dir.y, dir.x);
+                    let leftX = endX - arrowSize * Math.cos(angle - 0.5);
+                    let leftY = endY - arrowSize * Math.sin(angle - 0.5);
+                    let rightX = endX - arrowSize * Math.cos(angle + 0.5);
+                    let rightY = endY - arrowSize * Math.sin(angle + 0.5);
+                    ctx.beginPath();
+                    ctx.moveTo(endX, endY);
+                    ctx.lineTo(leftX, leftY);
+                    ctx.lineTo(rightX, rightY);
                     ctx.closePath();
                     ctx.fillStyle = color;
                     ctx.fill();
                     ctx.strokeStyle = 'white';
                     ctx.lineWidth = 2;
+                    ctx.stroke();
+                    // Zielkreis
+                    ctx.beginPath();
+                    ctx.arc(endX, endY, 20, 0, 2*Math.PI);
+                    ctx.fillStyle = 'rgba(255,0,0,0.5)';
+                    ctx.fill();
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 3;
                     ctx.stroke();
                 }
             }
@@ -1290,7 +1307,6 @@
             }
             gameLoop();
 
-            // Neustart
             restartBtn.addEventListener('click', () => {
                 gameOverDiv.style.display = 'none';
                 lobby.style.display = 'flex';
@@ -1303,7 +1319,6 @@
                 updateLobbyStats();
             });
 
-            // Canvas-Größe anpassen
             function resizeCanvas() {
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
@@ -1315,7 +1330,6 @@
             window.addEventListener('resize', resizeCanvas);
             resizeCanvas();
 
-            // Initiale Lobby anzeigen
             updateLobbyDisplay();
         })();
     </script>
