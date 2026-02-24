@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KILL STARS - Brawl Stars Edition</title>
+    <title>KILL STARS - Perfected</title>
     <style>
         * {
             box-sizing: border-box;
@@ -29,7 +29,7 @@
             background: #4caf7a;
             touch-action: none;
         }
-        /* Lobby - wie Brawl Stars */
+        /* Lobby */
         #lobby {
             position: absolute;
             top: 0;
@@ -386,16 +386,19 @@
                     name: 'Shelly', emoji: '🔫', hp: 100, speed: 3.2, damage: 20, color: '#e67e22',
                     attackDamage: 20, attackSpeed: 8, attackRange: 350, attackSpread: 5, attackCooldown: 300,
                     specialDamage: 40, specialSpeed: 12, specialRange: 450, specialSpread: 9,
+                    specialType: 'shotgun' // für spezielle Zielanzeige
                 },
                 { 
                     name: 'Colt', emoji: '🔫🔫', hp: 80, speed: 4.0, damage: 30, color: '#3498db',
                     attackDamage: 30, attackSpeed: 14, attackRange: 600, attackSpread: 1, attackCooldown: 250,
                     specialDamage: 25, specialSpeed: 16, specialRange: 700, specialSpread: 8,
+                    specialType: 'rapid'
                 },
                 { 
                     name: 'Bull', emoji: '🐂', hp: 130, speed: 2.5, damage: 50, color: '#c0392b',
                     attackDamage: 50, attackSpeed: 9, attackRange: 220, attackSpread: 1, attackCooldown: 350,
                     specialDamage: 90, specialSpeed: 22, specialRange: 300, specialSpread: 1,
+                    specialType: 'dash'
                 }
             ];
 
@@ -416,17 +419,15 @@
                 selectedBrawlerIndex = (selectedBrawlerIndex - 1 + brawlersList.length) % brawlersList.length;
                 updateLobbyDisplay();
             });
+            prevBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                selectedBrawlerIndex = (selectedBrawlerIndex - 1 + brawlersList.length) % brawlersList.length;
+                updateLobbyDisplay();
+            });
 
             nextBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 selectedBrawlerIndex = (selectedBrawlerIndex + 1) % brawlersList.length;
-                updateLobbyDisplay();
-            });
-
-            // Touch-Events für Pfeile
-            prevBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                selectedBrawlerIndex = (selectedBrawlerIndex - 1 + brawlersList.length) % brawlersList.length;
                 updateLobbyDisplay();
             });
             nextBtn.addEventListener('touchstart', (e) => {
@@ -490,7 +491,7 @@
                     x = Math.min(canvas.width - 50, Math.max(50, x));
                     y = Math.min(canvas.height - 50, Math.max(50, y));
                     
-                    // Gegner-Schaden reduziert: 5 + Welle (vorher 3+Welle, aber jetzt sicher fair)
+                    // Gegner: Schaden pro Treffer (alle 500ms)
                     const enemyDamage = 5 + wave; 
                     
                     enemies.push({
@@ -498,10 +499,11 @@
                         hp: 40 + wave * 8,
                         maxHp: 40 + wave * 8,
                         speed: 1.2 + wave * 0.1,
-                        damage: enemyDamage, // Reduziert!
+                        damage: enemyDamage,
                         radius: 25,
                         color: '#c13b3b',
-                        eyeColor: '#ff0000'
+                        eyeColor: '#ff0000',
+                        lastDamageTime: 0 // Für Schadens-Cooldown
                     });
                     enemiesSpawned++;
                     setTimeout(spawnEnemies, 700);
@@ -682,6 +684,44 @@
             // ==================== SPEZIAL ====================
             function useSpecial() {
                 if (!specialReady || !player || !gameActive) return;
+
+                if (player.specialType === 'dash') {
+                    // Bull: Dash - Spieler schnell in die Richtung bewegen
+                    let dir;
+                    if (rightStick.active && (rightStick.dir.x !== 0 || rightStick.dir.y !== 0)) {
+                        dir = rightStick.dir;
+                    } else {
+                        // Standardrichtung: nach rechts
+                        dir = { x: 1, y: 0 };
+                    }
+                    // Dash-Bewegung
+                    const dashSpeed = 15;
+                    player.x += dir.x * dashSpeed * 5; // 5 Schritte
+                    player.y += dir.y * dashSpeed * 5;
+                    // Grenzen
+                    player.x = Math.min(canvas.width - 40, Math.max(40, player.x));
+                    player.y = Math.min(canvas.height - 40, Math.max(40, player.y));
+                    
+                    // Schaden an Gegnern im Weg
+                    enemies.forEach(e => {
+                        let d = Math.hypot(player.x - e.x, player.y - e.y);
+                        if (d < 60) { // großer Radius für Dash
+                            e.hp -= player.specialDamage;
+                            addDamageNumber(e.x, e.y, player.specialDamage);
+                            addEffect(e.x, e.y);
+                        }
+                    });
+                    // Entferne tote Gegner
+                    enemies = enemies.filter(e => e.hp > 0);
+                    
+                    specialCharge = 0;
+                    specialReady = false;
+                    specialBtn.classList.remove('ready');
+                    updateUI();
+                    return;
+                }
+
+                // Für Shelly und Colt: Projektil-Spezial
                 let dir;
                 if (rightStick.active && (rightStick.dir.x !== 0 || rightStick.dir.y !== 0)) {
                     dir = rightStick.dir;
@@ -701,26 +741,49 @@
                         let len = Math.hypot(dx, dy);
                         dir = { x: dx / len, y: dy / len };
                     } else {
-                        dir = { x: 0, y: 1 };
+                        dir = { x: 1, y: 0 };
                     }
                 }
-                let bullets = [];
-                let baseAngle = Math.atan2(dir.y, dir.x);
-                let spread = player.specialSpread || 5;
-                for (let i = -Math.floor(spread/2); i <= Math.floor(spread/2); i++) {
-                    let angle = baseAngle + i * 0.15;
-                    bullets.push({
-                        x: player.x, y: player.y,
-                        vx: Math.cos(angle) * player.specialSpeed,
-                        vy: Math.sin(angle) * player.specialSpeed,
-                        damage: player.specialDamage,
-                        range: player.specialRange,
-                        owner: 'player',
-                        size: 12,
-                        color: '#ff5500'
-                    });
+
+                if (player.specialType === 'rapid') {
+                    // Colt: Kugelhagel - 8 Schüsse nacheinander
+                    for (let i = 0; i < 8; i++) {
+                        setTimeout(() => {
+                            if (!gameActive || !player) return;
+                            let angle = Math.atan2(dir.y, dir.x) + (i - 3.5) * 0.1;
+                            projectiles.push({
+                                x: player.x, y: player.y,
+                                vx: Math.cos(angle) * player.specialSpeed,
+                                vy: Math.sin(angle) * player.specialSpeed,
+                                damage: player.specialDamage,
+                                range: player.specialRange,
+                                owner: 'player',
+                                size: 8,
+                                color: '#ffaa00'
+                            });
+                        }, i * 70); // 70 ms Abstand
+                    }
+                } else {
+                    // Shelly: Superschrot (breiter Kegel)
+                    let bullets = [];
+                    let baseAngle = Math.atan2(dir.y, dir.x);
+                    let spread = player.specialSpread || 9;
+                    for (let i = -Math.floor(spread/2); i <= Math.floor(spread/2); i++) {
+                        let angle = baseAngle + i * 0.15;
+                        bullets.push({
+                            x: player.x, y: player.y,
+                            vx: Math.cos(angle) * player.specialSpeed,
+                            vy: Math.sin(angle) * player.specialSpeed,
+                            damage: player.specialDamage,
+                            range: player.specialRange,
+                            owner: 'player',
+                            size: 10,
+                            color: '#ff5500'
+                        });
+                    }
+                    projectiles.push(...bullets);
                 }
-                projectiles.push(...bullets);
+
                 specialCharge = 0;
                 specialReady = false;
                 specialBtn.classList.remove('ready');
@@ -820,19 +883,24 @@
                     }
                 }
 
-                // Gegner-Schaden am Spieler (reduziert!)
+                // Gegner-Schaden am Spieler (mit Cooldown)
+                const now = Date.now();
                 for (let i = 0; i < enemies.length; i++) {
                     let e = enemies[i];
                     let d = Math.hypot(player.x - e.x, player.y - e.y);
                     if (d < 35 + e.radius) {
-                        player.hp -= e.damage;
-                        addDamageNumber(player.x, player.y, e.damage);
-                        addEffect(player.x, player.y);
-                        if (player.hp <= 0) {
-                            gameActive = false;
-                            gameOverDiv.style.display = 'flex';
-                            finalScoreSpan.innerText = 'Punkte: ' + score;
-                            return;
+                        // Nur alle 500ms Schaden
+                        if (now - e.lastDamageTime > 500) {
+                            player.hp -= e.damage;
+                            addDamageNumber(player.x, player.y, e.damage);
+                            addEffect(player.x, player.y);
+                            e.lastDamageTime = now;
+                            if (player.hp <= 0) {
+                                gameActive = false;
+                                gameOverDiv.style.display = 'flex';
+                                finalScoreSpan.innerText = 'Punkte: ' + score;
+                                return;
+                            }
                         }
                     }
                 }
@@ -903,23 +971,65 @@
 
                 if (!gameActive || !player) return;
 
-                // Zielhilfe
+                // Zielhilfe mit Angriffsbereich
                 if (rightStick.active && (rightStick.dir.x !== 0 || rightStick.dir.y !== 0)) {
-                    let endX = player.x + rightStick.dir.x * 150;
-                    let endY = player.y + rightStick.dir.y * 150;
-                    ctx.beginPath();
-                    ctx.moveTo(player.x, player.y);
-                    ctx.lineTo(endX, endY);
-                    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-                    ctx.lineWidth = 6;
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.arc(endX, endY, 15, 0, 2*Math.PI);
-                    ctx.fillStyle = 'rgba(255,0,0,0.7)';
-                    ctx.fill();
-                    ctx.strokeStyle = 'white';
-                    ctx.lineWidth = 3;
-                    ctx.stroke();
+                    let dir = rightStick.dir;
+                    let baseAngle = Math.atan2(dir.y, dir.x);
+                    
+                    if (player.name === 'Shelly') {
+                        // Kegel für Shelly (5 Schuss)
+                        let spread = 0.8; // Winkel in Radiant
+                        ctx.beginPath();
+                        ctx.moveTo(player.x, player.y);
+                        let angle1 = baseAngle - spread/2;
+                        let angle2 = baseAngle + spread/2;
+                        let x1 = player.x + Math.cos(angle1) * player.attackRange;
+                        let y1 = player.y + Math.sin(angle1) * player.attackRange;
+                        let x2 = player.x + Math.cos(angle2) * player.attackRange;
+                        let y2 = player.y + Math.sin(angle2) * player.attackRange;
+                        ctx.lineTo(x1, y1);
+                        ctx.lineTo(x2, y2);
+                        ctx.closePath();
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                        ctx.fill();
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+                    } else if (player.name === 'Colt') {
+                        // Linie für Colt
+                        let endX = player.x + dir.x * player.attackRange;
+                        let endY = player.y + dir.y * player.attackRange;
+                        ctx.beginPath();
+                        ctx.moveTo(player.x, player.y);
+                        ctx.lineTo(endX, endY);
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                        ctx.lineWidth = 6;
+                        ctx.stroke();
+                        // Schmale Linie
+                        ctx.beginPath();
+                        ctx.arc(endX, endY, 10, 0, 2*Math.PI);
+                        ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';
+                        ctx.fill();
+                    } else if (player.name === 'Bull') {
+                        // Kurzer, dicker Kegel für Bull
+                        let spread = 0.4;
+                        ctx.beginPath();
+                        ctx.moveTo(player.x, player.y);
+                        let angle1 = baseAngle - spread/2;
+                        let angle2 = baseAngle + spread/2;
+                        let x1 = player.x + Math.cos(angle1) * player.attackRange;
+                        let y1 = player.y + Math.sin(angle1) * player.attackRange;
+                        let x2 = player.x + Math.cos(angle2) * player.attackRange;
+                        let y2 = player.y + Math.sin(angle2) * player.attackRange;
+                        ctx.lineTo(x1, y1);
+                        ctx.lineTo(x2, y2);
+                        ctx.closePath();
+                        ctx.fillStyle = 'rgba(255, 100, 100, 0.3)';
+                        ctx.fill();
+                        ctx.strokeStyle = 'rgba(255, 100, 100, 0.8)';
+                        ctx.lineWidth = 4;
+                        ctx.stroke();
+                    }
                 }
 
                 // Effekte
