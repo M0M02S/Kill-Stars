@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KILL STARS - TRIPLE MODE (final)</title>
+    <title>KILL STARS - ULTIMATIVE EDITION</title>
     <style>
         * {
             box-sizing: border-box;
@@ -383,6 +383,25 @@
             align-items: center;
             gap: 5px;
         }
+        .ammo-bars {
+            display: flex;
+            gap: 5px;
+            margin-left: 10px;
+        }
+        .ammo-bar {
+            width: 20px;
+            height: 20px;
+            background: #555;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid white;
+        }
+        .ammo-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: #ffaa00;
+            transition: width 0.1s;
+        }
         .joystick {
             position: absolute;
             width: min(130px, 28vw);
@@ -507,7 +526,7 @@
             </div>
             <div class="map-btn" data-map="desert" id="mapDesert">
                 <span>🏜️ WÜSTE</span>
-                <span class="map-desc">Showdown (Power-Cubes)</span>
+                <span class="map-desc">Showdown (Riesen-Map)</span>
             </div>
             <div class="map-btn" data-map="ice" id="mapIce">
                 <span>❄️ EIS</span>
@@ -558,7 +577,14 @@
         </div>
         <div id="score">🏆 0</div>
         <div id="powerCubesHUD" style="display: none;">📦 <span id="powerCubesCount">0</span></div>
-        <div id="ammoHUD" style="display: none;">🔫 <span id="ammoCount">3</span></div>
+        <div id="ammoHUD" style="display: none;">
+            <span>🔫</span>
+            <div class="ammo-bars" id="ammoBars">
+                <div class="ammo-bar"><div class="ammo-bar-fill" id="ammoBar1" style="width:100%"></div></div>
+                <div class="ammo-bar"><div class="ammo-bar-fill" id="ammoBar2" style="width:100%"></div></div>
+                <div class="ammo-bar"><div class="ammo-bar-fill" id="ammoBar3" style="width:100%"></div></div>
+            </div>
+        </div>
     </div>
     <div id="leftJoystick" class="joystick"><div class="joystickKnob" id="leftKnob"></div></div>
     <div id="rightJoystick" class="joystick"><div class="joystickKnob" id="rightKnob"></div></div>
@@ -605,7 +631,9 @@
             const powerCubesHUD = document.getElementById('powerCubesHUD');
             const powerCubesCount = document.getElementById('powerCubesCount');
             const ammoHUD = document.getElementById('ammoHUD');
-            const ammoCount = document.getElementById('ammoCount');
+            const ammoBar1 = document.getElementById('ammoBar1');
+            const ammoBar2 = document.getElementById('ammoBar2');
+            const ammoBar3 = document.getElementById('ammoBar3');
 
             // GameOver
             const gameOverDiv = document.getElementById('gameOver');
@@ -622,7 +650,7 @@
             // ==================== DATEN ====================
             const maps = {
                 grass: { id: 'grass', name: 'Grün', bgColor: '#4caf7a', patternColor: '#3d8c5c', lightColor: '#6fb56f', mode: 'waves' },
-                desert: { id: 'desert', name: 'Wüste', bgColor: '#c99b6b', patternColor: '#a87b4f', lightColor: '#dab07f', mode: 'showdown' },
+                desert: { id: 'desert', name: 'Wüste', bgColor: '#c99b6b', patternColor: '#a87b4f', lightColor: '#dab07f', mode: 'showdown', worldWidth: 2000, worldHeight: 2000 },
                 ice: { id: 'ice', name: 'Eis', bgColor: '#a8d0e6', patternColor: '#7fa9c4', lightColor: '#c0e0ff', mode: 'team' }
             };
             let selectedMap = 'grass';
@@ -886,6 +914,20 @@
                 });
             }
 
+            // ==================== KAMERA ====================
+            let camera = { x: 0, y: 0 };
+            const WORLD_SIZE = 2000; // für Showdown
+
+            function updateCamera() {
+                if (!player || gameMode !== 'showdown') return;
+                // Kamera folgt dem Spieler, aber bleibt innerhalb der Welt
+                camera.x = player.x - canvas.width / 2;
+                camera.y = player.y - canvas.height / 2;
+                // Begrenzung auf Weltgröße
+                camera.x = Math.max(0, Math.min(camera.x, WORLD_SIZE - canvas.width));
+                camera.y = Math.max(0, Math.min(camera.y, WORLD_SIZE - canvas.height));
+            }
+
             // ==================== SPIELVARIABLEN ====================
             let gameActive = false;
             let gameMode = 'waves';
@@ -934,6 +976,9 @@
                 const skinIndex = selectedSkinIndices[b.name];
                 const skin = skinData[b.name][skinIndex];
 
+                // Weltgröße je nach Modus
+                let worldSize = (selectedMap === 'desert') ? WORLD_SIZE : 0; // 0 bedeutet normale Bildschirmgröße
+
                 player = {
                     name: b.name,
                     baseHp: b.baseHp,
@@ -954,10 +999,17 @@
                     color: skin.color,
                     emoji: skin.emoji,
                     hat: skin.hat,
-                    x: canvas.width / 2,
-                    y: canvas.height / 2,
                     powerCubes: 0
                 };
+
+                // Startposition abhängig von Weltgröße
+                if (selectedMap === 'desert') {
+                    player.x = WORLD_SIZE / 2;
+                    player.y = WORLD_SIZE / 2;
+                } else {
+                    player.x = canvas.width / 2;
+                    player.y = canvas.height / 2;
+                }
 
                 gameActive = true;
                 gameMode = maps[selectedMap].mode;
@@ -981,7 +1033,7 @@
                 } else {
                     ammo = MAX_AMMO;
                     ammoHUD.style.display = 'flex';
-                    ammoCount.textContent = ammo;
+                    updateAmmoBars();
                 }
                 lastReloadTime = Date.now();
 
@@ -994,10 +1046,10 @@
                     startWave();
                 } else if (gameMode === 'showdown') {
                     powerCubesCount.textContent = '0';
-                    showdownRemainingEnemies = 5;
+                    showdownRemainingEnemies = 8; // mehr Gegner für große Map
                     showdownFinalMode = false;
                     spawnShowdownEnemies();
-                    spawnPowerCubes(10); // 10 Power-Cubes start
+                    spawnPowerCubes(12);
                 } else if (gameMode === 'team') {
                     startTeamMode();
                 }
@@ -1054,13 +1106,8 @@
                 if (!gameActive || gameMode !== 'showdown') return;
                 let count = showdownFinalMode ? 1 : showdownRemainingEnemies;
                 for (let i = 0; i < count; i++) {
-                    let angle = Math.random() * 2 * Math.PI;
-                    let distance = Math.max(canvas.width, canvas.height) * 0.4;
-                    let x = player.x + Math.cos(angle) * distance;
-                    let y = player.y + Math.sin(angle) * distance;
-                    x = Math.min(canvas.width - 50, Math.max(50, x));
-                    y = Math.min(canvas.height - 50, Math.max(50, y));
-
+                    let x = 100 + Math.random() * (WORLD_SIZE - 200);
+                    let y = 100 + Math.random() * (WORLD_SIZE - 200);
                     enemies.push({
                         x, y,
                         hp: 80 + wave * 10,
@@ -1080,8 +1127,8 @@
 
             function spawnPowerCubes(count) {
                 for (let i = 0; i < count; i++) {
-                    let x = 50 + Math.random() * (canvas.width - 100);
-                    let y = 50 + Math.random() * (canvas.height - 100);
+                    let x = 100 + Math.random() * (WORLD_SIZE - 200);
+                    let y = 100 + Math.random() * (WORLD_SIZE - 200);
                     powerCubes.push({
                         x, y,
                         radius: 15,
@@ -1104,15 +1151,13 @@
                 }
             }
 
-            // ==================== TEAM-MODUS (Knockout) ====================
+            // ==================== TEAM-MODUS ====================
             function startTeamMode() {
                 allies = [];
                 enemies = [];
-                // Team A: Spieler + 2 KI
                 for (let i = 0; i < 2; i++) {
                     allies.push(createTeamBot(true));
                 }
-                // Team B: 3 KI
                 for (let i = 0; i < 3; i++) {
                     enemies.push(createTeamBot(false));
                 }
@@ -1161,7 +1206,6 @@
             }
 
             function updateTeamBots() {
-                // Allies
                 allies.forEach(bot => {
                     if (bot.hp <= 0) return;
                     let target = null;
@@ -1201,7 +1245,6 @@
                     }
                 });
 
-                // Gegner-Bots
                 enemies.forEach(bot => {
                     if (bot.hp <= 0) return;
                     let targets = [];
@@ -1451,8 +1494,14 @@
                     const dashDistance = 150;
                     const targetX = player.x + dir.x * dashDistance;
                     const targetY = player.y + dir.y * dashDistance;
-                    player.x = Math.min(canvas.width - 40, Math.max(40, targetX));
-                    player.y = Math.min(canvas.height - 40, Math.max(40, targetY));
+                    // Weltbegrenzung beachten
+                    if (gameMode === 'showdown') {
+                        player.x = Math.min(WORLD_SIZE - 40, Math.max(40, targetX));
+                        player.y = Math.min(WORLD_SIZE - 40, Math.max(40, targetY));
+                    } else {
+                        player.x = Math.min(canvas.width - 40, Math.max(40, targetX));
+                        player.y = Math.min(canvas.height - 40, Math.max(40, targetY));
+                    }
                     let targets = enemies;
                     targets.forEach(e => {
                         if (e.hp <= 0) return;
@@ -1542,7 +1591,6 @@
             function shootInDirection(dir) {
                 if (!player || !gameActive) return;
 
-                // Munitionscheck
                 if (gameMode !== 'waves') {
                     if (ammo <= 0) return;
                 }
@@ -1553,7 +1601,7 @@
 
                 if (gameMode !== 'waves') {
                     ammo--;
-                    ammoCount.textContent = ammo;
+                    updateAmmoBars();
                 }
 
                 let bullets = [];
@@ -1588,6 +1636,19 @@
                 projectiles.push(...bullets);
             }
 
+            function updateAmmoBars() {
+                if (!ammoHUD || ammoHUD.style.display === 'none') return;
+                let percent = [0,0,0];
+                for (let i = 0; i < ammo; i++) percent[i] = 100;
+                if (ammo < MAX_AMMO) {
+                    // Teilweise Ladung? Wir haben nur volle oder leere Balken.
+                    // Für fließenden Übergang könnte man einen Timer verwenden.
+                }
+                ammoBar1.style.width = (ammo >= 1) ? '100%' : '0%';
+                ammoBar2.style.width = (ammo >= 2) ? '100%' : '0%';
+                ammoBar3.style.width = (ammo >= 3) ? '100%' : '0%';
+            }
+
             // ==================== HILFSFUNKTIONEN ====================
             function addDamageNumber(x, y, amount) {
                 damageNumbers.push({ x, y: y-20, value: amount, life: 60 });
@@ -1616,23 +1677,31 @@
             function update() {
                 if (!gameActive || !player) return;
 
-                // Nachladen (nur Showdown/Team)
+                // Nachladen
                 if (gameMode !== 'waves') {
                     let now = Date.now();
                     if (now - lastReloadTime > AMMO_RELOAD_TIME && ammo < MAX_AMMO) {
                         ammo++;
-                        ammoCount.textContent = ammo;
+                        updateAmmoBars();
                         lastReloadTime = now;
                     }
                 }
 
-                // Bewegung
+                // Bewegung mit Weltbegrenzung
                 if (leftStick.active) {
                     player.x += leftStick.dir.x * player.speed;
                     player.y += leftStick.dir.y * player.speed;
-                    player.x = Math.min(canvas.width - 40, Math.max(40, player.x));
-                    player.y = Math.min(canvas.height - 40, Math.max(40, player.y));
+                    if (gameMode === 'showdown') {
+                        player.x = Math.min(WORLD_SIZE - 40, Math.max(40, player.x));
+                        player.y = Math.min(WORLD_SIZE - 40, Math.max(40, player.y));
+                    } else {
+                        player.x = Math.min(canvas.width - 40, Math.max(40, player.x));
+                        player.y = Math.min(canvas.height - 40, Math.max(40, player.y));
+                    }
                 }
+
+                // Kamera aktualisieren
+                updateCamera();
 
                 // Modus-spezifisches Update
                 if (gameMode === 'waves') {
@@ -1695,9 +1764,17 @@
                     let p = projectiles[i];
                     p.x += p.vx;
                     p.y += p.vy;
-                    if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
-                        projectiles.splice(i, 1);
-                        continue;
+                    // Weltgrenzen für Showdown
+                    if (gameMode === 'showdown') {
+                        if (p.x < 0 || p.x > WORLD_SIZE || p.y < 0 || p.y > WORLD_SIZE) {
+                            projectiles.splice(i, 1);
+                            continue;
+                        }
+                    } else {
+                        if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
+                            projectiles.splice(i, 1);
+                            continue;
+                        }
                     }
                     let dist = Math.hypot(p.x - player.x, p.y - player.y);
                     if (dist > p.range) {
@@ -1722,7 +1799,6 @@
                                 }
                                 projectiles.splice(i, 1);
                                 if (e.hp <= 0) {
-                                    // Power-Cubes droppen
                                     let cubesToDrop = Math.floor((e.powerCubes || 0) / 2);
                                     for (let c = 0; c < cubesToDrop; c++) {
                                         powerCubes.push({
@@ -1772,7 +1848,6 @@
                             }
                         }
                     } else if (p.owner === 'enemy') {
-                        // Spieler treffen
                         let d = Math.hypot(p.x - player.x, p.y - player.y);
                         if (d < 35) {
                             player.hp -= p.damage;
@@ -1790,7 +1865,6 @@
                                 return;
                             }
                         } else {
-                            // Allies treffen
                             for (let j = allies.length - 1; j >= 0; j--) {
                                 let a = allies[j];
                                 if (a.hp <= 0) continue;
@@ -1862,7 +1936,6 @@
                     let e = enemies[i];
                     if (e.hp <= 0) continue;
 
-                    // Finde Ziel (Spieler oder anderen Gegner)
                     let targets = [];
                     if (player.hp > 0) targets.push(player);
                     for (let j = 0; j < enemies.length; j++) {
@@ -1889,10 +1962,9 @@
                             }
                             e.x += e.vx;
                             e.y += e.vy;
-                            e.x = Math.min(canvas.width - 30, Math.max(30, e.x));
-                            e.y = Math.min(canvas.height - 30, Math.max(30, e.y));
+                            e.x = Math.min(WORLD_SIZE - 30, Math.max(30, e.x));
+                            e.y = Math.min(WORLD_SIZE - 30, Math.max(30, e.y));
 
-                            // Schießen
                             let now = Date.now();
                             if (now - (e.lastShot || 0) > 1000) {
                                 e.lastShot = now;
@@ -1952,7 +2024,7 @@
                     }
                 }
 
-                // Gegner untereinander Nahkampf (optional)
+                // Gegner untereinander Nahkampf
                 for (let i = 0; i < enemies.length; i++) {
                     for (let j = i+1; j < enemies.length; j++) {
                         let e1 = enemies[i];
@@ -1992,8 +2064,8 @@
                     let toSpawn = Math.min(12 - powerCubes.length, 2);
                     for (let i = 0; i < toSpawn; i++) {
                         powerCubes.push({
-                            x: 50 + Math.random() * (canvas.width - 100),
-                            y: 50 + Math.random() * (canvas.height - 100),
+                            x: 100 + Math.random() * (WORLD_SIZE - 200),
+                            y: 100 + Math.random() * (WORLD_SIZE - 200),
                             radius: 15,
                             color: '#b8860b'
                         });
@@ -2033,40 +2105,98 @@
                 }
             }
 
-            // ==================== ZEICHNEN ====================
+            // ==================== ZEICHNEN (mit Kamera) ====================
+            function worldToScreenX(wx) {
+                return wx - camera.x;
+            }
+
+            function worldToScreenY(wy) {
+                return wy - camera.y;
+            }
+
             function draw() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
                 const map = maps[selectedMap];
-                ctx.fillStyle = map.bgColor;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = map.lightColor;
-                for (let i = 0; i < 30; i++) {
-                    ctx.beginPath();
-                    ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, 20, 0, 2*Math.PI);
-                    ctx.globalAlpha = 0.15;
-                    ctx.fill();
-                }
-                ctx.globalAlpha = 1;
-                ctx.strokeStyle = map.patternColor;
-                ctx.lineWidth = 2;
-                for (let i = 0; i < canvas.width; i += 70) {
-                    ctx.beginPath();
-                    ctx.moveTo(i, 0);
-                    ctx.lineTo(i, canvas.height);
-                    ctx.stroke();
-                }
-                for (let i = 0; i < canvas.height; i += 70) {
-                    ctx.beginPath();
-                    ctx.moveTo(0, i);
-                    ctx.lineTo(canvas.width, i);
-                    ctx.stroke();
+                let bgColor = map.bgColor;
+                let lightColor = map.lightColor;
+                let patternColor = map.patternColor;
+
+                if (gameMode === 'showdown') {
+                    // Zeichne große Welt
+                    ctx.fillStyle = bgColor;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    // Wir müssen die Hintergrundmuster relativ zur Kamera zeichnen
+                    // Einfachheitshalber: einfarbig mit Flecken
+                    ctx.fillStyle = lightColor;
+                    for (let i = 0; i < 30; i++) {
+                        let wx = Math.random() * WORLD_SIZE;
+                        let wy = Math.random() * WORLD_SIZE;
+                        let sx = worldToScreenX(wx);
+                        let sy = worldToScreenY(wy);
+                        if (sx > -20 && sx < canvas.width+20 && sy > -20 && sy < canvas.height+20) {
+                            ctx.beginPath();
+                            ctx.arc(sx, sy, 20, 0, 2*Math.PI);
+                            ctx.globalAlpha = 0.15;
+                            ctx.fill();
+                        }
+                    }
+                    ctx.globalAlpha = 1;
+                    // Gitterlinien (optional)
+                    ctx.strokeStyle = patternColor;
+                    ctx.lineWidth = 2;
+                    for (let i = 0; i < WORLD_SIZE; i += 200) {
+                        let sx = worldToScreenX(i);
+                        if (sx >= 0 && sx <= canvas.width) {
+                            ctx.beginPath();
+                            ctx.moveTo(sx, 0);
+                            ctx.lineTo(sx, canvas.height);
+                            ctx.stroke();
+                        }
+                    }
+                    for (let i = 0; i < WORLD_SIZE; i += 200) {
+                        let sy = worldToScreenY(i);
+                        if (sy >= 0 && sy <= canvas.height) {
+                            ctx.beginPath();
+                            ctx.moveTo(0, sy);
+                            ctx.lineTo(canvas.width, sy);
+                            ctx.stroke();
+                        }
+                    }
+                } else {
+                    // Normale Map (keine Kamera)
+                    ctx.fillStyle = bgColor;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = lightColor;
+                    for (let i = 0; i < 30; i++) {
+                        ctx.beginPath();
+                        ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, 20, 0, 2*Math.PI);
+                        ctx.globalAlpha = 0.15;
+                        ctx.fill();
+                    }
+                    ctx.globalAlpha = 1;
+                    ctx.strokeStyle = patternColor;
+                    ctx.lineWidth = 2;
+                    for (let i = 0; i < canvas.width; i += 70) {
+                        ctx.beginPath();
+                        ctx.moveTo(i, 0);
+                        ctx.lineTo(i, canvas.height);
+                        ctx.stroke();
+                    }
+                    for (let i = 0; i < canvas.height; i += 70) {
+                        ctx.beginPath();
+                        ctx.moveTo(0, i);
+                        ctx.lineTo(canvas.width, i);
+                        ctx.stroke();
+                    }
                 }
 
                 if (!gameActive || !player) return;
 
-                // Zielhilfen
+                // Zielhilfen (mit Weltkoordinaten)
                 if (rightStick.active && (rightStick.dir.x !== 0 || rightStick.dir.y !== 0)) {
+                    let endX = player.x + rightStick.dir.x * player.attackRange;
+                    let endY = player.y + rightStick.dir.y * player.attackRange;
                     drawAim(player, rightStick.dir, player.attackRange, player.attackSpread, 'rgba(255,255,255,0.5)');
                 }
                 if (specialAiming && (specialDir.x !== 0 || specialDir.y !== 0)) {
@@ -2075,51 +2205,59 @@
 
                 // Power-Cubes
                 powerCubes.forEach(c => {
+                    let sx = worldToScreenX(c.x);
+                    let sy = worldToScreenY(c.y);
                     ctx.save();
                     ctx.shadowColor = 'orange';
                     ctx.shadowBlur = 20;
                     ctx.fillStyle = c.color;
                     ctx.beginPath();
-                    ctx.arc(c.x, c.y, c.radius, 0, 2*Math.PI);
+                    ctx.arc(sx, sy, c.radius, 0, 2*Math.PI);
                     ctx.fill();
                     ctx.fillStyle = '#fff';
                     ctx.font = '20px Arial';
-                    ctx.fillText('📦', c.x-12, c.y+8);
+                    ctx.fillText('📦', sx-12, sy+8);
                     ctx.restore();
                 });
 
                 // Münzen
                 coins.forEach(c => {
+                    let sx = worldToScreenX(c.x);
+                    let sy = worldToScreenY(c.y);
                     ctx.save();
                     ctx.shadowColor = 'gold';
                     ctx.shadowBlur = 20;
                     ctx.fillStyle = '#FFD700';
                     ctx.beginPath();
-                    ctx.arc(c.x, c.y, 15, 0, 2*Math.PI);
+                    ctx.arc(sx, sy, 15, 0, 2*Math.PI);
                     ctx.fill();
                     ctx.fillStyle = '#B8860B';
                     ctx.font = '20px Arial';
-                    ctx.fillText('💰', c.x-12, c.y+8);
+                    ctx.fillText('💰', sx-12, sy+8);
                     ctx.restore();
                 });
 
                 // Effekte
                 effects.forEach(e => {
+                    let sx = worldToScreenX(e.x);
+                    let sy = worldToScreenY(e.y);
                     let progress = e.life / e.maxLife;
                     ctx.beginPath();
-                    ctx.arc(e.x, e.y, 30 * (1 - progress), 0, 2*Math.PI);
+                    ctx.arc(sx, sy, 30 * (1 - progress), 0, 2*Math.PI);
                     ctx.fillStyle = `rgba(255, 150, 0, ${progress})`;
                     ctx.fill();
                 });
 
                 // Projektile
                 projectiles.forEach(p => {
+                    let sx = worldToScreenX(p.x);
+                    let sy = worldToScreenY(p.y);
                     ctx.save();
                     ctx.shadowColor = 'yellow';
                     ctx.shadowBlur = 15;
                     ctx.fillStyle = p.color;
                     ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.size, 0, 2*Math.PI);
+                    ctx.arc(sx, sy, p.size, 0, 2*Math.PI);
                     ctx.fill();
                     ctx.restore();
                 });
@@ -2127,36 +2265,40 @@
                 // Allies
                 allies.forEach(a => {
                     if (a.hp <= 0) return;
+                    let sx = worldToScreenX(a.x);
+                    let sy = worldToScreenY(a.y);
                     ctx.save();
                     ctx.shadowColor = 'green';
                     ctx.shadowBlur = 15;
                     ctx.fillStyle = a.color;
                     ctx.beginPath();
-                    ctx.arc(a.x, a.y, 25, 0, 2*Math.PI);
+                    ctx.arc(sx, sy, 25, 0, 2*Math.PI);
                     ctx.fill();
                     ctx.strokeStyle = '#fff';
                     ctx.lineWidth = 3;
                     ctx.stroke();
                     ctx.fillStyle = 'white';
                     ctx.font = '20px Arial';
-                    ctx.fillText(a.emoji, a.x-12, a.y-20);
+                    ctx.fillText(a.emoji, sx-12, sy-20);
                     ctx.shadowBlur = 0;
                     ctx.fillStyle = '#c0392b';
-                    ctx.fillRect(a.x-20, a.y-30, 40, 5);
+                    ctx.fillRect(sx-20, sy-30, 40, 5);
                     ctx.fillStyle = '#2ecc71';
-                    ctx.fillRect(a.x-20, a.y-30, 40 * (a.hp/a.maxHp), 5);
+                    ctx.fillRect(sx-20, sy-30, 40 * (a.hp/a.maxHp), 5);
                     ctx.restore();
                 });
 
                 // Gegner
                 enemies.forEach(e => {
                     if (e.hp <= 0) return;
+                    let sx = worldToScreenX(e.x);
+                    let sy = worldToScreenY(e.y);
                     ctx.save();
                     ctx.shadowColor = 'black';
                     ctx.shadowBlur = 15;
                     ctx.fillStyle = e.color;
                     ctx.beginPath();
-                    ctx.arc(e.x, e.y, e.radius, 0, 2*Math.PI);
+                    ctx.arc(sx, sy, e.radius, 0, 2*Math.PI);
                     ctx.fill();
                     ctx.strokeStyle = '#5a3a2a';
                     ctx.lineWidth = 4;
@@ -2164,45 +2306,47 @@
 
                     ctx.fillStyle = 'white';
                     ctx.beginPath();
-                    ctx.arc(e.x-10, e.y-8, 7, 0, 2*Math.PI);
+                    ctx.arc(sx-10, sy-8, 7, 0, 2*Math.PI);
                     ctx.fill();
                     ctx.beginPath();
-                    ctx.arc(e.x+10, e.y-8, 7, 0, 2*Math.PI);
+                    ctx.arc(sx+10, sy-8, 7, 0, 2*Math.PI);
                     ctx.fill();
                     ctx.fillStyle = '#ff0000';
                     ctx.beginPath();
-                    ctx.arc(e.x-10, e.y-8, 4, 0, 2*Math.PI);
+                    ctx.arc(sx-10, sy-8, 4, 0, 2*Math.PI);
                     ctx.fill();
                     ctx.beginPath();
-                    ctx.arc(e.x+10, e.y-8, 4, 0, 2*Math.PI);
+                    ctx.arc(sx+10, sy-8, 4, 0, 2*Math.PI);
                     ctx.fill();
 
                     ctx.beginPath();
-                    ctx.moveTo(e.x-18, e.y-20);
-                    ctx.lineTo(e.x-6, e.y-16);
+                    ctx.moveTo(sx-18, sy-20);
+                    ctx.lineTo(sx-6, sy-16);
                     ctx.lineWidth = 4;
                     ctx.strokeStyle = 'black';
                     ctx.stroke();
                     ctx.beginPath();
-                    ctx.moveTo(e.x+18, e.y-20);
-                    ctx.lineTo(e.x+6, e.y-16);
+                    ctx.moveTo(sx+18, sy-20);
+                    ctx.lineTo(sx+6, sy-16);
                     ctx.stroke();
 
                     ctx.shadowBlur = 0;
                     ctx.fillStyle = '#c0392b';
-                    ctx.fillRect(e.x-25, e.y-40, 50, 6);
+                    ctx.fillRect(sx-25, sy-40, 50, 6);
                     ctx.fillStyle = '#2ecc71';
-                    ctx.fillRect(e.x-25, e.y-40, 50 * (e.hp/e.maxHp), 6);
+                    ctx.fillRect(sx-25, sy-40, 50 * (e.hp/e.maxHp), 6);
                     ctx.restore();
                 });
 
                 // Spieler
+                let sx = worldToScreenX(player.x);
+                let sy = worldToScreenY(player.y);
                 ctx.save();
                 ctx.shadowColor = 'white';
                 ctx.shadowBlur = 25;
                 ctx.fillStyle = player.color;
                 ctx.beginPath();
-                ctx.arc(player.x, player.y, 30, 0, 2*Math.PI);
+                ctx.arc(sx, sy, 30, 0, 2*Math.PI);
                 ctx.fill();
                 ctx.strokeStyle = 'gold';
                 ctx.lineWidth = 5;
@@ -2210,31 +2354,31 @@
 
                 ctx.fillStyle = 'white';
                 ctx.beginPath();
-                ctx.arc(player.x-12, player.y-10, 8, 0, 2*Math.PI);
+                ctx.arc(sx-12, sy-10, 8, 0, 2*Math.PI);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(player.x+12, player.y-10, 8, 0, 2*Math.PI);
+                ctx.arc(sx+12, sy-10, 8, 0, 2*Math.PI);
                 ctx.fill();
                 ctx.fillStyle = '#2c3e50';
                 ctx.beginPath();
-                ctx.arc(player.x-12, player.y-10, 4, 0, 2*Math.PI);
+                ctx.arc(sx-12, sy-10, 4, 0, 2*Math.PI);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(player.x+12, player.y-10, 4, 0, 2*Math.PI);
+                ctx.arc(sx+12, sy-10, 4, 0, 2*Math.PI);
                 ctx.fill();
 
                 ctx.font = '30px Arial';
                 ctx.fillStyle = 'white';
                 ctx.shadowBlur = 10;
-                ctx.fillText(player.hat, player.x-15, player.y-50);
-                ctx.fillText(player.emoji, player.x-20, player.y-80);
+                ctx.fillText(player.hat, sx-15, sy-50);
+                ctx.fillText(player.emoji, sx-20, sy-80);
                 ctx.restore();
 
                 // Power-Cube-Anzeige am Spieler
                 if (gameMode === 'showdown' && player.powerCubes > 0) {
                     ctx.fillStyle = '#b8860b';
                     ctx.font = 'bold 20px Arial';
-                    ctx.fillText(`📦 ${player.powerCubes}`, player.x-20, player.y-100);
+                    ctx.fillText(`📦 ${player.powerCubes}`, sx-20, sy-100);
                 }
 
                 // Schadenszahlen
@@ -2242,12 +2386,14 @@
                 ctx.font = 'bold 26px Arial';
                 ctx.textAlign = 'center';
                 damageNumbers.forEach(d => {
+                    let dsx = worldToScreenX(d.x);
+                    let dsy = worldToScreenY(d.y);
                     let alpha = d.life / 60;
                     ctx.fillStyle = `rgba(255, 50, 50, ${alpha})`;
                     ctx.strokeStyle = 'white';
                     ctx.lineWidth = 3;
-                    ctx.strokeText('-' + d.value, d.x, d.y);
-                    ctx.fillText('-' + d.value, d.x, d.y);
+                    ctx.strokeText('-' + d.value, dsx, dsy);
+                    ctx.fillText('-' + d.value, dsx, dsy);
                 });
                 ctx.restore();
             }
@@ -2255,16 +2401,18 @@
             function drawAim(player, dir, range, spread, color) {
                 if (!player || !dir) return;
                 let baseAngle = Math.atan2(dir.y, dir.x);
+                let sx = worldToScreenX(player.x);
+                let sy = worldToScreenY(player.y);
                 if (player.name === 'Shelly') {
                     let spreadAngle = 0.8;
                     ctx.beginPath();
-                    ctx.moveTo(player.x, player.y);
+                    ctx.moveTo(sx, sy);
                     let angle1 = baseAngle - spreadAngle/2;
                     let angle2 = baseAngle + spreadAngle/2;
-                    let x1 = player.x + Math.cos(angle1) * range;
-                    let y1 = player.y + Math.sin(angle1) * range;
-                    let x2 = player.x + Math.cos(angle2) * range;
-                    let y2 = player.y + Math.sin(angle2) * range;
+                    let x1 = worldToScreenX(player.x + Math.cos(angle1) * range);
+                    let y1 = worldToScreenY(player.y + Math.sin(angle1) * range);
+                    let x2 = worldToScreenX(player.x + Math.cos(angle2) * range);
+                    let y2 = worldToScreenY(player.y + Math.sin(angle2) * range);
                     ctx.lineTo(x1, y1);
                     ctx.lineTo(x2, y2);
                     ctx.closePath();
@@ -2274,10 +2422,10 @@
                     ctx.lineWidth = 2;
                     ctx.stroke();
                 } else if (player.name === 'Colt') {
-                    let endX = player.x + dir.x * range;
-                    let endY = player.y + dir.y * range;
+                    let endX = worldToScreenX(player.x + dir.x * range);
+                    let endY = worldToScreenY(player.y + dir.y * range);
                     ctx.beginPath();
-                    ctx.moveTo(player.x, player.y);
+                    ctx.moveTo(sx, sy);
                     ctx.lineTo(endX, endY);
                     ctx.strokeStyle = color;
                     ctx.lineWidth = 6;
@@ -2288,10 +2436,10 @@
                     ctx.fill();
                 } else if (player.name === 'Bull') {
                     let dashRange = 150;
-                    let endX = player.x + dir.x * dashRange;
-                    let endY = player.y + dir.y * dashRange;
+                    let endX = worldToScreenX(player.x + dir.x * dashRange);
+                    let endY = worldToScreenY(player.y + dir.y * dashRange);
                     ctx.beginPath();
-                    ctx.moveTo(player.x, player.y);
+                    ctx.moveTo(sx, sy);
                     ctx.lineTo(endX, endY);
                     ctx.strokeStyle = color;
                     ctx.lineWidth = 8;
@@ -2345,9 +2493,9 @@
             function resizeCanvas() {
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
-                if (player) {
-                    player.x = Math.min(canvas.width-40, Math.max(40, player.x));
-                    player.y = Math.min(canvas.height-40, Math.max(40, player.y));
+                // Kamera ggf. anpassen
+                if (gameMode === 'showdown' && player) {
+                    updateCamera();
                 }
             }
             window.addEventListener('resize', resizeCanvas);
