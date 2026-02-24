@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KILL STARS - Mobile Arena</title>
+    <title>KILL STARS - Brawl Stars Edition</title>
     <style>
         * {
             box-sizing: border-box;
@@ -29,10 +29,13 @@
             background: #4caf7a;
             touch-action: none;
         }
-        /* Lobby */
+        /* Lobby - wie Brawl Stars */
         #lobby {
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: linear-gradient(145deg, #1e3c2c, #0f2819);
             display: flex;
             flex-direction: column;
@@ -46,87 +49,86 @@
         }
         #lobby h1 {
             font-size: min(15vw, 80px);
-            margin-bottom: 10px;
+            margin-bottom: 20px;
             color: #ffe484;
             text-shadow: 5px 5px 0 #b45f06;
             text-align: center;
         }
-        .menu-buttons {
+        .brawler-showcase {
             display: flex;
-            gap: min(5vw, 30px);
-            margin: 40px 0;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .menu-btn {
-            background: #f9b81b;
-            border: 4px solid #fff;
-            border-radius: 60px;
-            padding: min(4vw, 20px) min(10vw, 50px);
-            font-size: min(8vw, 40px);
-            font-weight: bold;
-            color: #3d2b1a;
-            text-shadow: 2px 2px 0 #fff;
-            box-shadow: 0 10px 0 #a05f00, 0 20px 20px black;
-            transition: 0.07s ease;
-            cursor: pointer;
-            touch-action: manipulation;
-        }
-        .menu-btn:active {
-            transform: translateY(8px);
-            box-shadow: 0 5px 0 #a05f00, 0 15px 15px black;
-        }
-        #brawlerSelectScreen {
-            background: #2a4a3a;
-            border-radius: 40px;
-            padding: 20px;
-            display: none;
-            flex-wrap: wrap;
+            align-items: center;
             justify-content: center;
             gap: 20px;
-            max-width: 95%;
-            border: 5px solid #ffd966;
-            margin-top: 20px;
-            max-height: 60vh;
-            overflow-y: auto;
+            margin: 30px 0;
+            width: 100%;
+            max-width: 600px;
         }
-        .brawler-card {
+        .arrow {
+            font-size: min(60px, 12vw);
+            background: rgba(255,215,0,0.5);
+            width: min(80px, 15vw);
+            height: min(80px, 15vw);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid gold;
+            color: white;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: 0.1s;
+            box-shadow: 0 5px 0 #a05f00;
+        }
+        .arrow:active {
+            transform: translateY(5px);
+            box-shadow: 0 0 0 #a05f00;
+        }
+        .brawler-card-large {
             background: #3d5e4a;
-            padding: 15px;
-            border-radius: 30px;
-            width: min(200px, 40vw);
+            border-radius: 40px;
+            padding: 20px;
+            width: min(350px, 70vw);
             text-align: center;
-            border: 4px solid #aaa;
-            transition: 0.2s;
-            box-shadow: 0 8px 0 #1a2e22;
+            border: 6px solid gold;
+            box-shadow: 0 20px 0 #1a2e22, 0 30px 30px black;
         }
-        .brawler-card.selected {
-            border-color: #ffd966;
-            transform: scale(1.05);
-            box-shadow: 0 0 30px gold;
+        .brawler-emoji-large {
+            font-size: min(120px, 25vw);
+            filter: drop-shadow(5px 10px 0 #000);
         }
-        .brawler-emoji {
-            font-size: min(80px, 15vw);
-            filter: drop-shadow(5px 10px 0 #00000070);
-        }
-        .brawler-name {
-            font-size: min(28px, 6vw);
+        .brawler-name-large {
+            font-size: min(48px, 10vw);
             font-weight: bold;
+            color: #ffe484;
         }
-        .brawler-stats {
-            font-size: min(16px, 4vw);
+        .brawler-stats-large {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 20px 0;
+            font-size: min(24px, 5vw);
             background: #1f2e25;
-            padding: 8px;
-            border-radius: 20px;
-            margin: 10px 0;
-        }
-        .back-btn {
-            background: #a55;
-            padding: 15px 40px;
+            padding: 15px;
             border-radius: 50px;
-            font-size: 30px;
+        }
+        .play-button {
+            background: #f9b81b;
+            border: 5px solid #fff;
+            border-radius: 60px;
+            padding: min(20px, 4vw) min(80px, 15vw);
+            font-size: min(48px, 10vw);
+            font-weight: bold;
+            color: #3d2b1a;
+            text-shadow: 3px 3px 0 #fff;
+            box-shadow: 0 15px 0 #a05f00, 0 20px 20px black;
             margin-top: 30px;
-            border: 3px solid white;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: 0.07s;
+        }
+        .play-button:active {
+            transform: translateY(10px);
+            box-shadow: 0 5px 0 #a05f00, 0 15px 15px black;
         }
         /* HUD */
         #hud {
@@ -213,7 +215,7 @@
             border: 3px solid #ffd966;
             transition: 0.02s;
         }
-        /* Spezial-Button - jetzt oberhalb des rechten Joysticks */
+        /* Spezial-Button */
         #specialButton {
             position: absolute;
             bottom: max(180px, 24vh);
@@ -272,7 +274,6 @@
             font-weight: bold;
             touch-action: manipulation;
         }
-        /* Responsive Anpassungen */
         @media (orientation: portrait) {
             #hud {
                 flex-direction: column;
@@ -282,23 +283,36 @@
     </style>
 </head>
 <body>
+    <!-- Lobby -->
     <div id="lobby">
         <h1>KILL STARS</h1>
-        <div class="menu-buttons">
-            <div class="menu-btn" id="playBtn">⚔️ KÄMPFEN</div>
-            <div class="menu-btn" id="brawlerMenuBtn">🦸 KÄMPFER</div>
+        <div class="brawler-showcase">
+            <div class="arrow" id="prevBrawler">◀</div>
+            <div class="brawler-card-large" id="brawlerCard">
+                <div class="brawler-emoji-large" id="brawlerEmoji">🔫</div>
+                <div class="brawler-name-large" id="brawlerName">Shelly</div>
+                <div class="brawler-stats-large">
+                    <span>❤️ <span id="brawlerHp">100</span></span>
+                    <span>⚡ <span id="brawlerSpeed">3.2</span></span>
+                    <span>🔫 <span id="brawlerDmg">20</span></span>
+                </div>
+            </div>
+            <div class="arrow" id="nextBrawler">▶</div>
         </div>
-        <div id="brawlerSelectScreen"></div>
-        <div class="menu-btn back-btn" id="backToMain" style="display: none;">🔙 ZURÜCK</div>
+        <div class="play-button" id="playBtn">⚔️ KÄMPFEN</div>
     </div>
 
+    <!-- Game Over -->
     <div id="gameOver">
         <div>💀 GAME OVER 💀</div>
         <div id="finalScore"></div>
         <button id="restartBtn">NEU STARTEN</button>
     </div>
 
+    <!-- Spiel Canvas -->
     <canvas id="gameCanvas"></canvas>
+    
+    <!-- HUD -->
     <div id="hud">
         <div id="wave">🌊 Welle 1</div>
         <div id="hpBar">
@@ -307,25 +321,35 @@
         </div>
         <div id="score">🏆 0</div>
     </div>
+
+    <!-- Joysticks -->
     <div id="leftJoystick" class="joystick"><div class="joystickKnob" id="leftKnob"></div></div>
     <div id="rightJoystick" class="joystick"><div class="joystickKnob" id="rightKnob"></div></div>
     <div id="specialButton"><span class="special-charge">0%</span><span>SPEZIAL</span></div>
 
     <script>
         (function() {
-            // ==================== GAMELOOP & VARIABLEN ====================
+            // ==================== GRUNDSETUP ====================
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d');
 
-            // UI-Elemente
+            // Lobby-Elemente
             const lobby = document.getElementById('lobby');
-            const brawlerSelectScreen = document.getElementById('brawlerSelectScreen');
-            const backToMain = document.getElementById('backToMain');
+            const prevBtn = document.getElementById('prevBrawler');
+            const nextBtn = document.getElementById('nextBrawler');
+            const brawlerEmoji = document.getElementById('brawlerEmoji');
+            const brawlerName = document.getElementById('brawlerName');
+            const brawlerHp = document.getElementById('brawlerHp');
+            const brawlerSpeed = document.getElementById('brawlerSpeed');
+            const brawlerDmg = document.getElementById('brawlerDmg');
             const playBtn = document.getElementById('playBtn');
-            const brawlerMenuBtn = document.getElementById('brawlerMenuBtn');
+
+            // GameOver
             const gameOverDiv = document.getElementById('gameOver');
             const finalScoreSpan = document.getElementById('finalScore');
             const restartBtn = document.getElementById('restartBtn');
+
+            // HUD
             const waveDisplay = document.getElementById('wave');
             const scoreDisplay = document.getElementById('score');
             const hpCurrent = document.getElementById('hpCurrent');
@@ -337,7 +361,7 @@
             const leftKnob = document.getElementById('leftKnob');
             const rightKnob = document.getElementById('rightKnob');
 
-            // Spielzustand
+            // ==================== SPIELVARIABLEN ====================
             let gameActive = false;
             let player = null;
             let enemies = [];
@@ -355,84 +379,83 @@
             let enemiesThisWave = 0;
             let enemiesSpawned = 0;
             const BASE_ENEMIES = 3;
-            let selectedBrawler = 'Shelly';
 
-            // Joystick-Zustände (Multi-Touch)
-            let leftStick = { active: false, id: null, dir: { x: 0, y: 0 } };
-            let rightStick = { active: false, id: null, dir: { x: 0, y: 0 }, tap: false, startX: 0, startY: 0 };
-
-            // ==================== BRAWLER DATEN ====================
-            const brawlers = {
-                Shelly: {
-                    name: 'Shelly', color: '#e67e22', colorLight: '#f39c12', speed: 3.2,
-                    hp: 100, maxHp: 100, emoji: '🔫', hat: '🧢',
+            // Brawler-Liste für Lobby
+            const brawlersList = [
+                { 
+                    name: 'Shelly', emoji: '🔫', hp: 100, speed: 3.2, damage: 20, color: '#e67e22',
                     attackDamage: 20, attackSpeed: 8, attackRange: 350, attackSpread: 5, attackCooldown: 300,
                     specialDamage: 40, specialSpeed: 12, specialRange: 450, specialSpread: 9,
                 },
-                Colt: {
-                    name: 'Colt', color: '#3498db', colorLight: '#5dade2', speed: 4.0,
-                    hp: 80, maxHp: 80, emoji: '🔫🔫', hat: '🤠',
+                { 
+                    name: 'Colt', emoji: '🔫🔫', hp: 80, speed: 4.0, damage: 30, color: '#3498db',
                     attackDamage: 30, attackSpeed: 14, attackRange: 600, attackSpread: 1, attackCooldown: 250,
                     specialDamage: 25, specialSpeed: 16, specialRange: 700, specialSpread: 8,
                 },
-                Bull: {
-                    name: 'Bull', color: '#c0392b', colorLight: '#e74c3c', speed: 2.5,
-                    hp: 130, maxHp: 130, emoji: '🐂', hat: '⛑️',
+                { 
+                    name: 'Bull', emoji: '🐂', hp: 130, speed: 2.5, damage: 50, color: '#c0392b',
                     attackDamage: 50, attackSpeed: 9, attackRange: 220, attackSpread: 1, attackCooldown: 350,
                     specialDamage: 90, specialSpeed: 22, specialRange: 300, specialSpread: 1,
                 }
-            };
+            ];
 
-            // ==================== UI AUFBAU ====================
-            function buildBrawlerCards() {
-                brawlerSelectScreen.innerHTML = '';
-                for (let key in brawlers) {
-                    let b = brawlers[key];
-                    let card = document.createElement('div');
-                    card.className = 'brawler-card' + (selectedBrawler === key ? ' selected' : '');
-                    card.setAttribute('data-brawler', key);
-                    card.innerHTML = `
-                        <div class="brawler-emoji">${b.emoji}</div>
-                        <div class="brawler-name">${b.name}</div>
-                        <div class="brawler-stats">❤️ ${b.maxHp} | ⚡ ${b.speed}<br>🔫 ${b.attackDamage}</div>
-                    `;
-                    card.addEventListener('click', () => {
-                        document.querySelectorAll('.brawler-card').forEach(c => c.classList.remove('selected'));
-                        card.classList.add('selected');
-                        selectedBrawler = key;
-                    });
-                    brawlerSelectScreen.appendChild(card);
-                }
+            let selectedBrawlerIndex = 0; // Shelly
+
+            // ==================== LOBBY AKTUALISIEREN ====================
+            function updateLobbyDisplay() {
+                const b = brawlersList[selectedBrawlerIndex];
+                brawlerEmoji.textContent = b.emoji;
+                brawlerName.textContent = b.name;
+                brawlerHp.textContent = b.hp;
+                brawlerSpeed.textContent = b.speed;
+                brawlerDmg.textContent = b.damage;
             }
-            buildBrawlerCards();
 
-            // Menü-Navigation
+            prevBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                selectedBrawlerIndex = (selectedBrawlerIndex - 1 + brawlersList.length) % brawlersList.length;
+                updateLobbyDisplay();
+            });
+
+            nextBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                selectedBrawlerIndex = (selectedBrawlerIndex + 1) % brawlersList.length;
+                updateLobbyDisplay();
+            });
+
+            // Touch-Events für Pfeile
+            prevBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                selectedBrawlerIndex = (selectedBrawlerIndex - 1 + brawlersList.length) % brawlersList.length;
+                updateLobbyDisplay();
+            });
+            nextBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                selectedBrawlerIndex = (selectedBrawlerIndex + 1) % brawlersList.length;
+                updateLobbyDisplay();
+            });
+
+            // Spiel starten
             playBtn.addEventListener('click', () => {
                 lobby.style.display = 'none';
                 startGame();
             });
-            brawlerMenuBtn.addEventListener('click', () => {
-                brawlerSelectScreen.style.display = 'flex';
-                backToMain.style.display = 'inline-block';
-                playBtn.style.display = 'none';
-                brawlerMenuBtn.style.display = 'none';
-            });
-            backToMain.addEventListener('click', () => {
-                brawlerSelectScreen.style.display = 'none';
-                backToMain.style.display = 'none';
-                playBtn.style.display = 'inline-block';
-                brawlerMenuBtn.style.display = 'inline-block';
+            playBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                lobby.style.display = 'none';
+                startGame();
             });
 
-            // Spiel starten
+            // ==================== SPIEL STARTEN ====================
             function startGame() {
-                let b = brawlers[selectedBrawler];
+                const b = brawlersList[selectedBrawlerIndex];
                 player = {
                     ...b,
                     x: canvas.width / 2,
                     y: canvas.height / 2,
-                    hp: b.maxHp,
-                    maxHp: b.maxHp
+                    hp: b.hp,
+                    maxHp: b.hp,
+                    hat: b.name === 'Shelly' ? '🧢' : (b.name === 'Colt' ? '🤠' : '⛑️')
                 };
                 gameActive = true;
                 wave = 1;
@@ -466,12 +489,16 @@
                     let y = player.y + Math.sin(angle) * distance;
                     x = Math.min(canvas.width - 50, Math.max(50, x));
                     y = Math.min(canvas.height - 50, Math.max(50, y));
+                    
+                    // Gegner-Schaden reduziert: 5 + Welle (vorher 3+Welle, aber jetzt sicher fair)
+                    const enemyDamage = 5 + wave; 
+                    
                     enemies.push({
                         x, y,
                         hp: 40 + wave * 8,
                         maxHp: 40 + wave * 8,
                         speed: 1.2 + wave * 0.1,
-                        damage: 3 + wave,
+                        damage: enemyDamage, // Reduziert!
                         radius: 25,
                         color: '#c13b3b',
                         eyeColor: '#ff0000'
@@ -481,7 +508,10 @@
                 }
             }
 
-            // ==================== JOYSTICK-TOUCH ====================
+            // ==================== JOYSTICK-TOUCH (Multi-Touch) ====================
+            let leftStick = { active: false, id: null, dir: { x: 0, y: 0 } };
+            let rightStick = { active: false, id: null, dir: { x: 0, y: 0 }, tap: false, startX: 0, startY: 0 };
+
             function handleTouchStart(e, isRight) {
                 e.preventDefault();
                 const touches = e.changedTouches;
@@ -579,7 +609,6 @@
                 }
             }
 
-            // Event-Listener
             leftJoystick.addEventListener('touchstart', (e) => handleTouchStart(e, false), { passive: false });
             leftJoystick.addEventListener('touchmove', (e) => handleTouchMove(e, false), { passive: false });
             leftJoystick.addEventListener('touchend', (e) => handleTouchEnd(e, false));
@@ -791,7 +820,7 @@
                     }
                 }
 
-                // Gegner-Schaden am Spieler
+                // Gegner-Schaden am Spieler (reduziert!)
                 for (let i = 0; i < enemies.length; i++) {
                     let e = enemies[i];
                     let d = Math.hypot(player.x - e.x, player.y - e.y);
@@ -825,7 +854,7 @@
                     startWave();
                 }
 
-                // Lebensdauer von Effekten
+                // Lebensdauer
                 for (let i = effects.length - 1; i >= 0; i--) {
                     effects[i].life--;
                     if (effects[i].life <= 0) effects.splice(i, 1);
@@ -1037,10 +1066,11 @@
             restartBtn.addEventListener('click', () => {
                 gameOverDiv.style.display = 'none';
                 lobby.style.display = 'flex';
-                brawlerSelectScreen.style.display = 'none';
-                backToMain.style.display = 'none';
-                playBtn.style.display = 'inline-block';
-                brawlerMenuBtn.style.display = 'inline-block';
+            });
+            restartBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                gameOverDiv.style.display = 'none';
+                lobby.style.display = 'flex';
             });
 
             // Canvas-Größe anpassen
@@ -1054,6 +1084,9 @@
             }
             window.addEventListener('resize', resizeCanvas);
             resizeCanvas();
+
+            // Initiale Lobby anzeigen
+            updateLobbyDisplay();
         })();
     </script>
 </body>
