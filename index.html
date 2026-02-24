@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KILL STARS - ULTIMATIVE + RAND SPAWN</title>
+    <title>KILL STARS - ULTIMATIVE + INTELLIGENTE BOTS</title>
     <style>
         /* ========== ALLE STYLES (wie gehabt) ========== */
         * {
@@ -637,7 +637,7 @@
             </div>
             <div class="map-btn" data-map="ice" id="mapIce">
                 <span>❄️ EIS</span>
-                <span class="map-desc">3vs3 (Rand-Spawn)</span>
+                <span class="map-desc">3vs3 (intelligente Bots)</span>
             </div>
         </div>
 
@@ -1113,6 +1113,35 @@
                     entity.x = Math.min(worldWidth - (entity.radius||25), Math.max((entity.radius||25), entity.x));
                     entity.y = Math.min(worldWidth - (entity.radius||25), Math.max((entity.radius||25), entity.y));
                 }
+            }
+
+            // ==================== INTELLIGENTE BEWEGUNG ====================
+            function findFreeDirection(entity, targetX, targetY) {
+                let idealDx = targetX - entity.x;
+                let idealDy = targetY - entity.y;
+                let idealLen = Math.hypot(idealDx, idealDy);
+                if (idealLen < 1) return { dx: 0, dy: 0 };
+                let idealDir = { x: idealDx / idealLen, y: idealDy / idealLen };
+                // Prüfe, ob die ideale Richtung frei ist
+                let testX = entity.x + idealDir.x * entity.speed;
+                let testY = entity.y + idealDir.y * entity.speed;
+                if (!collidesWithWall(testX, testY, entity.radius)) {
+                    return { dx: idealDir.x * entity.speed, dy: idealDir.y * entity.speed };
+                }
+                // Sonst suche in 20°-Schritten links und rechts
+                for (let angle = 0.2; angle <= 1.0; angle += 0.2) {
+                    for (let sign of [-1, 1]) {
+                        let dirX = Math.cos(Math.atan2(idealDir.y, idealDir.x) + sign * angle);
+                        let dirY = Math.sin(Math.atan2(idealDir.y, idealDir.x) + sign * angle);
+                        testX = entity.x + dirX * entity.speed;
+                        testY = entity.y + dirY * entity.speed;
+                        if (!collidesWithWall(testX, testY, entity.radius)) {
+                            return { dx: dirX * entity.speed, dy: dirY * entity.speed };
+                        }
+                    }
+                }
+                // Wenn nichts gefunden, bewege dich gar nicht
+                return { dx: 0, dy: 0 };
             }
 
             // ==================== KAMERA ====================
@@ -1631,7 +1660,7 @@
                 }
             }
 
-            // ==================== KI ====================
+            // ==================== KI FÜR ALLE MODI ====================
             function updateEnemies() {
                 const now = Date.now();
                 enemies.forEach(e => {
@@ -1663,38 +1692,25 @@
                             }
                         }
                         if (len > 0) {
-                            let moveX = (dx/len) * e.speed;
-                            let moveY = (dy/len) * e.speed;
-                            resolveCollision(e, moveX, moveY);
+                            let move = findFreeDirection(e, e.targetX, e.targetY);
+                            resolveCollision(e, move.dx, move.dy);
                         }
                         if (playerVisible) {
                             e.state = 'chase';
                         }
                     } else if (e.state === 'chase') {
-                        let dx = player.x - e.x;
-                        let dy = player.y - e.y;
-                        let len = Math.hypot(dx, dy);
-                        if (len > 0) {
-                            let moveX = (dx/len) * e.speed;
-                            let moveY = (dy/len) * e.speed;
-                            resolveCollision(e, moveX, moveY);
-                        }
+                        let move = findFreeDirection(e, player.x, player.y);
+                        resolveCollision(e, move.dx, move.dy);
                         e.lastSeenPlayer = { x: player.x, y: player.y };
                         if (!playerVisible) {
                             e.state = 'search';
                             e.searchTimer = 120;
                         }
                     } else if (e.state === 'search') {
-                        let dx = e.lastSeenPlayer.x - e.x;
-                        let dy = e.lastSeenPlayer.y - e.y;
-                        let len = Math.hypot(dx, dy);
-                        if (len > 0) {
-                            let moveX = (dx/len) * e.speed;
-                            let moveY = (dy/len) * e.speed;
-                            resolveCollision(e, moveX, moveY);
-                        }
+                        let move = findFreeDirection(e, e.lastSeenPlayer.x, e.lastSeenPlayer.y);
+                        resolveCollision(e, move.dx, move.dy);
                         e.searchTimer--;
-                        if (e.searchTimer <= 0 || (len < 20)) {
+                        if (e.searchTimer <= 0 || (Math.hypot(e.x - e.lastSeenPlayer.x, e.y - e.lastSeenPlayer.y) < 20)) {
                             e.state = 'patrol';
                         }
                         if (playerVisible) {
@@ -1964,6 +1980,7 @@
             }
 
             function updateTeamBots() {
+                // Allies
                 allies.forEach(bot => {
                     if (bot.hp <= 0) return;
                     let target = null;
@@ -1974,32 +1991,32 @@
                         if (d < minDist) { minDist = d; target = e; }
                     });
                     if (target) {
-                        let dx = target.x - bot.x;
-                        let dy = target.y - bot.y;
-                        let len = Math.hypot(dx, dy);
-                        if (len > 0) {
-                            let moveX = (dx/len) * bot.speed;
-                            let moveY = (dy/len) * bot.speed;
-                            resolveCollision(bot, moveX, moveY);
-                        }
+                        let move = findFreeDirection(bot, target.x, target.y);
+                        resolveCollision(bot, move.dx, move.dy);
                         let now = Date.now();
                         if (now - bot.lastShot > bot.attackCooldown) {
                             bot.lastShot = now;
-                            let dir = { x: dx/len, y: dy/len };
-                            let angle = Math.atan2(dir.y, dir.x);
-                            projectiles.push({
-                                x: bot.x, y: bot.y,
-                                vx: Math.cos(angle) * bot.attackSpeed,
-                                vy: Math.sin(angle) * bot.attackSpeed,
-                                damage: bot.attackDamage,
-                                range: 400,
-                                owner: 'ally',
-                                size: 6,
-                                color: '#00ff00'
-                            });
+                            let dx = target.x - bot.x;
+                            let dy = target.y - bot.y;
+                            let len = Math.hypot(dx, dy);
+                            if (len > 0) {
+                                let dir = { x: dx/len, y: dy/len };
+                                let angle = Math.atan2(dir.y, dir.x);
+                                projectiles.push({
+                                    x: bot.x, y: bot.y,
+                                    vx: Math.cos(angle) * bot.attackSpeed,
+                                    vy: Math.sin(angle) * bot.attackSpeed,
+                                    damage: bot.attackDamage,
+                                    range: 400,
+                                    owner: 'ally',
+                                    size: 6,
+                                    color: '#00ff00'
+                                });
+                            }
                         }
                     }
                 });
+                // Gegner-Bots
                 enemies.forEach(bot => {
                     if (bot.hp <= 0) return;
                     let targets = [];
@@ -2013,29 +2030,28 @@
                         if (d < minDist) { minDist = d; target = t; }
                     });
                     if (target) {
-                        let dx = target.x - bot.x;
-                        let dy = target.y - bot.y;
-                        let len = Math.hypot(dx, dy);
-                        if (len > 0) {
-                            let moveX = (dx/len) * bot.speed;
-                            let moveY = (dy/len) * bot.speed;
-                            resolveCollision(bot, moveX, moveY);
-                        }
+                        let move = findFreeDirection(bot, target.x, target.y);
+                        resolveCollision(bot, move.dx, move.dy);
                         let now = Date.now();
                         if (now - bot.lastShot > bot.attackCooldown) {
                             bot.lastShot = now;
-                            let dir = { x: dx/len, y: dy/len };
-                            let angle = Math.atan2(dir.y, dir.x);
-                            projectiles.push({
-                                x: bot.x, y: bot.y,
-                                vx: Math.cos(angle) * bot.attackSpeed,
-                                vy: Math.sin(angle) * bot.attackSpeed,
-                                damage: bot.attackDamage,
-                                range: 400,
-                                owner: 'enemy',
-                                size: 6,
-                                color: '#ff0000'
-                            });
+                            let dx = target.x - bot.x;
+                            let dy = target.y - bot.y;
+                            let len = Math.hypot(dx, dy);
+                            if (len > 0) {
+                                let dir = { x: dx/len, y: dy/len };
+                                let angle = Math.atan2(dir.y, dir.x);
+                                projectiles.push({
+                                    x: bot.x, y: bot.y,
+                                    vx: Math.cos(angle) * bot.attackSpeed,
+                                    vy: Math.sin(angle) * bot.attackSpeed,
+                                    damage: bot.attackDamage,
+                                    range: 400,
+                                    owner: 'enemy',
+                                    size: 6,
+                                    color: '#ff0000'
+                                });
+                            }
                         }
                     }
                 });
