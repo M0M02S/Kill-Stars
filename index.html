@@ -182,8 +182,8 @@
         /* Joysticks */
         .joystick {
             position: absolute;
-            width: min(140px, 30vw);
-            height: min(140px, 30vw);
+            width: min(130px, 28vw);
+            height: min(130px, 28vw);
             background: rgba(30,30,30,0.7);
             border-radius: 50%;
             touch-action: none;
@@ -193,12 +193,12 @@
             box-shadow: 0 0 30px black;
         }
         #leftJoystick {
-            bottom: min(30px, 5vh);
-            left: min(30px, 5vw);
+            bottom: max(30px, 6vh);
+            left: max(20px, 4vw);
         }
         #rightJoystick {
-            bottom: min(30px, 5vh);
-            right: min(30px, 5vw);
+            bottom: max(30px, 6vh);
+            right: max(150px, 22vw);
         }
         .joystickKnob {
             position: absolute;
@@ -213,18 +213,19 @@
             border: 3px solid #ffd966;
             transition: 0.02s;
         }
+        /* Spezial-Button - jetzt oberhalb des rechten Joysticks */
         #specialButton {
             position: absolute;
-            bottom: min(30px, 5vh);
-            right: min(30px, 5vw);
-            width: min(110px, 25vw);
-            height: min(110px, 25vw);
+            bottom: max(180px, 24vh);
+            right: max(30px, 5vw);
+            width: min(100px, 22vw);
+            height: min(100px, 22vw);
             border-radius: 50%;
             background: #444;
             border: 5px solid #fff;
             color: white;
             font-weight: bold;
-            font-size: min(18px, 4vw);
+            font-size: min(16px, 3.5vw);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -312,7 +313,7 @@
 
     <script>
         (function() {
-            // Canvas und Context
+            // ==================== GAMELOOP & VARIABLEN ====================
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d');
 
@@ -356,11 +357,11 @@
             const BASE_ENEMIES = 3;
             let selectedBrawler = 'Shelly';
 
-            // Joystick-Zustände (mit Touch-IDs für Multi-Touch)
+            // Joystick-Zustände (Multi-Touch)
             let leftStick = { active: false, id: null, dir: { x: 0, y: 0 } };
             let rightStick = { active: false, id: null, dir: { x: 0, y: 0 }, tap: false, startX: 0, startY: 0 };
 
-            // Brawler-Daten
+            // ==================== BRAWLER DATEN ====================
             const brawlers = {
                 Shelly: {
                     name: 'Shelly', color: '#e67e22', colorLight: '#f39c12', speed: 3.2,
@@ -382,7 +383,7 @@
                 }
             };
 
-            // Brawler-Karten erstellen
+            // ==================== UI AUFBAU ====================
             function buildBrawlerCards() {
                 brawlerSelectScreen.innerHTML = '';
                 for (let key in brawlers) {
@@ -470,7 +471,7 @@
                         hp: 40 + wave * 8,
                         maxHp: 40 + wave * 8,
                         speed: 1.2 + wave * 0.1,
-                        damage: 3 + wave, // Fairer Schaden
+                        damage: 3 + wave,
                         radius: 25,
                         color: '#c13b3b',
                         eyeColor: '#ff0000'
@@ -480,7 +481,7 @@
                 }
             }
 
-            // Joystick-Event-Handler mit Multi-Touch
+            // ==================== JOYSTICK-TOUCH ====================
             function handleTouchStart(e, isRight) {
                 e.preventDefault();
                 const touches = e.changedTouches;
@@ -578,7 +579,7 @@
                 }
             }
 
-            // Event-Listener für Joysticks
+            // Event-Listener
             leftJoystick.addEventListener('touchstart', (e) => handleTouchStart(e, false), { passive: false });
             leftJoystick.addEventListener('touchmove', (e) => handleTouchMove(e, false), { passive: false });
             leftJoystick.addEventListener('touchend', (e) => handleTouchEnd(e, false));
@@ -589,7 +590,7 @@
             rightJoystick.addEventListener('touchend', (e) => handleTouchEnd(e, true));
             rightJoystick.addEventListener('touchcancel', (e) => handleTouchEnd(e, true));
 
-            // Schießfunktionen
+            // ==================== SCHIESSEN ====================
             function autoShoot() {
                 if (!player || !gameActive) return;
                 let closest = null;
@@ -649,7 +650,7 @@
                 projectiles.push(...bullets);
             }
 
-            // Spezial
+            // ==================== SPEZIAL ====================
             function useSpecial() {
                 if (!specialReady || !player || !gameActive) return;
                 let dir;
@@ -701,7 +702,7 @@
                 useSpecial();
             });
 
-            // Hilfsfunktionen
+            // ==================== HILFSFUNKTIONEN ====================
             function addDamageNumber(x, y, amount) {
                 damageNumbers.push({ x, y: y-20, value: amount, life: 60 });
             }
@@ -712,7 +713,6 @@
                 effects.push({ x, y, life: 20, maxLife: 20 });
             }
 
-            // UI aktualisieren
             function updateUI() {
                 if (!player) return;
                 waveDisplay.innerHTML = `🌊 Welle ${wave}`;
@@ -726,11 +726,11 @@
                 }
             }
 
-            // Update-Loop
+            // ==================== UPDATE ====================
             function update() {
                 if (!gameActive || !player) return;
 
-                // Bewegung (linker Stick)
+                // Bewegung
                 if (leftStick.active) {
                     player.x += leftStick.dir.x * player.speed;
                     player.y += leftStick.dir.y * player.speed;
@@ -825,7 +825,7 @@
                     startWave();
                 }
 
-                // Lebensdauer von Effekten und Münzen
+                // Lebensdauer von Effekten
                 for (let i = effects.length - 1; i >= 0; i--) {
                     effects[i].life--;
                     if (effects[i].life <= 0) effects.splice(i, 1);
@@ -842,14 +842,13 @@
                 updateUI();
             }
 
-            // Zeichnen
+            // ==================== ZEICHNEN ====================
             function draw() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
                 // Hintergrund
                 ctx.fillStyle = '#5aa45a';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                // Gras-Muster
                 ctx.fillStyle = '#6fb56f';
                 for (let i = 0; i < 30; i++) {
                     ctx.beginPath();
@@ -864,7 +863,6 @@
                     ctx.beginPath();
                     ctx.moveTo(i, 0);
                     ctx.lineTo(i, canvas.height);
-                    ctx.strokeStyle = '#3d8c5c';
                     ctx.stroke();
                 }
                 for (let i = 0; i < canvas.height; i += 70) {
@@ -895,7 +893,7 @@
                     ctx.stroke();
                 }
 
-                // Effekte (Explosionen)
+                // Effekte
                 effects.forEach(e => {
                     let progress = e.life / e.maxLife;
                     ctx.beginPath();
@@ -936,7 +934,6 @@
                     ctx.save();
                     ctx.shadowColor = 'black';
                     ctx.shadowBlur = 15;
-                    // Körper
                     ctx.fillStyle = e.color;
                     ctx.beginPath();
                     ctx.arc(e.x, e.y, e.radius, 0, 2*Math.PI);
@@ -944,7 +941,7 @@
                     ctx.strokeStyle = '#5a3a2a';
                     ctx.lineWidth = 4;
                     ctx.stroke();
-                    // Augen
+
                     ctx.fillStyle = 'white';
                     ctx.beginPath();
                     ctx.arc(e.x-10, e.y-8, 7, 0, 2*Math.PI);
@@ -959,7 +956,7 @@
                     ctx.beginPath();
                     ctx.arc(e.x+10, e.y-8, 4, 0, 2*Math.PI);
                     ctx.fill();
-                    // Augenbrauen
+
                     ctx.beginPath();
                     ctx.moveTo(e.x-18, e.y-20);
                     ctx.lineTo(e.x-6, e.y-16);
@@ -970,7 +967,7 @@
                     ctx.moveTo(e.x+18, e.y-20);
                     ctx.lineTo(e.x+6, e.y-16);
                     ctx.stroke();
-                    // Lebensbalken
+
                     ctx.shadowBlur = 0;
                     ctx.fillStyle = '#c0392b';
                     ctx.fillRect(e.x-25, e.y-40, 50, 6);
@@ -983,7 +980,6 @@
                 ctx.save();
                 ctx.shadowColor = 'white';
                 ctx.shadowBlur = 25;
-                // Körper
                 ctx.fillStyle = player.color;
                 ctx.beginPath();
                 ctx.arc(player.x, player.y, 30, 0, 2*Math.PI);
@@ -991,7 +987,7 @@
                 ctx.strokeStyle = 'gold';
                 ctx.lineWidth = 5;
                 ctx.stroke();
-                // Augen
+
                 ctx.fillStyle = 'white';
                 ctx.beginPath();
                 ctx.arc(player.x-12, player.y-10, 8, 0, 2*Math.PI);
@@ -1006,13 +1002,11 @@
                 ctx.beginPath();
                 ctx.arc(player.x+12, player.y-10, 4, 0, 2*Math.PI);
                 ctx.fill();
-                // Hut / Accessoire
+
                 ctx.font = '30px Arial';
                 ctx.fillStyle = 'white';
                 ctx.shadowBlur = 10;
                 ctx.fillText(player.hat, player.x-15, player.y-50);
-                // Emoji
-                ctx.font = '30px Arial';
                 ctx.fillText(player.emoji, player.x-20, player.y-80);
                 ctx.restore();
 
@@ -1031,7 +1025,7 @@
                 ctx.restore();
             }
 
-            // GameLoop
+            // ==================== GAMELOOP ====================
             function gameLoop() {
                 update();
                 draw();
