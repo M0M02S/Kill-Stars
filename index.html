@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KILL STARS - ULTIMATE + INTELLIGENTE KI</title>
+    <title>KILL STARS - ULTIMATIVE + FIXES</title>
     <style>
         /* ========== ALLE STYLES (wie gehabt) ========== */
         * {
@@ -633,11 +633,11 @@
             </div>
             <div class="map-btn" data-map="desert" id="mapDesert">
                 <span>🏜️ WÜSTE</span>
-                <span class="map-desc">Showdown (Felsen/Kakteen)</span>
+                <span class="map-desc">Showdown (große Map)</span>
             </div>
             <div class="map-btn" data-map="ice" id="mapIce">
                 <span>❄️ EIS</span>
-                <span class="map-desc">3vs3 Knockout (Eissäulen)</span>
+                <span class="map-desc">3vs3 (große Map)</span>
             </div>
         </div>
 
@@ -801,11 +801,15 @@
             const sendChatBtn = document.getElementById('sendChatBtn');
             const startMultiplayerBtn = document.getElementById('startMultiplayerBtn');
 
-            // ==================== MAP-DEFINITION MIT VIELEN HINDERNISSEN ====================
+            // ==================== MAP-DEFINITION MIT WELTGRÖSSEN ====================
+            const WORLD_SIZE_SHOWDOWN = 2000;
+            const WORLD_SIZE_TEAM = 1500; // für 3vs3 größere Welt
+
             const maps = {
                 grass: {
                     id: 'grass', name: 'Grün', bgColor: '#4caf7a', patternColor: '#3d8c5c', lightColor: '#6fb56f',
                     mode: 'waves',
+                    worldWidth: 0, // keine Welt, Bildschirmgröße
                     obstacles: [
                         // Hecken (Wände)
                         { x: 200, y: 150, w: 80, h: 80, type: 'wall', color: '#2d5a2d' },
@@ -823,7 +827,8 @@
                 },
                 desert: {
                     id: 'desert', name: 'Wüste', bgColor: '#c99b6b', patternColor: '#a87b4f', lightColor: '#dab07f',
-                    mode: 'showdown', worldWidth: 2000, worldHeight: 2000,
+                    mode: 'showdown',
+                    worldWidth: WORLD_SIZE_SHOWDOWN,
                     obstacles: [
                         // Felsen (Wände)
                         { x: 300, y: 250, w: 100, h: 100, type: 'wall', color: '#8b5a2b' },
@@ -833,7 +838,7 @@
                         { x: 500, y: 900, w: 90, h: 90, type: 'wall', color: '#8b5a2b' },
                         { x: 1300, y: 200, w: 100, h: 80, type: 'wall', color: '#8b5a2b' },
                         { x: 1800, y: 500, w: 110, h: 70, type: 'wall', color: '#8b5a2b' },
-                        // Kakteen (Büsche – bieten Deckung)
+                        // Kakteen (Büsche)
                         { x: 400, y: 150, w: 40, h: 80, type: 'bush', color: '#5d8c4a' },
                         { x: 800, y: 800, w: 50, h: 50, type: 'bush', color: '#5d8c4a' },
                         { x: 1200, y: 350, w: 60, h: 60, type: 'bush', color: '#5d8c4a' },
@@ -846,26 +851,28 @@
                 ice: {
                     id: 'ice', name: 'Eis', bgColor: '#a8d0e6', patternColor: '#7fa9c4', lightColor: '#c0e0ff',
                     mode: 'team',
+                    worldWidth: WORLD_SIZE_TEAM,
                     obstacles: [
                         // Eissäulen (Wände)
-                        { x: 150, y: 150, w: 50, h: 100, type: 'wall', color: '#b0e0ff' },
-                        { x: 350, y: 400, w: 70, h: 70, type: 'wall', color: '#b0e0ff' },
-                        { x: 550, y: 250, w: 90, h: 90, type: 'wall', color: '#b0e0ff' },
-                        { x: 750, y: 600, w: 60, h: 120, type: 'wall', color: '#b0e0ff' },
-                        { x: 450, y: 700, w: 80, h: 80, type: 'wall', color: '#b0e0ff' },
-                        { x: 650, y: 450, w: 100, h: 50, type: 'wall', color: '#b0e0ff' },
+                        { x: 200, y: 200, w: 50, h: 100, type: 'wall', color: '#b0e0ff' },
+                        { x: 400, y: 500, w: 70, h: 70, type: 'wall', color: '#b0e0ff' },
+                        { x: 600, y: 300, w: 90, h: 90, type: 'wall', color: '#b0e0ff' },
+                        { x: 800, y: 700, w: 60, h: 120, type: 'wall', color: '#b0e0ff' },
+                        { x: 1000, y: 400, w: 80, h: 80, type: 'wall', color: '#b0e0ff' },
+                        { x: 1200, y: 600, w: 100, h: 50, type: 'wall', color: '#b0e0ff' },
                         // Schneewehen (Büsche)
-                        { x: 200, y: 300, w: 80, h: 40, type: 'bush', color: '#ffffff' },
-                        { x: 500, y: 500, w: 60, h: 60, type: 'bush', color: '#ffffff' },
-                        { x: 700, y: 200, w: 70, h: 70, type: 'bush', color: '#ffffff' },
-                        { x: 850, y: 450, w: 50, h: 80, type: 'bush', color: '#ffffff' },
-                        { x: 300, y: 550, w: 90, h: 50, type: 'bush', color: '#ffffff' },
-                        { x: 600, y: 350, w: 60, h: 60, type: 'bush', color: '#ffffff' }
+                        { x: 250, y: 350, w: 80, h: 40, type: 'bush', color: '#ffffff' },
+                        { x: 550, y: 550, w: 60, h: 60, type: 'bush', color: '#ffffff' },
+                        { x: 750, y: 250, w: 70, h: 70, type: 'bush', color: '#ffffff' },
+                        { x: 950, y: 500, w: 50, h: 80, type: 'bush', color: '#ffffff' },
+                        { x: 1150, y: 650, w: 90, h: 50, type: 'bush', color: '#ffffff' },
+                        { x: 1350, y: 400, w: 60, h: 60, type: 'bush', color: '#ffffff' }
                     ]
                 }
             };
             let selectedMap = 'grass';
             let obstacles = maps.grass.obstacles;
+            let worldWidth = 0; // 0 bedeutet Bildschirmgröße
 
             mapGrass.addEventListener('click', () => {
                 selectedMap = 'grass';
@@ -1093,7 +1100,7 @@
                 return false;
             }
 
-            // Verbesserte Kollisionsauflösung mit Ausweichen
+            // Verbesserte Kollisionsauflösung
             function resolveCollision(entity, dx, dy) {
                 let originalX = entity.x;
                 let originalY = entity.y;
@@ -1107,23 +1114,31 @@
                 if (collidesWithWall(entity.x, entity.y, entity.radius || 25)) {
                     entity.y = originalY;
                 }
-                // Falls immer noch Kollision (z.B. diagonal), bleib stehen
+                // Falls immer noch Kollision, bleib stehen
                 if (collidesWithWall(entity.x, entity.y, entity.radius || 25)) {
                     entity.x = originalX;
                     entity.y = originalY;
                 }
+                // Weltgrenzen (falls Welt definiert)
+                if (worldWidth > 0) {
+                    entity.x = Math.min(worldWidth - (entity.radius||25), Math.max((entity.radius||25), entity.x));
+                    entity.y = Math.min(worldWidth - (entity.radius||25), Math.max((entity.radius||25), entity.y));
+                }
             }
 
-            // ==================== KAMERA (für Showdown) ====================
+            // ==================== KAMERA ====================
             let camera = { x: 0, y: 0 };
-            const WORLD_SIZE = 2000;
 
             function updateCamera() {
-                if (!player || gameMode !== 'showdown') return;
+                if (!player) return;
+                let worldSize = 0;
+                if (gameMode === 'showdown') worldSize = WORLD_SIZE_SHOWDOWN;
+                else if (gameMode === 'team') worldSize = WORLD_SIZE_TEAM;
+                else return; // keine Kamera für waves
                 camera.x = player.x - canvas.width / 2;
                 camera.y = player.y - canvas.height / 2;
-                camera.x = Math.max(0, Math.min(camera.x, WORLD_SIZE - canvas.width));
-                camera.y = Math.max(0, Math.min(camera.y, WORLD_SIZE - canvas.height));
+                camera.x = Math.max(0, Math.min(camera.x, worldSize - canvas.width));
+                camera.y = Math.max(0, Math.min(camera.y, worldSize - canvas.height));
             }
 
             // ==================== MULTIPLAYER (nur Lobby) ====================
@@ -1390,7 +1405,7 @@
             rightJoystick.addEventListener('touchend', (e) => handleTouchEnd(e, true));
             rightJoystick.addEventListener('touchcancel', (e) => handleTouchEnd(e, true));
 
-            // Spezial-Zielen (wie gehabt)
+            // Spezial-Zielen
             specialBtn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 if (!specialReady || !gameActive || !player) return;
@@ -1544,9 +1559,10 @@
                     const dashDistance = 150;
                     const targetX = player.x + dir.x * dashDistance;
                     const targetY = player.y + dir.y * dashDistance;
-                    if (gameMode === 'showdown') {
-                        player.x = Math.min(WORLD_SIZE-40, Math.max(40, targetX));
-                        player.y = Math.min(WORLD_SIZE-40, Math.max(40, targetY));
+                    // Weltgrenzen beachten
+                    if (worldWidth > 0) {
+                        player.x = Math.min(worldWidth - 40, Math.max(40, targetX));
+                        player.y = Math.min(worldWidth - 40, Math.max(40, targetY));
                     } else {
                         player.x = Math.min(canvas.width-40, Math.max(40, targetX));
                         player.y = Math.min(canvas.height-40, Math.max(40, targetY));
@@ -1627,7 +1643,7 @@
                 }
             }
 
-            // ==================== VERBESSERTE KI FÜR ALLE MODI ====================
+            // ==================== KI FÜR ALLE MODI ====================
             function updateEnemies() {
                 const now = Date.now();
                 enemies.forEach(e => {
@@ -1649,12 +1665,12 @@
                         let dy = e.targetY - e.y;
                         let len = Math.hypot(dx, dy);
                         if (len < 20) {
-                            // Neues Ziel innerhalb der Map
-                            if (gameMode === 'showdown') {
+                            // Neues Ziel innerhalb der Welt
+                            if (worldWidth > 0) {
                                 e.targetX = e.x + (Math.random()-0.5)*300;
                                 e.targetY = e.y + (Math.random()-0.5)*300;
-                                e.targetX = Math.min(WORLD_SIZE-30, Math.max(30, e.targetX));
-                                e.targetY = Math.min(WORLD_SIZE-30, Math.max(30, e.targetY));
+                                e.targetX = Math.min(worldWidth-30, Math.max(30, e.targetX));
+                                e.targetY = Math.min(worldWidth-30, Math.max(30, e.targetY));
                             } else {
                                 e.targetX = e.x + (Math.random()-0.5)*200;
                                 e.targetY = e.y + (Math.random()-0.5)*200;
@@ -1684,7 +1700,7 @@
 
                         if (!playerVisible) {
                             e.state = 'search';
-                            e.searchTimer = 120; // 2 Sekunden
+                            e.searchTimer = 120;
                         }
                     } else if (e.state === 'search') {
                         let dx = e.lastSeenPlayer.x - e.x;
@@ -1762,9 +1778,9 @@
             }
 
             function updateShowdown() {
-                updateEnemies(); // gleiche KI
+                updateEnemies();
 
-                // Power-Cubes von Gegnern (für Showdown)
+                // Power-Cubes von Gegnern
                 for (let i = 0; i < enemies.length; i++) {
                     let e = enemies[i];
                     for (let k = powerCubes.length-1; k>=0; k--) {
@@ -1803,8 +1819,8 @@
                     let toSpawn = Math.min(12 - powerCubes.length, 2);
                     for (let i=0; i<toSpawn; i++) {
                         powerCubes.push({
-                            x: 100 + Math.random()*(WORLD_SIZE-200),
-                            y: 100 + Math.random()*(WORLD_SIZE-200),
+                            x: 100 + Math.random()*(WORLD_SIZE_SHOWDOWN-200),
+                            y: 100 + Math.random()*(WORLD_SIZE_SHOWDOWN-200),
                             radius: 15,
                             color: '#b8860b'
                         });
@@ -1871,8 +1887,8 @@
                 if (!gameActive || gameMode !== 'showdown') return;
                 let count = showdownFinalMode ? 1 : showdownRemainingEnemies;
                 for (let i = 0; i < count; i++) {
-                    let x = 100 + Math.random() * (WORLD_SIZE - 200);
-                    let y = 100 + Math.random() * (WORLD_SIZE - 200);
+                    let x = 100 + Math.random() * (WORLD_SIZE_SHOWDOWN - 200);
+                    let y = 100 + Math.random() * (WORLD_SIZE_SHOWDOWN - 200);
                     enemies.push({
                         x, y,
                         hp: 80 + wave * 10,
@@ -1895,8 +1911,8 @@
 
             function spawnPowerCubes(count) {
                 for (let i = 0; i < count; i++) {
-                    let x = 100 + Math.random() * (WORLD_SIZE - 200);
-                    let y = 100 + Math.random() * (WORLD_SIZE - 200);
+                    let x = 100 + Math.random() * (WORLD_SIZE_SHOWDOWN - 200);
+                    let y = 100 + Math.random() * (WORLD_SIZE_SHOWDOWN - 200);
                     powerCubes.push({
                         x, y,
                         radius: 15,
@@ -1956,15 +1972,15 @@
             }
 
             function positionTeamMembers() {
-                let startX = 150;
-                let startY = canvas.height / 2;
-                player.x = startX;
-                player.y = startY - 50;
-                if (allies[0]) { allies[0].x = startX + 50; allies[0].y = startY + 50; }
-                if (allies[1]) { allies[1].x = startX + 100; allies[1].y = startY - 30; }
-                startX = canvas.width - 150;
+                // In der großen Welt starten alle in der Mitte
+                let startX = WORLD_SIZE_TEAM / 2;
+                let startY = WORLD_SIZE_TEAM / 2;
+                player.x = startX - 100;
+                player.y = startY;
+                if (allies[0]) { allies[0].x = startX - 50; allies[0].y = startY + 50; }
+                if (allies[1]) { allies[1].x = startX; allies[1].y = startY - 30; }
                 enemies.forEach((e, i) => {
-                    e.x = startX - i * 60;
+                    e.x = startX + 100 + i * 60;
                     e.y = startY + (i - 1) * 50;
                 });
             }
@@ -2107,8 +2123,8 @@
                         continue;
                     }
                     // Weltgrenzen
-                    if (gameMode === 'showdown') {
-                        if (p.x<0 || p.x>WORLD_SIZE || p.y<0 || p.y>WORLD_SIZE) {
+                    if (worldWidth > 0) {
+                        if (p.x<0 || p.x>worldWidth || p.y<0 || p.y>worldWidth) {
                             projectiles.splice(i,1);
                             continue;
                         }
@@ -2215,28 +2231,30 @@
                 updateUI();
             }
 
-            // ==================== ZEICHNEN (mit detaillierteren Hindernissen) ====================
-            function worldToScreenX(wx) { return gameMode === 'showdown' ? wx - camera.x : wx; }
-            function worldToScreenY(wy) { return gameMode === 'showdown' ? wy - camera.y : wy; }
+            // ==================== ZEICHNEN ====================
+            function worldToScreenX(wx) {
+                if (worldWidth > 0) return wx - camera.x;
+                return wx;
+            }
+            function worldToScreenY(wy) {
+                if (worldWidth > 0) return wy - camera.y;
+                return wy;
+            }
 
             function drawObstacle(o) {
                 let sx = worldToScreenX(o.x);
                 let sy = worldToScreenY(o.y);
                 ctx.save();
-                // Schatten
                 ctx.shadowColor = 'rgba(0,0,0,0.5)';
                 ctx.shadowBlur = 10;
                 ctx.shadowOffsetX = 3;
                 ctx.shadowOffsetY = 3;
-                // Grundfarbe
                 ctx.fillStyle = o.color;
                 ctx.fillRect(sx, sy, o.w, o.h);
-                // Details (Streifen, Punkte)
                 if (o.type === 'wall') {
                     ctx.strokeStyle = '#000';
                     ctx.lineWidth = 2;
                     ctx.strokeRect(sx, sy, o.w, o.h);
-                    // Muster
                     ctx.fillStyle = 'rgba(0,0,0,0.2)';
                     for (let i = 0; i < o.w; i+=10) {
                         ctx.fillRect(sx+i, sy, 2, o.h);
@@ -2255,13 +2273,14 @@
             function draw() {
                 ctx.clearRect(0,0,canvas.width,canvas.height);
                 const map = maps[selectedMap];
-                if (gameMode === 'showdown') {
+                if (worldWidth > 0) {
+                    // Große Welt
                     ctx.fillStyle = map.bgColor;
                     ctx.fillRect(0,0,canvas.width,canvas.height);
                     ctx.fillStyle = map.lightColor;
                     for (let i=0;i<50;i++) {
-                        let wx = Math.random() * WORLD_SIZE;
-                        let wy = Math.random() * WORLD_SIZE;
+                        let wx = Math.random() * worldWidth;
+                        let wy = Math.random() * worldWidth;
                         let sx = worldToScreenX(wx);
                         let sy = worldToScreenY(wy);
                         if (sx > -20 && sx < canvas.width+20 && sy > -20 && sy < canvas.height+20) {
@@ -2273,15 +2292,16 @@
                     ctx.globalAlpha=1;
                     ctx.strokeStyle = map.patternColor;
                     ctx.lineWidth=2;
-                    for (let i=0;i<WORLD_SIZE;i+=200) {
+                    for (let i=0;i<worldWidth;i+=200) {
                         let sx = worldToScreenX(i);
                         if (sx>=0 && sx<=canvas.width) { ctx.beginPath(); ctx.moveTo(sx,0); ctx.lineTo(sx,canvas.height); ctx.stroke(); }
                     }
-                    for (let i=0;i<WORLD_SIZE;i+=200) {
+                    for (let i=0;i<worldWidth;i+=200) {
                         let sy = worldToScreenY(i);
                         if (sy>=0 && sy<=canvas.height) { ctx.beginPath(); ctx.moveTo(0,sy); ctx.lineTo(canvas.width,sy); ctx.stroke(); }
                     }
                 } else {
+                    // Normale Bildschirmgröße
                     ctx.fillStyle = map.bgColor;
                     ctx.fillRect(0,0,canvas.width,canvas.height);
                     ctx.fillStyle = map.lightColor;
@@ -2298,7 +2318,6 @@
                 }
 
                 // Hindernisse zeichnen
-                obstacles = maps[selectedMap].obstacles;
                 obstacles.forEach(drawObstacle);
 
                 if (!gameActive || !player) return;
@@ -2475,8 +2494,10 @@
             function startSoloGame() {
                 lobby.style.display = 'none';
                 gameActive = true;
-                gameMode = maps[selectedMap].mode;
-                obstacles = maps[selectedMap].obstacles;
+                const mapData = maps[selectedMap];
+                gameMode = mapData.mode;
+                obstacles = mapData.obstacles;
+                worldWidth = mapData.worldWidth || 0;
                 wave = 1;
                 score = 0;
                 enemies = []; projectiles = []; coins = []; powerCubes = []; effects = []; damageNumbers = [];
@@ -2501,8 +2522,8 @@
                     color: skin.color,
                     emoji: skin.emoji,
                     hat: skin.hat,
-                    x: canvas.width/2,
-                    y: canvas.height/2,
+                    x: worldWidth ? worldWidth/2 : canvas.width/2,
+                    y: worldWidth ? worldWidth/2 : canvas.height/2,
                     powerCubes: 0,
                     radius: 30
                 };
@@ -2511,7 +2532,6 @@
                     startWave();
                 } else if (gameMode === 'showdown') {
                     ammo = MAX_AMMO; ammoHUD.style.display = 'flex'; ammo = MAX_AMMO; updateAmmoBars();
-                    player.x = WORLD_SIZE/2; player.y = WORLD_SIZE/2;
                     powerCubesHUD.style.display = 'flex';
                     startShowdown();
                 } else if (gameMode === 'team') {
@@ -2532,7 +2552,7 @@
             function resizeCanvas() {
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
-                if (gameMode==='showdown' && player) updateCamera();
+                if (worldWidth > 0 && player) updateCamera();
             }
             window.addEventListener('resize', resizeCanvas);
             resizeCanvas();
