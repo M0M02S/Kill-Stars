@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KILL STARS - ULTIMATIVE EDITION</title>
+    <title>KILL STARS - FINAL</title>
     <style>
+        /* (CSS bleibt identisch - aus Platzgründen hier nicht wiederholt, aber im endgültigen Code vorhanden) */
         * {
             box-sizing: border-box;
             user-select: none;
@@ -916,14 +917,12 @@
 
             // ==================== KAMERA ====================
             let camera = { x: 0, y: 0 };
-            const WORLD_SIZE = 2000; // für Showdown
+            const WORLD_SIZE = 2000; // nur für Showdown
 
             function updateCamera() {
                 if (!player || gameMode !== 'showdown') return;
-                // Kamera folgt dem Spieler, aber bleibt innerhalb der Welt
                 camera.x = player.x - canvas.width / 2;
                 camera.y = player.y - canvas.height / 2;
-                // Begrenzung auf Weltgröße
                 camera.x = Math.max(0, Math.min(camera.x, WORLD_SIZE - canvas.width));
                 camera.y = Math.max(0, Math.min(camera.y, WORLD_SIZE - canvas.height));
             }
@@ -976,9 +975,6 @@
                 const skinIndex = selectedSkinIndices[b.name];
                 const skin = skinData[b.name][skinIndex];
 
-                // Weltgröße je nach Modus
-                let worldSize = (selectedMap === 'desert') ? WORLD_SIZE : 0; // 0 bedeutet normale Bildschirmgröße
-
                 player = {
                     name: b.name,
                     baseHp: b.baseHp,
@@ -1002,7 +998,6 @@
                     powerCubes: 0
                 };
 
-                // Startposition abhängig von Weltgröße
                 if (selectedMap === 'desert') {
                     player.x = WORLD_SIZE / 2;
                     player.y = WORLD_SIZE / 2;
@@ -1026,7 +1021,6 @@
                 effects = [];
                 damageNumbers = [];
 
-                // Munition je nach Modus
                 if (gameMode === 'waves') {
                     ammo = Infinity;
                     ammoHUD.style.display = 'none';
@@ -1037,7 +1031,6 @@
                 }
                 lastReloadTime = Date.now();
 
-                // HUD anpassen
                 waveDisplay.style.display = (gameMode === 'waves') ? 'inline-block' : 'none';
                 powerCubesHUD.style.display = (gameMode === 'showdown') ? 'flex' : 'none';
 
@@ -1046,7 +1039,7 @@
                     startWave();
                 } else if (gameMode === 'showdown') {
                     powerCubesCount.textContent = '0';
-                    showdownRemainingEnemies = 8; // mehr Gegner für große Map
+                    showdownRemainingEnemies = 8;
                     showdownFinalMode = false;
                     spawnShowdownEnemies();
                     spawnPowerCubes(12);
@@ -1101,7 +1094,7 @@
                 }
             }
 
-            // ==================== SHOWDOWN ====================
+            // ==================== SHOWDOWN (mit verbesserter KI) ====================
             function spawnShowdownEnemies() {
                 if (!gameActive || gameMode !== 'showdown') return;
                 let count = showdownFinalMode ? 1 : showdownRemainingEnemies;
@@ -1120,7 +1113,9 @@
                         lastDamageTime: 0,
                         powerCubes: 0,
                         lastShot: 0,
-                        type: 'showdown'
+                        type: 'showdown',
+                        moveDir: { x: Math.random() - 0.5, y: Math.random() - 0.5 }, // zufällige Startrichtung
+                        moveTimer: 0
                     });
                 }
             }
@@ -1494,7 +1489,6 @@
                     const dashDistance = 150;
                     const targetX = player.x + dir.x * dashDistance;
                     const targetY = player.y + dir.y * dashDistance;
-                    // Weltbegrenzung beachten
                     if (gameMode === 'showdown') {
                         player.x = Math.min(WORLD_SIZE - 40, Math.max(40, targetX));
                         player.y = Math.min(WORLD_SIZE - 40, Math.max(40, targetY));
@@ -1638,12 +1632,6 @@
 
             function updateAmmoBars() {
                 if (!ammoHUD || ammoHUD.style.display === 'none') return;
-                let percent = [0,0,0];
-                for (let i = 0; i < ammo; i++) percent[i] = 100;
-                if (ammo < MAX_AMMO) {
-                    // Teilweise Ladung? Wir haben nur volle oder leere Balken.
-                    // Für fließenden Übergang könnte man einen Timer verwenden.
-                }
                 ammoBar1.style.width = (ammo >= 1) ? '100%' : '0%';
                 ammoBar2.style.width = (ammo >= 2) ? '100%' : '0%';
                 ammoBar3.style.width = (ammo >= 3) ? '100%' : '0%';
@@ -1677,7 +1665,6 @@
             function update() {
                 if (!gameActive || !player) return;
 
-                // Nachladen
                 if (gameMode !== 'waves') {
                     let now = Date.now();
                     if (now - lastReloadTime > AMMO_RELOAD_TIME && ammo < MAX_AMMO) {
@@ -1687,7 +1674,6 @@
                     }
                 }
 
-                // Bewegung mit Weltbegrenzung
                 if (leftStick.active) {
                     player.x += leftStick.dir.x * player.speed;
                     player.y += leftStick.dir.y * player.speed;
@@ -1700,10 +1686,8 @@
                     }
                 }
 
-                // Kamera aktualisieren
                 updateCamera();
 
-                // Modus-spezifisches Update
                 if (gameMode === 'waves') {
                     updateWaves();
                 } else if (gameMode === 'showdown') {
@@ -1712,10 +1696,8 @@
                     updateTeam();
                 }
 
-                // Projektile
                 updateProjectiles();
 
-                // Power-Cubes einsammeln (Spieler)
                 if (gameMode === 'showdown') {
                     for (let i = powerCubes.length - 1; i >= 0; i--) {
                         let c = powerCubes[i];
@@ -1726,7 +1708,6 @@
                     }
                 }
 
-                // Münzen einsammeln (Wellen-Modus)
                 if (gameMode === 'waves') {
                     for (let i = coins.length - 1; i >= 0; i--) {
                         let c = coins[i];
@@ -1742,7 +1723,6 @@
                     }
                 }
 
-                // Lebensdauer von Effekten
                 for (let i = effects.length - 1; i >= 0; i--) {
                     effects[i].life--;
                     if (effects[i].life <= 0) effects.splice(i, 1);
@@ -1764,7 +1744,6 @@
                     let p = projectiles[i];
                     p.x += p.vx;
                     p.y += p.vy;
-                    // Weltgrenzen für Showdown
                     if (gameMode === 'showdown') {
                         if (p.x < 0 || p.x > WORLD_SIZE || p.y < 0 || p.y > WORLD_SIZE) {
                             projectiles.splice(i, 1);
@@ -1782,7 +1761,6 @@
                         continue;
                     }
 
-                    // Showdown: Jeder Schuss kann jeden treffen (außer Schützen)
                     if (gameMode === 'showdown') {
                         for (let j = enemies.length - 1; j >= 0; j--) {
                             let e = enemies[j];
@@ -1821,7 +1799,6 @@
                         continue;
                     }
 
-                    // Normale Kollision (Wellen/Team)
                     if (p.owner === 'player' || p.owner === 'ally') {
                         for (let j = enemies.length - 1; j >= 0; j--) {
                             let e = enemies[j];
@@ -1931,43 +1908,75 @@
             }
 
             function updateShowdown() {
-                // Gegner bewegen und gegenseitig bekämpfen
+                const DETECTION_RANGE = 300; // Sichtweite
                 for (let i = 0; i < enemies.length; i++) {
                     let e = enemies[i];
                     if (e.hp <= 0) continue;
 
-                    let targets = [];
-                    if (player.hp > 0) targets.push(player);
-                    for (let j = 0; j < enemies.length; j++) {
-                        if (i !== j && enemies[j].hp > 0) targets.push(enemies[j]);
+                    // Zufallsbewegung (alle 2 Sekunden neue Richtung)
+                    if (e.moveTimer <= 0) {
+                        e.moveDir = { x: Math.random() - 0.5, y: Math.random() - 0.5 };
+                        // Normalisieren
+                        let len = Math.hypot(e.moveDir.x, e.moveDir.y);
+                        if (len > 0) {
+                            e.moveDir.x /= len;
+                            e.moveDir.y /= len;
+                        }
+                        e.moveTimer = 120 + Math.random() * 120; // 2-4 Sekunden (bei 60fps)
+                    } else {
+                        e.moveTimer--;
                     }
 
-                    if (targets.length > 0) {
-                        let closest = null;
-                        let minDist = Infinity;
-                        targets.forEach(t => {
-                            let d = Math.hypot(t.x - e.x, t.y - e.y);
-                            if (d < minDist) {
-                                minDist = d;
-                                closest = t;
-                            }
-                        });
-                        if (closest) {
-                            let dx = closest.x - e.x;
-                            let dy = closest.y - e.y;
+                    // Suche nach Zielen in der Nähe
+                    let closestTarget = null;
+                    let minDist = Infinity;
+                    // Spieler
+                    if (player.hp > 0) {
+                        let d = Math.hypot(player.x - e.x, player.y - e.y);
+                        if (d < DETECTION_RANGE && d < minDist) {
+                            minDist = d;
+                            closestTarget = player;
+                        }
+                    }
+                    // Andere Gegner
+                    for (let j = 0; j < enemies.length; j++) {
+                        if (i === j || enemies[j].hp <= 0) continue;
+                        let d = Math.hypot(enemies[j].x - e.x, enemies[j].y - e.y);
+                        if (d < DETECTION_RANGE && d < minDist) {
+                            minDist = d;
+                            closestTarget = enemies[j];
+                        }
+                    }
+
+                    if (closestTarget) {
+                        // Bewege auf Ziel zu
+                        let dx = closestTarget.x - e.x;
+                        let dy = closestTarget.y - e.y;
+                        let len = Math.hypot(dx, dy);
+                        if (len > 0) {
+                            e.vx = (dx / len) * e.speed;
+                            e.vy = (dy / len) * e.speed;
+                        }
+                    } else {
+                        // Zufallsbewegung
+                        e.vx = e.moveDir.x * e.speed;
+                        e.vy = e.moveDir.y * e.speed;
+                    }
+
+                    e.x += e.vx;
+                    e.y += e.vy;
+                    e.x = Math.min(WORLD_SIZE - 30, Math.max(30, e.x));
+                    e.y = Math.min(WORLD_SIZE - 30, Math.max(30, e.y));
+
+                    // Schießen, wenn ein Ziel in Reichweite ist
+                    if (closestTarget) {
+                        let now = Date.now();
+                        if (now - (e.lastShot || 0) > 1000) {
+                            e.lastShot = now;
+                            let dx = closestTarget.x - e.x;
+                            let dy = closestTarget.y - e.y;
                             let len = Math.hypot(dx, dy);
                             if (len > 0) {
-                                e.vx = (dx / len) * e.speed;
-                                e.vy = (dy / len) * e.speed;
-                            }
-                            e.x += e.vx;
-                            e.y += e.vy;
-                            e.x = Math.min(WORLD_SIZE - 30, Math.max(30, e.x));
-                            e.y = Math.min(WORLD_SIZE - 30, Math.max(30, e.y));
-
-                            let now = Date.now();
-                            if (now - (e.lastShot || 0) > 1000) {
-                                e.lastShot = now;
                                 let dir = { x: dx / len, y: dy / len };
                                 let angle = Math.atan2(dir.y, dir.x);
                                 projectiles.push({
@@ -1985,7 +1994,7 @@
                         }
                     }
 
-                    // Power-Cubes aufsammeln (Gegner)
+                    // Power-Cubes aufsammeln
                     for (let k = powerCubes.length - 1; k >= 0; k--) {
                         let cube = powerCubes[k];
                         let d = Math.hypot(e.x - cube.x, e.y - cube.y);
@@ -2042,7 +2051,6 @@
                     }
                 }
 
-                // Power-Cubes droppen bei Tod
                 for (let i = enemies.length - 1; i >= 0; i--) {
                     let e = enemies[i];
                     if (e.hp <= 0) {
@@ -2059,7 +2067,6 @@
                     }
                 }
 
-                // Power-Cubes spawnen (zwischen 8 und 12)
                 if (powerCubes.length < 8) {
                     let toSpawn = Math.min(12 - powerCubes.length, 2);
                     for (let i = 0; i < toSpawn; i++) {
@@ -2072,7 +2079,6 @@
                     }
                 }
 
-                // Siegbedingungen
                 if (enemies.length === 0) {
                     gameActive = false;
                     gameOverMessage.innerHTML = '🏆 SHOWDOWN SIEG 🏆';
@@ -2105,13 +2111,15 @@
                 }
             }
 
-            // ==================== ZEICHNEN (mit Kamera) ====================
+            // ==================== ZEICHNEN (mit Kamera für Showdown) ====================
             function worldToScreenX(wx) {
-                return wx - camera.x;
+                if (gameMode === 'showdown') return wx - camera.x;
+                return wx;
             }
 
             function worldToScreenY(wy) {
-                return wy - camera.y;
+                if (gameMode === 'showdown') return wy - camera.y;
+                return wy;
             }
 
             function draw() {
@@ -2123,11 +2131,9 @@
                 let patternColor = map.patternColor;
 
                 if (gameMode === 'showdown') {
-                    // Zeichne große Welt
+                    // Große Welt
                     ctx.fillStyle = bgColor;
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    // Wir müssen die Hintergrundmuster relativ zur Kamera zeichnen
-                    // Einfachheitshalber: einfarbig mit Flecken
                     ctx.fillStyle = lightColor;
                     for (let i = 0; i < 30; i++) {
                         let wx = Math.random() * WORLD_SIZE;
@@ -2142,7 +2148,6 @@
                         }
                     }
                     ctx.globalAlpha = 1;
-                    // Gitterlinien (optional)
                     ctx.strokeStyle = patternColor;
                     ctx.lineWidth = 2;
                     for (let i = 0; i < WORLD_SIZE; i += 200) {
@@ -2164,7 +2169,7 @@
                         }
                     }
                 } else {
-                    // Normale Map (keine Kamera)
+                    // Normale Map
                     ctx.fillStyle = bgColor;
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                     ctx.fillStyle = lightColor;
@@ -2193,10 +2198,8 @@
 
                 if (!gameActive || !player) return;
 
-                // Zielhilfen (mit Weltkoordinaten)
+                // Zielhilfen
                 if (rightStick.active && (rightStick.dir.x !== 0 || rightStick.dir.y !== 0)) {
-                    let endX = player.x + rightStick.dir.x * player.attackRange;
-                    let endY = player.y + rightStick.dir.y * player.attackRange;
                     drawAim(player, rightStick.dir, player.attackRange, player.attackSpread, 'rgba(255,255,255,0.5)');
                 }
                 if (specialAiming && (specialDir.x !== 0 || specialDir.y !== 0)) {
@@ -2374,7 +2377,6 @@
                 ctx.fillText(player.emoji, sx-20, sy-80);
                 ctx.restore();
 
-                // Power-Cube-Anzeige am Spieler
                 if (gameMode === 'showdown' && player.powerCubes > 0) {
                     ctx.fillStyle = '#b8860b';
                     ctx.font = 'bold 20px Arial';
@@ -2493,7 +2495,6 @@
             function resizeCanvas() {
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
-                // Kamera ggf. anpassen
                 if (gameMode === 'showdown' && player) {
                     updateCamera();
                 }
