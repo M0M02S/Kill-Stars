@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>KILL STARS - FINAL</title>
     <style>
-        /* (CSS bleibt identisch - aus Platzgründen hier nicht wiederholt, aber im endgültigen Code vorhanden) */
         * {
             box-sizing: border-box;
             user-select: none;
@@ -52,6 +51,32 @@
             color: #ffe484;
             text-shadow: 5px 5px 0 #b45f06;
             text-align: center;
+        }
+        .player-info {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+        .player-name-input {
+            background: #2a4a3a;
+            border: 2px solid gold;
+            border-radius: 40px;
+            padding: 10px 20px;
+            font-size: min(20px, 4vw);
+            color: white;
+            text-align: center;
+            width: min(300px, 60vw);
+        }
+        .player-id {
+            background: #2a4a3a;
+            border: 2px solid gold;
+            border-radius: 40px;
+            padding: 10px 20px;
+            font-size: min(16px, 3vw);
+            color: #aaa;
         }
         .stats-container {
             display: flex;
@@ -515,6 +540,10 @@
     <!-- Lobby -->
     <div id="lobby">
         <h1>KILL STARS</h1>
+        <div class="player-info">
+            <input type="text" id="playerNameInput" class="player-name-input" placeholder="Dein Name" maxlength="20">
+            <div class="player-id" id="playerIdDisplay">ID: ...</div>
+        </div>
         <div class="stats-container">
             <div class="stat-box"><span>💰</span> <span id="totalCoinsDisplay">0</span></div>
             <div class="stat-box"><span>🏆</span> <span id="highScoreDisplay">0</span></div>
@@ -648,6 +677,26 @@
             const leftKnob = document.getElementById('leftKnob');
             const rightKnob = document.getElementById('rightKnob');
 
+            // ==================== SPIELERNAME & ID ====================
+            const playerNameInput = document.getElementById('playerNameInput');
+            const playerIdDisplay = document.getElementById('playerIdDisplay');
+
+            // Eindeutige Spieler-ID generieren, falls nicht vorhanden
+            let playerId = localStorage.getItem('killStars_playerId');
+            if (!playerId) {
+                playerId = 'P' + Date.now() + Math.floor(Math.random() * 10000);
+                localStorage.setItem('killStars_playerId', playerId);
+            }
+            playerIdDisplay.textContent = 'ID: ' + playerId.substring(0, 8) + '...';
+
+            // Spielername laden
+            let playerName = localStorage.getItem('killStars_playerName') || 'Spieler';
+            playerNameInput.value = playerName;
+            playerNameInput.addEventListener('input', (e) => {
+                playerName = e.target.value.trim() || 'Spieler';
+                localStorage.setItem('killStars_playerName', playerName);
+            });
+
             // ==================== DATEN ====================
             const maps = {
                 grass: { id: 'grass', name: 'Grün', bgColor: '#4caf7a', patternColor: '#3d8c5c', lightColor: '#6fb56f', mode: 'waves' },
@@ -656,21 +705,22 @@
             };
             let selectedMap = 'grass';
 
+            // Skin-Preise angepasst: 0, 5000, 10000
             const skinData = {
                 Shelly: [
                     { name: 'Standard', emoji: '🔫', color: '#e67e22', hat: '🧢', price: 0 },
-                    { name: 'Gold-Shelly', emoji: '🔫✨', color: '#f1c40f', hat: '👑', price: 100 },
-                    { name: 'Nacht-Shelly', emoji: '🔫🌙', color: '#2c3e50', hat: '🎩', price: 200 }
+                    { name: 'Gold-Shelly', emoji: '🔫✨', color: '#f1c40f', hat: '👑', price: 5000 },
+                    { name: 'Nacht-Shelly', emoji: '🔫🌙', color: '#2c3e50', hat: '🎩', price: 10000 }
                 ],
                 Colt: [
                     { name: 'Standard', emoji: '🔫🔫', color: '#3498db', hat: '🤠', price: 0 },
-                    { name: 'Feuer-Colt', emoji: '🔥🔫', color: '#e67e22', hat: '🔥', price: 100 },
-                    { name: 'Eis-Colt', emoji: '❄️🔫', color: '#5dade2', hat: '❄️', price: 200 }
+                    { name: 'Feuer-Colt', emoji: '🔥🔫', color: '#e67e22', hat: '🔥', price: 5000 },
+                    { name: 'Eis-Colt', emoji: '❄️🔫', color: '#5dade2', hat: '❄️', price: 10000 }
                 ],
                 Bull: [
                     { name: 'Standard', emoji: '🐂', color: '#c0392b', hat: '⛑️', price: 0 },
-                    { name: 'Kampf-Bull', emoji: '🐂⚔️', color: '#7f8c8d', hat: '⛑️⚔️', price: 100 },
-                    { name: 'Robo-Bull', emoji: '🤖🐂', color: '#2c3e50', hat: '🔩', price: 200 }
+                    { name: 'Kampf-Bull', emoji: '🐂⚔️', color: '#7f8c8d', hat: '⛑️⚔️', price: 5000 },
+                    { name: 'Robo-Bull', emoji: '🤖🐂', color: '#2c3e50', hat: '🔩', price: 10000 }
                 ]
             };
 
@@ -704,7 +754,7 @@
             }
             updateLobbyStats();
 
-            // ==================== BRAWLER-DATEN (Basis) ====================
+            // ==================== BRAWLER-DATEN ====================
             const brawlersList = [
                 { 
                     name: 'Shelly', 
@@ -915,9 +965,9 @@
                 });
             }
 
-            // ==================== KAMERA ====================
+            // ==================== KAMERA (nur Showdown) ====================
             let camera = { x: 0, y: 0 };
-            const WORLD_SIZE = 2000; // nur für Showdown
+            const WORLD_SIZE = 2000;
 
             function updateCamera() {
                 if (!player || gameMode !== 'showdown') return;
@@ -1094,7 +1144,7 @@
                 }
             }
 
-            // ==================== SHOWDOWN (mit verbesserter KI) ====================
+            // ==================== SHOWDOWN ====================
             function spawnShowdownEnemies() {
                 if (!gameActive || gameMode !== 'showdown') return;
                 let count = showdownFinalMode ? 1 : showdownRemainingEnemies;
@@ -1114,7 +1164,7 @@
                         powerCubes: 0,
                         lastShot: 0,
                         type: 'showdown',
-                        moveDir: { x: Math.random() - 0.5, y: Math.random() - 0.5 }, // zufällige Startrichtung
+                        moveDir: { x: Math.random() - 0.5, y: Math.random() - 0.5 },
                         moveTimer: 0
                     });
                 }
@@ -1146,7 +1196,7 @@
                 }
             }
 
-            // ==================== TEAM-MODUS ====================
+            // ==================== TEAM-MODUS (mit Bildschirmbegrenzung) ====================
             function startTeamMode() {
                 allies = [];
                 enemies = [];
@@ -1201,6 +1251,7 @@
             }
 
             function updateTeamBots() {
+                // Allies
                 allies.forEach(bot => {
                     if (bot.hp <= 0) return;
                     let target = null;
@@ -1221,6 +1272,10 @@
                             bot.x += (dx / len) * bot.speed;
                             bot.y += (dy / len) * bot.speed;
                         }
+                        // Begrenzung auf Canvas
+                        bot.x = Math.min(canvas.width - 30, Math.max(30, bot.x));
+                        bot.y = Math.min(canvas.height - 30, Math.max(30, bot.y));
+
                         let now = Date.now();
                         if (now - bot.lastShot > bot.attackCooldown) {
                             bot.lastShot = now;
@@ -1240,6 +1295,7 @@
                     }
                 });
 
+                // Gegner-Bots
                 enemies.forEach(bot => {
                     if (bot.hp <= 0) return;
                     let targets = [];
@@ -1263,6 +1319,10 @@
                             bot.x += (dx / len) * bot.speed;
                             bot.y += (dy / len) * bot.speed;
                         }
+                        // Begrenzung auf Canvas
+                        bot.x = Math.min(canvas.width - 30, Math.max(30, bot.x));
+                        bot.y = Math.min(canvas.height - 30, Math.max(30, bot.y));
+
                         let now = Date.now();
                         if (now - bot.lastShot > bot.attackCooldown) {
                             bot.lastShot = now;
@@ -1908,29 +1968,25 @@
             }
 
             function updateShowdown() {
-                const DETECTION_RANGE = 300; // Sichtweite
+                const DETECTION_RANGE = 300;
                 for (let i = 0; i < enemies.length; i++) {
                     let e = enemies[i];
                     if (e.hp <= 0) continue;
 
-                    // Zufallsbewegung (alle 2 Sekunden neue Richtung)
                     if (e.moveTimer <= 0) {
                         e.moveDir = { x: Math.random() - 0.5, y: Math.random() - 0.5 };
-                        // Normalisieren
                         let len = Math.hypot(e.moveDir.x, e.moveDir.y);
                         if (len > 0) {
                             e.moveDir.x /= len;
                             e.moveDir.y /= len;
                         }
-                        e.moveTimer = 120 + Math.random() * 120; // 2-4 Sekunden (bei 60fps)
+                        e.moveTimer = 120 + Math.random() * 120;
                     } else {
                         e.moveTimer--;
                     }
 
-                    // Suche nach Zielen in der Nähe
                     let closestTarget = null;
                     let minDist = Infinity;
-                    // Spieler
                     if (player.hp > 0) {
                         let d = Math.hypot(player.x - e.x, player.y - e.y);
                         if (d < DETECTION_RANGE && d < minDist) {
@@ -1938,7 +1994,6 @@
                             closestTarget = player;
                         }
                     }
-                    // Andere Gegner
                     for (let j = 0; j < enemies.length; j++) {
                         if (i === j || enemies[j].hp <= 0) continue;
                         let d = Math.hypot(enemies[j].x - e.x, enemies[j].y - e.y);
@@ -1949,7 +2004,6 @@
                     }
 
                     if (closestTarget) {
-                        // Bewege auf Ziel zu
                         let dx = closestTarget.x - e.x;
                         let dy = closestTarget.y - e.y;
                         let len = Math.hypot(dx, dy);
@@ -1958,7 +2012,6 @@
                             e.vy = (dy / len) * e.speed;
                         }
                     } else {
-                        // Zufallsbewegung
                         e.vx = e.moveDir.x * e.speed;
                         e.vy = e.moveDir.y * e.speed;
                     }
@@ -1968,7 +2021,6 @@
                     e.x = Math.min(WORLD_SIZE - 30, Math.max(30, e.x));
                     e.y = Math.min(WORLD_SIZE - 30, Math.max(30, e.y));
 
-                    // Schießen, wenn ein Ziel in Reichweite ist
                     if (closestTarget) {
                         let now = Date.now();
                         if (now - (e.lastShot || 0) > 1000) {
@@ -1994,7 +2046,6 @@
                         }
                     }
 
-                    // Power-Cubes aufsammeln
                     for (let k = powerCubes.length - 1; k >= 0; k--) {
                         let cube = powerCubes[k];
                         let d = Math.hypot(e.x - cube.x, e.y - cube.y);
@@ -2009,7 +2060,6 @@
                     }
                 }
 
-                // Gegner-Schaden am Spieler
                 const now = Date.now();
                 for (let i = 0; i < enemies.length; i++) {
                     let e = enemies[i];
@@ -2033,7 +2083,6 @@
                     }
                 }
 
-                // Gegner untereinander Nahkampf
                 for (let i = 0; i < enemies.length; i++) {
                     for (let j = i+1; j < enemies.length; j++) {
                         let e1 = enemies[i];
@@ -2111,7 +2160,7 @@
                 }
             }
 
-            // ==================== ZEICHNEN (mit Kamera für Showdown) ====================
+            // ==================== ZEICHNEN ====================
             function worldToScreenX(wx) {
                 if (gameMode === 'showdown') return wx - camera.x;
                 return wx;
@@ -2131,7 +2180,6 @@
                 let patternColor = map.patternColor;
 
                 if (gameMode === 'showdown') {
-                    // Große Welt
                     ctx.fillStyle = bgColor;
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                     ctx.fillStyle = lightColor;
@@ -2169,7 +2217,6 @@
                         }
                     }
                 } else {
-                    // Normale Map
                     ctx.fillStyle = bgColor;
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                     ctx.fillStyle = lightColor;
@@ -2198,7 +2245,6 @@
 
                 if (!gameActive || !player) return;
 
-                // Zielhilfen
                 if (rightStick.active && (rightStick.dir.x !== 0 || rightStick.dir.y !== 0)) {
                     drawAim(player, rightStick.dir, player.attackRange, player.attackSpread, 'rgba(255,255,255,0.5)');
                 }
@@ -2206,7 +2252,6 @@
                     drawAim(player, specialDir, player.specialRange, player.specialSpread, 'rgba(255,100,0,0.7)');
                 }
 
-                // Power-Cubes
                 powerCubes.forEach(c => {
                     let sx = worldToScreenX(c.x);
                     let sy = worldToScreenY(c.y);
@@ -2223,7 +2268,6 @@
                     ctx.restore();
                 });
 
-                // Münzen
                 coins.forEach(c => {
                     let sx = worldToScreenX(c.x);
                     let sy = worldToScreenY(c.y);
@@ -2240,7 +2284,6 @@
                     ctx.restore();
                 });
 
-                // Effekte
                 effects.forEach(e => {
                     let sx = worldToScreenX(e.x);
                     let sy = worldToScreenY(e.y);
@@ -2251,7 +2294,6 @@
                     ctx.fill();
                 });
 
-                // Projektile
                 projectiles.forEach(p => {
                     let sx = worldToScreenX(p.x);
                     let sy = worldToScreenY(p.y);
@@ -2265,7 +2307,6 @@
                     ctx.restore();
                 });
 
-                // Allies
                 allies.forEach(a => {
                     if (a.hp <= 0) return;
                     let sx = worldToScreenX(a.x);
@@ -2291,7 +2332,6 @@
                     ctx.restore();
                 });
 
-                // Gegner
                 enemies.forEach(e => {
                     if (e.hp <= 0) return;
                     let sx = worldToScreenX(e.x);
@@ -2341,7 +2381,6 @@
                     ctx.restore();
                 });
 
-                // Spieler
                 let sx = worldToScreenX(player.x);
                 let sy = worldToScreenY(player.y);
                 ctx.save();
@@ -2383,7 +2422,6 @@
                     ctx.fillText(`📦 ${player.powerCubes}`, sx-20, sy-100);
                 }
 
-                // Schadenszahlen
                 ctx.save();
                 ctx.font = 'bold 26px Arial';
                 ctx.textAlign = 'center';
