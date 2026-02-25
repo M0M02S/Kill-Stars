@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KILL STARS - ULTIMATIVE + INTELLIGENTE BOTS</title>
+    <title>KILL STARS - ULTIMATIVE + HEILUNG + MULTIPLAYER FIX</title>
     <style>
         /* ========== ALLE STYLES (wie gehabt) ========== */
         * {
@@ -612,7 +612,7 @@
     <script src="https://unpkg.com/vanilla-party@latest/dist/vanilla-party.js"></script>
 </head>
 <body>
-    <!-- Lobby (identisch) -->
+    <!-- Lobby -->
     <div id="lobby">
         <h1>KILL STARS</h1>
         <div class="player-info">
@@ -641,7 +641,7 @@
             </div>
         </div>
 
-        <!-- Multiplayer-Bereich -->
+        <!-- Multiplayer-Bereich (korrigiert) -->
         <div class="room-section">
             <div class="room-header">
                 <h2>🎮 Multiplayer-Lobby</h2>
@@ -733,7 +733,7 @@
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d');
 
-            // Lobby-Elemente (wie gehabt)
+            // Lobby-Elemente
             const lobby = document.getElementById('lobby');
             const prevBrawlerBtn = document.getElementById('prevBrawler');
             const nextBrawlerBtn = document.getElementById('nextBrawler');
@@ -1094,20 +1094,24 @@
                 return false;
             }
 
-            function resolveCollision(entity, dx, dy) {
-                let originalX = entity.x;
-                let originalY = entity.y;
-                entity.x += dx;
-                if (collidesWithWall(entity.x, entity.y, entity.radius || 25)) {
-                    entity.x = originalX;
-                }
-                entity.y += dy;
-                if (collidesWithWall(entity.x, entity.y, entity.radius || 25)) {
-                    entity.y = originalY;
-                }
-                if (collidesWithWall(entity.x, entity.y, entity.radius || 25)) {
-                    entity.x = originalX;
-                    entity.y = originalY;
+            function moveSmooth(entity, dx, dy) {
+                let steps = 4;
+                let stepX = dx / steps;
+                let stepY = dy / steps;
+                for (let i = 0; i < steps; i++) {
+                    let newX = entity.x + stepX;
+                    let newY = entity.y + stepY;
+                    if (!collidesWithWall(newX, newY, entity.radius || 25)) {
+                        entity.x = newX;
+                        entity.y = newY;
+                    } else {
+                        if (!collidesWithWall(entity.x + stepX, entity.y, entity.radius)) {
+                            entity.x += stepX;
+                        }
+                        if (!collidesWithWall(entity.x, entity.y + stepY, entity.radius)) {
+                            entity.y += stepY;
+                        }
+                    }
                 }
                 if (worldWidth > 0) {
                     entity.x = Math.min(worldWidth - (entity.radius||25), Math.max((entity.radius||25), entity.x));
@@ -1115,20 +1119,17 @@
                 }
             }
 
-            // ==================== INTELLIGENTE BEWEGUNG ====================
             function findFreeDirection(entity, targetX, targetY) {
                 let idealDx = targetX - entity.x;
                 let idealDy = targetY - entity.y;
                 let idealLen = Math.hypot(idealDx, idealDy);
                 if (idealLen < 1) return { dx: 0, dy: 0 };
                 let idealDir = { x: idealDx / idealLen, y: idealDy / idealLen };
-                // Prüfe, ob die ideale Richtung frei ist
                 let testX = entity.x + idealDir.x * entity.speed;
                 let testY = entity.y + idealDir.y * entity.speed;
                 if (!collidesWithWall(testX, testY, entity.radius)) {
                     return { dx: idealDir.x * entity.speed, dy: idealDir.y * entity.speed };
                 }
-                // Sonst suche in 20°-Schritten links und rechts
                 for (let angle = 0.2; angle <= 1.0; angle += 0.2) {
                     for (let sign of [-1, 1]) {
                         let dirX = Math.cos(Math.atan2(idealDir.y, idealDir.x) + sign * angle);
@@ -1140,7 +1141,6 @@
                         }
                     }
                 }
-                // Wenn nichts gefunden, bewege dich gar nicht
                 return { dx: 0, dy: 0 };
             }
 
@@ -1159,83 +1159,99 @@
                 camera.y = Math.max(0, Math.min(camera.y, worldSize - canvas.height));
             }
 
-            // ==================== MULTIPLAYER (nur Lobby) ====================
+            // ==================== MULTIPLAYER (KORRIGIERT) ====================
             let room = null;
             let playersInRoom = {};
             let isHost = false;
             const SERVER_URL = "wss://vanilla-party.luizbills.com";
             const APP_NAME = "kill-stars-multi";
 
-            createRoomBtn.addEventListener('click', () => {
+            createRoomBtn.addEventListener('click', async () => {
                 const roomName = prompt("Raumname eingeben (z.B. 'meinRaum123'):");
                 if (!roomName) return;
-                partyConnect(SERVER_URL, APP_NAME, roomName);
-                room = partyLoadMyRoom();
-                isHost = true;
-                roomStatus.innerText = `Raum: ${roomName} (Host)`;
-                room.onPeerJoin = (peerId) => {
-                    addChatMessage({ name: 'System', message: `Spieler ${peerId} ist beigetreten.` });
-                };
-                room.onPeerLeave = (peerId) => {
-                    addChatMessage({ name: 'System', message: `Spieler ${peerId} hat verlassen.` });
-                    delete playersInRoom[peerId];
-                    updateSlots();
-                };
-                room.onMessage = (senderId, message) => {
-                    if (message.type === 'playerData') {
-                        playersInRoom[senderId] = message.data;
-                        updateSlots();
-                    } else if (message.type === 'chat') {
-                        addChatMessage({ name: message.from, message: message.text });
-                    } else if (message.type === 'startGame') {
-                        lobby.style.display = 'none';
-                        startSoloGame();
-                    }
-                };
-                playersInRoom[playerId] = {
-                    name: playerName,
-                    emoji: brawlerEmoji.textContent
-                };
-                updateSlots();
-                startMultiplayerBtn.style.display = 'inline-block';
-            });
+                roomStatus.innerText = `Verbinde...`;
+                try {
+                    const party = await partyConnect(SERVER_URL, APP_NAME, roomName);
+                    room = await party.createRoom();
+                    isHost = true;
+                    roomStatus.innerText = `Raum: ${roomName} (Host)`;
+                    startMultiplayerBtn.style.display = 'inline-block';
 
-            joinRoomBtn.addEventListener('click', () => {
-                const roomName = prompt("Gib den Raumnamen ein:");
-                if (!roomName) return;
-                partyConnect(SERVER_URL, APP_NAME, roomName);
-                room = partyLoadMyRoom();
-                isHost = false;
-                roomStatus.innerText = `Raum: ${roomName} (Gast)`;
-                room.send({
-                    type: 'playerData',
-                    data: {
-                        id: playerId,
+                    room.onPeerJoin = (peerId) => {
+                        addChatMessage({ name: 'System', message: `Spieler ${peerId} ist beigetreten.` });
+                    };
+                    room.onPeerLeave = (peerId) => {
+                        addChatMessage({ name: 'System', message: `Spieler ${peerId} hat verlassen.` });
+                        delete playersInRoom[peerId];
+                        updateSlots();
+                    };
+                    room.onMessage = (senderId, message) => {
+                        if (message.type === 'playerData') {
+                            playersInRoom[senderId] = message.data;
+                            updateSlots();
+                        } else if (message.type === 'chat') {
+                            addChatMessage({ name: message.from, message: message.text });
+                        } else if (message.type === 'startGame') {
+                            lobby.style.display = 'none';
+                            startSoloGame();
+                        }
+                    };
+
+                    playersInRoom[playerId] = {
                         name: playerName,
                         emoji: brawlerEmoji.textContent
-                    }
-                });
-                room.onMessage = (senderId, message) => {
-                    if (message.type === 'playerData') {
-                        playersInRoom[senderId] = message.data;
-                        updateSlots();
-                    } else if (message.type === 'chat') {
-                        addChatMessage({ name: message.from, message: message.text });
-                    } else if (message.type === 'startGame') {
-                        lobby.style.display = 'none';
-                        startSoloGame();
-                    }
-                };
-                room.onPeerLeave = (peerId) => {
-                    addChatMessage({ name: 'System', message: `Spieler ${peerId} hat verlassen.` });
-                    delete playersInRoom[peerId];
+                    };
                     updateSlots();
-                };
-                playersInRoom[playerId] = {
-                    name: playerName,
-                    emoji: brawlerEmoji.textContent
-                };
-                updateSlots();
+                } catch (e) {
+                    roomStatus.innerText = `Fehler: ${e.message}`;
+                }
+            });
+
+            joinRoomBtn.addEventListener('click', async () => {
+                const roomName = prompt("Gib den Raumnamen ein:");
+                if (!roomName) return;
+                roomStatus.innerText = `Verbinde...`;
+                try {
+                    const party = await partyConnect(SERVER_URL, APP_NAME, roomName);
+                    room = await party.joinRoom();
+                    isHost = false;
+                    roomStatus.innerText = `Raum: ${roomName} (Gast)`;
+
+                    room.onMessage = (senderId, message) => {
+                        if (message.type === 'playerData') {
+                            playersInRoom[senderId] = message.data;
+                            updateSlots();
+                        } else if (message.type === 'chat') {
+                            addChatMessage({ name: message.from, message: message.text });
+                        } else if (message.type === 'startGame') {
+                            lobby.style.display = 'none';
+                            startSoloGame();
+                        }
+                    };
+                    room.onPeerLeave = (peerId) => {
+                        addChatMessage({ name: 'System', message: `Spieler ${peerId} hat verlassen.` });
+                        delete playersInRoom[peerId];
+                        updateSlots();
+                    };
+
+                    // Eigene Daten an alle senden
+                    room.send({
+                        type: 'playerData',
+                        data: {
+                            id: playerId,
+                            name: playerName,
+                            emoji: brawlerEmoji.textContent
+                        }
+                    });
+
+                    playersInRoom[playerId] = {
+                        name: playerName,
+                        emoji: brawlerEmoji.textContent
+                    };
+                    updateSlots();
+                } catch (e) {
+                    roomStatus.innerText = `Fehler: ${e.message}`;
+                }
             });
 
             function updateSlots() {
@@ -1306,6 +1322,11 @@
             let lastReloadTime = 0;
             let showdownRemainingEnemies = 0;
             let showdownFinalMode = false;
+
+            // Heilungs-Timer
+            let lastDamageTime = 0;
+            const HEAL_DELAY = 5000; // 5 Sekunden
+            const HEAL_RATE = 0.1; // pro Frame (~6 HP/s bei 60fps)
 
             // Joystick-Zustände
             let leftStick = { active: false, id: null, dir: { x: 0, y: 0 } };
@@ -1642,7 +1663,6 @@
                 ammoBar3.style.width = (ammo >= 3) ? '100%' : '0%';
             }
 
-            // Hilfsfunktionen
             function addDamageNumber(x, y, amount) { damageNumbers.push({ x, y: y-20, value: amount, life: 60 }); }
             function addCoin(x, y) { coins.push({ x, y, value: 50, life: 300 }); }
             function addEffect(x, y) { effects.push({ x, y, life: 20, maxLife: 20 }); }
@@ -1693,14 +1713,14 @@
                         }
                         if (len > 0) {
                             let move = findFreeDirection(e, e.targetX, e.targetY);
-                            resolveCollision(e, move.dx, move.dy);
+                            moveSmooth(e, move.dx, move.dy);
                         }
                         if (playerVisible) {
                             e.state = 'chase';
                         }
                     } else if (e.state === 'chase') {
                         let move = findFreeDirection(e, player.x, player.y);
-                        resolveCollision(e, move.dx, move.dy);
+                        moveSmooth(e, move.dx, move.dy);
                         e.lastSeenPlayer = { x: player.x, y: player.y };
                         if (!playerVisible) {
                             e.state = 'search';
@@ -1708,7 +1728,7 @@
                         }
                     } else if (e.state === 'search') {
                         let move = findFreeDirection(e, e.lastSeenPlayer.x, e.lastSeenPlayer.y);
-                        resolveCollision(e, move.dx, move.dy);
+                        moveSmooth(e, move.dx, move.dy);
                         e.searchTimer--;
                         if (e.searchTimer <= 0 || (Math.hypot(e.x - e.lastSeenPlayer.x, e.y - e.lastSeenPlayer.y) < 20)) {
                             e.state = 'patrol';
@@ -1751,6 +1771,7 @@
                             addDamageNumber(player.x, player.y, e.damage);
                             addEffect(player.x, player.y);
                             e.lastDamageTime = now;
+                            lastDamageTime = now; // für Heilung
                             if (player.hp <= 0) {
                                 gameActive = false;
                                 if (score > highScore) highScore = score;
@@ -1762,6 +1783,14 @@
                             }
                         }
                     }
+                }
+            }
+
+            // ==================== HEILUNG ====================
+            function applyHealing() {
+                if (!player) return;
+                if (player.hp < player.maxHp && Date.now() - lastDamageTime > HEAL_DELAY) {
+                    player.hp = Math.min(player.maxHp, player.hp + HEAL_RATE);
                 }
             }
 
@@ -1964,14 +1993,12 @@
             }
 
             function positionTeamMembers() {
-                // Team A (Spieler + Allies) links
                 let startX = 200;
                 let startY = WORLD_SIZE_TEAM / 2;
                 player.x = startX;
                 player.y = startY - 50;
                 if (allies[0]) { allies[0].x = startX + 50; allies[0].y = startY + 50; }
                 if (allies[1]) { allies[1].x = startX + 100; allies[1].y = startY - 30; }
-                // Team B (Gegner) rechts
                 let enemyStartX = WORLD_SIZE_TEAM - 200;
                 enemies.forEach((e, i) => {
                     e.x = enemyStartX - i * 60;
@@ -1980,7 +2007,6 @@
             }
 
             function updateTeamBots() {
-                // Allies
                 allies.forEach(bot => {
                     if (bot.hp <= 0) return;
                     let target = null;
@@ -1992,7 +2018,7 @@
                     });
                     if (target) {
                         let move = findFreeDirection(bot, target.x, target.y);
-                        resolveCollision(bot, move.dx, move.dy);
+                        moveSmooth(bot, move.dx, move.dy);
                         let now = Date.now();
                         if (now - bot.lastShot > bot.attackCooldown) {
                             bot.lastShot = now;
@@ -2016,7 +2042,6 @@
                         }
                     }
                 });
-                // Gegner-Bots
                 enemies.forEach(bot => {
                     if (bot.hp <= 0) return;
                     let targets = [];
@@ -2031,7 +2056,7 @@
                     });
                     if (target) {
                         let move = findFreeDirection(bot, target.x, target.y);
-                        resolveCollision(bot, move.dx, move.dy);
+                        moveSmooth(bot, move.dx, move.dy);
                         let now = Date.now();
                         if (now - bot.lastShot > bot.attackCooldown) {
                             bot.lastShot = now;
@@ -2061,6 +2086,9 @@
             function update() {
                 if (!gameActive || !player) return;
 
+                // Heilung
+                applyHealing();
+
                 if (gameMode !== 'waves') {
                     let now = Date.now();
                     if (now - lastReloadTime > AMMO_RELOAD_TIME && ammo < MAX_AMMO) {
@@ -2073,7 +2101,7 @@
                 if (leftStick.active) {
                     let dx = leftStick.dir.x * player.speed;
                     let dy = leftStick.dir.y * player.speed;
-                    resolveCollision(player, dx, dy);
+                    moveSmooth(player, dx, dy);
                 }
 
                 updateCamera();
@@ -2150,6 +2178,7 @@
                             player.hp -= p.damage;
                             addDamageNumber(player.x, player.y, p.damage);
                             addEffect(p.x, p.y);
+                            lastDamageTime = Date.now(); // für Heilung
                             projectiles.splice(i,1);
                             if (player.hp <= 0) {
                                 gameActive = false;
@@ -2489,24 +2518,24 @@
                     powerCubes: 0,
                     radius: 30
                 };
+                lastDamageTime = Date.now(); // initial
 
                 if (gameMode === 'waves') {
                     ammo = Infinity; ammoHUD.style.display = 'none';
                     startWave();
                 } else if (gameMode === 'showdown') {
-                    // Zufälliger Rand-Spawn
-                    let side = Math.floor(Math.random() * 4); // 0: oben, 1: rechts, 2: unten, 3: links
+                    let side = Math.floor(Math.random() * 4);
                     let margin = 60;
-                    if (side === 0) { // oben
+                    if (side === 0) {
                         player.x = margin + Math.random() * (worldWidth - 2*margin);
                         player.y = margin;
-                    } else if (side === 1) { // rechts
+                    } else if (side === 1) {
                         player.x = worldWidth - margin;
                         player.y = margin + Math.random() * (worldWidth - 2*margin);
-                    } else if (side === 2) { // unten
+                    } else if (side === 2) {
                         player.x = margin + Math.random() * (worldWidth - 2*margin);
                         player.y = worldWidth - margin;
-                    } else { // links
+                    } else {
                         player.x = margin;
                         player.y = margin + Math.random() * (worldWidth - 2*margin);
                     }
@@ -2514,7 +2543,6 @@
                     powerCubesHUD.style.display = 'flex';
                     startShowdown();
                 } else if (gameMode === 'team') {
-                    // Team A (Spieler) links
                     player.x = 200;
                     player.y = worldWidth / 2 + (Math.random() - 0.5) * 200;
                     ammo = MAX_AMMO; ammoHUD.style.display = 'flex'; ammo = MAX_AMMO; updateAmmoBars();
