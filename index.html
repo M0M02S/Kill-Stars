@@ -503,7 +503,7 @@
             background: #ffaa00;
             transition: width 0.1s;
         }
-        /* Joysticks - angepasst für Handy (kleiner) */
+        /* Joysticks - Grundgrößen */
         .joystick {
             position: absolute;
             width: min(120px, 28vw);
@@ -632,8 +632,8 @@
             }
             /* Handy-spezifische Anpassungen - Joysticks noch kleiner */
             .joystick {
-                width: min(90px, 20vw);
-                height: min(90px, 20vw);
+                width: min(70px, 18vw);
+                height: min(70px, 18vw);
             }
             #leftJoystick {
                 bottom: 15px;
@@ -641,17 +641,36 @@
             }
             #rightJoystick {
                 bottom: 15px;
-                right: 90px;
+                right: 80px;  /* Platz für Spezial-Button */
+            }
+            .joystickKnob {
+                width: 60%;
+                height: 60%;
+                top: 20%;
+                left: 20%;
             }
             #specialButton {
-                bottom: 100px;
+                bottom: 90px;
                 right: 10px;
-                width: 70px;
-                height: 70px;
-                font-size: 12px;
+                width: 60px;
+                height: 60px;
+                font-size: 10px;
             }
             #specialButton .special-charge {
+                font-size: 14px;
+            }
+            /* HUD etwas kleiner */
+            #hud {
                 font-size: 18px;
+                padding: 8px 12px;
+            }
+            #hpFill {
+                width: 80px;
+                height: 16px;
+            }
+            .ammo-bar {
+                width: 18px;
+                height: 18px;
             }
         }
         /* Für größere Geräte (iPad) bleibt alles normal */
@@ -1167,11 +1186,12 @@
                         }
                     }
                 }
+                // Welt- / Canvas-Grenzen (auch für Wellen-Modus)
                 if (worldWidth > 0) {
                     entity.x = Math.min(worldWidth - (entity.radius||25), Math.max((entity.radius||25), entity.x));
                     entity.y = Math.min(worldWidth - (entity.radius||25), Math.max((entity.radius||25), entity.y));
                 } else {
-                    // Begrenzung auf Canvas für Wellen-Modus
+                    // Strikte Begrenzung auf Canvas, damit Spieler nicht raus kann
                     entity.x = Math.min(canvas.width - (entity.radius||25), Math.max((entity.radius||25), entity.x));
                     entity.y = Math.min(canvas.height - (entity.radius||25), Math.max((entity.radius||25), entity.y));
                 }
@@ -2024,7 +2044,9 @@
                     state: 'chase',
                     targetX: 0, targetY: 0,
                     lastSeenPlayer: { x: 0, y: 0 },
-                    searchTimer: 0
+                    searchTimer: 0,
+                    stuckCounter: 0,
+                    lastPos: { x: 0, y: 0 }
                 };
             }
 
@@ -2042,6 +2064,8 @@
                 [...allies, ...enemies].forEach(bot => {
                     bot.targetX = bot.x + (Math.random()-0.5)*200;
                     bot.targetY = bot.y + (Math.random()-0.5)*200;
+                    bot.lastPos = { x: bot.x, y: bot.y };
+                    bot.stuckCounter = 0;
                 });
             }
 
@@ -2051,6 +2075,20 @@
                 // Allies verfolgen Gegner
                 allies.forEach(bot => {
                     if (bot.hp <= 0) return;
+
+                    // Stuck-Erkennung
+                    if (Math.hypot(bot.x - bot.lastPos.x, bot.y - bot.lastPos.y) < 1) {
+                        bot.stuckCounter++;
+                        if (bot.stuckCounter > 30) {
+                            // Neues Ziel setzen
+                            bot.targetX = bot.x + (Math.random()-0.5)*300;
+                            bot.targetY = bot.y + (Math.random()-0.5)*300;
+                            bot.stuckCounter = 0;
+                        }
+                    } else {
+                        bot.stuckCounter = 0;
+                    }
+                    bot.lastPos = { x: bot.x, y: bot.y };
 
                     let target = null;
                     let minDist = Infinity;
@@ -2112,6 +2150,19 @@
                 // Gegner-Bots verfolgen Allies/Spieler
                 enemies.forEach(bot => {
                     if (bot.hp <= 0) return;
+
+                    // Stuck-Erkennung
+                    if (Math.hypot(bot.x - bot.lastPos.x, bot.y - bot.lastPos.y) < 1) {
+                        bot.stuckCounter++;
+                        if (bot.stuckCounter > 30) {
+                            bot.targetX = bot.x + (Math.random()-0.5)*300;
+                            bot.targetY = bot.y + (Math.random()-0.5)*300;
+                            bot.stuckCounter = 0;
+                        }
+                    } else {
+                        bot.stuckCounter = 0;
+                    }
+                    bot.lastPos = { x: bot.x, y: bot.y };
 
                     let targets = [];
                     if (player.hp > 0) targets.push(player);
@@ -2379,8 +2430,7 @@
             }
 
             function shadeColor(color, percent) {
-                // Hilfsfunktion zum Abdunkeln/Aufhellen von Farben (hex)
-                // Hier nur als Platzhalter, wir nutzen feste Werte
+                // Vereinfachte Schattierung (nur als Platzhalter)
                 return color;
             }
 
