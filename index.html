@@ -503,11 +503,11 @@
             background: #ffaa00;
             transition: width 0.1s;
         }
-        /* Joysticks */
+        /* Joysticks - leicht verkleinert */
         .joystick {
             position: absolute;
-            width: min(150px, 30vw);
-            height: min(150px, 30vw);
+            width: min(120px, 28vw);  /* vorher 150px */
+            height: min(120px, 28vw);
             background: rgba(30,30,30,0.7);
             border-radius: 50%;
             touch-action: none;
@@ -522,7 +522,7 @@
         }
         #rightJoystick {
             bottom: max(30px, 6vh);
-            right: max(160px, 22vw);
+            right: max(140px, 20vw);  /* angepasst */
         }
         .joystickKnob {
             position: absolute;
@@ -630,19 +630,10 @@
             #rotateWarning {
                 display: none;
             }
-            /* Handy-spezifische Anpassungen */
-            #hud {
-                top: 10px;
-                font-size: 20px;
-                padding: 8px 12px;
-            }
-            #hpFill {
-                width: 100px;
-                height: 18px;
-            }
+            /* Handy-spezifische Anpassungen - Joysticks noch kleiner */
             .joystick {
-                width: min(110px, 25vw);
-                height: min(110px, 25vw);
+                width: min(100px, 22vw);
+                height: min(100px, 22vw);
             }
             #leftJoystick {
                 bottom: 20px;
@@ -650,7 +641,7 @@
             }
             #rightJoystick {
                 bottom: 20px;
-                right: 120px;
+                right: 100px;  /* angepasst */
             }
             #specialButton {
                 bottom: 120px;
