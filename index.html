@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KILL STARS - ULTIMATIVE</title>
+    <title>KILL STARS - FINAL</title>
     <style>
         /* ========== BASIS-STYLES ========== */
         * {
@@ -619,7 +619,7 @@
             }
             #rightJoystick {
                 bottom: 15px;
-                right: 85px; /* Platz für Spezial */
+                right: 85px;
             }
             #specialButton {
                 bottom: 15px;
@@ -654,7 +654,7 @@
                 height: 130px;
             }
             #leftJoystick {
-                bottom: 100px;  /* weiter nach oben */
+                bottom: 100px;
                 left: 30px;
             }
             #rightJoystick {
@@ -851,7 +851,6 @@
                     id: 'grass', name: 'Grün', bgColor: '#4caf7a', patternColor: '#3d8c5c', lightColor: '#6fb56f',
                     mode: 'waves', worldWidth: WORLD_SIZE,
                     obstacles: [
-                        // 15 Hindernisse (Wände + Büsche)
                         { x: 200, y: 150, w: 80, h: 80, type: 'wall', color: '#2d5a2d' },
                         { x: 500, y: 400, w: 70, h: 70, type: 'wall', color: '#2d5a2d' },
                         { x: 800, y: 600, w: 100, h: 40, type: 'wall', color: '#2d5a2d' },
@@ -1125,7 +1124,7 @@
                         if (!collidesWithWall(entity.x, entity.y + stepY, entity.radius)) entity.y += stepY;
                     }
                 }
-                // Weltbegrenzung (immer worldWidth > 0)
+                // Weltbegrenzung
                 entity.x = Math.min(worldWidth - (entity.radius||25), Math.max((entity.radius||25), entity.x));
                 entity.y = Math.min(worldWidth - (entity.radius||25), Math.max((entity.radius||25), entity.y));
             }
@@ -1227,37 +1226,342 @@
             let rightStick = { active: false, id: null, dir: { x:0, y:0 }, tap: false, startX:0, startY:0 };
             let specialAiming = false, specialDir = { x:0, y:0 }, specialStartPos = { x:0, y:0 }, specialTap = false, specialTouchId = null;
 
-            // Touch-Handler (wie gehabt, aus Platzgründen leicht gekürzt)
-            function handleTouchStart(e, isRight) { /* ... */ }
-            function handleTouchMove(e, isRight) { /* ... */ }
-            function handleTouchEnd(e, isRight) { /* ... */ }
-            leftJoystick.addEventListener('touchstart', e => handleTouchStart(e, false), { passive: false });
-            leftJoystick.addEventListener('touchmove', e => handleTouchMove(e, false), { passive: false });
-            leftJoystick.addEventListener('touchend', e => handleTouchEnd(e, false));
-            leftJoystick.addEventListener('touchcancel', e => handleTouchEnd(e, false));
-            rightJoystick.addEventListener('touchstart', e => handleTouchStart(e, true), { passive: false });
-            rightJoystick.addEventListener('touchmove', e => handleTouchMove(e, true), { passive: false });
-            rightJoystick.addEventListener('touchend', e => handleTouchEnd(e, true));
-            rightJoystick.addEventListener('touchcancel', e => handleTouchEnd(e, true));
+            // Joystick-Listener
+            function handleTouchStart(e, isRight) {
+                e.preventDefault();
+                const touches = e.changedTouches;
+                for (let touch of touches) {
+                    if (isRight && !rightStick.active) {
+                        rightStick.active = true;
+                        rightStick.id = touch.identifier;
+                        rightStick.startX = touch.clientX;
+                        rightStick.startY = touch.clientY;
+                        rightStick.tap = true;
+                        rightStick.dir = { x: 0, y: 0 };
+                        rightKnob.style.left = '35px';
+                        rightKnob.style.top = '35px';
+                        break;
+                    } else if (!isRight && !leftStick.active) {
+                        leftStick.active = true;
+                        leftStick.id = touch.identifier;
+                        leftStick.dir = { x: 0, y: 0 };
+                        leftKnob.style.left = '35px';
+                        leftKnob.style.top = '35px';
+                        break;
+                    }
+                }
+            }
 
-            specialBtn.addEventListener('touchstart', e => { /* ... */ }, { passive: false });
-            specialBtn.addEventListener('touchmove', e => { /* ... */ }, { passive: false });
-            specialBtn.addEventListener('touchend', e => { /* ... */ }, { passive: false });
-            specialBtn.addEventListener('touchcancel', e => { /* ... */ });
+            function handleTouchMove(e, isRight) {
+                e.preventDefault();
+                const touches = e.touches;
+                for (let touch of touches) {
+                    if (isRight && rightStick.active && touch.identifier === rightStick.id) {
+                        const rect = rightJoystick.getBoundingClientRect();
+                        const centerX = rect.left + rect.width / 2;
+                        const centerY = rect.top + rect.height / 2;
+                        let dx = touch.clientX - centerX;
+                        let dy = touch.clientY - centerY;
+                        const distance = Math.sqrt(dx*dx + dy*dy);
+                        const maxDist = rect.width / 2;
+                        if (distance > maxDist) {
+                            dx = (dx / distance) * maxDist;
+                            dy = (dy / distance) * maxDist;
+                        }
+                        rightKnob.style.left = (35 + dx) + 'px';
+                        rightKnob.style.top = (35 + dy) + 'px';
+                        const normX = dx / maxDist;
+                        const normY = dy / maxDist;
+                        rightStick.dir = { x: normX, y: normY };
+                        if (distance > 10) rightStick.tap = false;
+                        break;
+                    } else if (!isRight && leftStick.active && touch.identifier === leftStick.id) {
+                        const rect = leftJoystick.getBoundingClientRect();
+                        const centerX = rect.left + rect.width / 2;
+                        const centerY = rect.top + rect.height / 2;
+                        let dx = touch.clientX - centerX;
+                        let dy = touch.clientY - centerY;
+                        const distance = Math.sqrt(dx*dx + dy*dy);
+                        const maxDist = rect.width / 2;
+                        if (distance > maxDist) {
+                            dx = (dx / distance) * maxDist;
+                            dy = (dy / distance) * maxDist;
+                        }
+                        leftKnob.style.left = (35 + dx) + 'px';
+                        leftKnob.style.top = (35 + dy) + 'px';
+                        leftStick.dir = { x: dx / maxDist, y: dy / maxDist };
+                        break;
+                    }
+                }
+            }
 
-            function autoShoot() { /* ... */ }
-            function shootInDirection(dir) { /* ... */ }
-            function useSpecialAuto() { /* ... */ }
-            function useSpecialDirection(dir) { /* ... */ }
-            function updateAmmoBars() { /* ... */ }
+            function handleTouchEnd(e, isRight) {
+                e.preventDefault();
+                const touches = e.changedTouches;
+                for (let touch of touches) {
+                    if (isRight && rightStick.active && touch.identifier === rightStick.id) {
+                        if (rightStick.tap) {
+                            autoShoot();
+                        } else {
+                            if (rightStick.dir.x !== 0 || rightStick.dir.y !== 0) {
+                                shootInDirection(rightStick.dir);
+                            }
+                        }
+                        rightStick.active = false;
+                        rightStick.id = null;
+                        rightStick.dir = { x: 0, y: 0 };
+                        rightKnob.style.left = '35px';
+                        rightKnob.style.top = '35px';
+                        break;
+                    } else if (!isRight && leftStick.active && touch.identifier === leftStick.id) {
+                        leftStick.active = false;
+                        leftStick.id = null;
+                        leftStick.dir = { x: 0, y: 0 };
+                        leftKnob.style.left = '35px';
+                        leftKnob.style.top = '35px';
+                        break;
+                    }
+                }
+            }
+
+            leftJoystick.addEventListener('touchstart', (e) => handleTouchStart(e, false), { passive: false });
+            leftJoystick.addEventListener('touchmove', (e) => handleTouchMove(e, false), { passive: false });
+            leftJoystick.addEventListener('touchend', (e) => handleTouchEnd(e, false));
+            leftJoystick.addEventListener('touchcancel', (e) => handleTouchEnd(e, false));
+            rightJoystick.addEventListener('touchstart', (e) => handleTouchStart(e, true), { passive: false });
+            rightJoystick.addEventListener('touchmove', (e) => handleTouchMove(e, true), { passive: false });
+            rightJoystick.addEventListener('touchend', (e) => handleTouchEnd(e, true));
+            rightJoystick.addEventListener('touchcancel', (e) => handleTouchEnd(e, true));
+
+            // Spezial-Zielen
+            specialBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (!specialReady || !gameActive || !player) return;
+                const touch = e.changedTouches[0];
+                if (!touch) return;
+                specialAiming = true;
+                specialTouchId = touch.identifier;
+                specialStartPos.x = touch.clientX;
+                specialStartPos.y = touch.clientY;
+                specialTap = true;
+                specialDir = { x: 0, y: 0 };
+            }, { passive: false });
+
+            specialBtn.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!specialAiming || !gameActive || !player) return;
+                const touches = e.touches;
+                for (let touch of touches) {
+                    if (touch.identifier === specialTouchId) {
+                        let dx = touch.clientX - specialStartPos.x;
+                        let dy = touch.clientY - specialStartPos.y;
+                        const distance = Math.sqrt(dx*dx + dy*dy);
+                        if (distance > 10) specialTap = false;
+                        if (distance > 0) {
+                            const len = Math.min(distance, 100) / 100;
+                            specialDir.x = (dx / distance) * len;
+                            specialDir.y = (dy / distance) * len;
+                        }
+                        break;
+                    }
+                }
+            }, { passive: false });
+
+            specialBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                if (!specialAiming || !gameActive || !player) return;
+                const touches = e.changedTouches;
+                for (let touch of touches) {
+                    if (touch.identifier === specialTouchId) {
+                        if (specialTap) {
+                            useSpecialAuto();
+                        } else {
+                            if (specialDir.x !== 0 || specialDir.y !== 0) {
+                                useSpecialDirection(specialDir);
+                            } else {
+                                useSpecialAuto();
+                            }
+                        }
+                        specialAiming = false;
+                        specialTouchId = null;
+                        specialDir = { x: 0, y: 0 };
+                        break;
+                    }
+                }
+            }, { passive: false });
+
+            specialBtn.addEventListener('touchcancel', (e) => {
+                specialAiming = false;
+                specialTouchId = null;
+                specialDir = { x: 0, y: 0 };
+            });
+
+            // Schießen und Spezial
+            function autoShoot() {
+                if (!player || !gameActive) return;
+                let closest = null;
+                let minDist = Infinity;
+                enemies.forEach(e => {
+                    let d = Math.hypot(e.x - player.x, e.y - player.y);
+                    if (d < minDist) { minDist = d; closest = e; }
+                });
+                if (closest) {
+                    let dx = closest.x - player.x;
+                    let dy = closest.y - player.y;
+                    let len = Math.hypot(dx, dy);
+                    if (len > 0) shootInDirection({ x: dx/len, y: dy/len });
+                }
+            }
+
+            function shootInDirection(dir) {
+                if (!player || !gameActive) return;
+                if (gameMode !== 'waves') {
+                    if (ammo <= 0) return;
+                }
+                let now = Date.now();
+                if (now - lastShot < player.attackCooldown) return;
+                lastShot = now;
+                if (gameMode !== 'waves') {
+                    ammo--;
+                    updateAmmoBars();
+                }
+                let bullets = [];
+                let baseAngle = Math.atan2(dir.y, dir.x);
+                let spread = player.attackSpread || 1;
+                if (spread === 1) {
+                    bullets.push({
+                        x: player.x, y: player.y,
+                        vx: dir.x * player.attackSpeed,
+                        vy: dir.y * player.attackSpeed,
+                        damage: player.attackDamage,
+                        range: player.attackRange,
+                        owner: 'player',
+                        size: 8,
+                        color: '#ffcc44'
+                    });
+                } else {
+                    for (let i = -Math.floor(spread/2); i <= Math.floor(spread/2); i++) {
+                        let angle = baseAngle + i * 0.2;
+                        bullets.push({
+                            x: player.x, y: player.y,
+                            vx: Math.cos(angle) * player.attackSpeed,
+                            vy: Math.sin(angle) * player.attackSpeed,
+                            damage: player.attackDamage,
+                            range: player.attackRange,
+                            owner: 'player',
+                            size: 6,
+                            color: '#ffaa00'
+                        });
+                    }
+                }
+                projectiles.push(...bullets);
+            }
+
+            function useSpecialAuto() {
+                if (!specialReady || !player || !gameActive) return;
+                let closest = null;
+                let minDist = Infinity;
+                enemies.forEach(e => {
+                    if (e.hp > 0) {
+                        let d = Math.hypot(e.x - player.x, e.y - player.y);
+                        if (d < minDist) { minDist = d; closest = e; }
+                    }
+                });
+                if (closest) {
+                    let dx = closest.x - player.x;
+                    let dy = closest.y - player.y;
+                    let len = Math.hypot(dx, dy);
+                    if (len > 0) {
+                        useSpecialDirection({ x: dx/len, y: dy/len });
+                    } else {
+                        useSpecialDirection({ x: 1, y: 0 });
+                    }
+                } else {
+                    useSpecialDirection({ x: 1, y: 0 });
+                }
+            }
+
+            function useSpecialDirection(dir) {
+                if (!specialReady || !player || !gameActive) return;
+                if (player.specialType === 'dash') {
+                    const dashDistance = 150;
+                    const targetX = player.x + dir.x * dashDistance;
+                    const targetY = player.y + dir.y * dashDistance;
+                    if (worldWidth > 0) {
+                        player.x = Math.min(worldWidth - 40, Math.max(40, targetX));
+                        player.y = Math.min(worldWidth - 40, Math.max(40, targetY));
+                    } else {
+                        player.x = Math.min(canvas.width-40, Math.max(40, targetX));
+                        player.y = Math.min(canvas.height-40, Math.max(40, targetY));
+                    }
+                    enemies.forEach(e => {
+                        let d = Math.hypot(player.x - e.x, player.y - e.y);
+                        if (d < 70) {
+                            e.hp -= player.specialDamage;
+                            addDamageNumber(e.x, e.y, player.specialDamage);
+                            addEffect(e.x, e.y);
+                        }
+                    });
+                    enemies = enemies.filter(e => e.hp > 0);
+                } else if (player.specialType === 'rapid') {
+                    for (let i = 0; i < 8; i++) {
+                        setTimeout(() => {
+                            if (!gameActive || !player) return;
+                            let angle = Math.atan2(dir.y, dir.x) + (i - 3.5) * 0.1;
+                            projectiles.push({
+                                x: player.x, y: player.y,
+                                vx: Math.cos(angle) * player.specialSpeed,
+                                vy: Math.sin(angle) * player.specialSpeed,
+                                damage: player.specialDamage,
+                                range: player.specialRange,
+                                owner: 'player',
+                                size: 8,
+                                color: '#ffaa00'
+                            });
+                        }, i * 70);
+                    }
+                } else {
+                    let bullets = [];
+                    let baseAngle = Math.atan2(dir.y, dir.x);
+                    let spread = player.specialSpread || 9;
+                    for (let i = -Math.floor(spread/2); i <= Math.floor(spread/2); i++) {
+                        let angle = baseAngle + i * 0.15;
+                        bullets.push({
+                            x: player.x, y: player.y,
+                            vx: Math.cos(angle) * player.specialSpeed,
+                            vy: Math.sin(angle) * player.specialSpeed,
+                            damage: player.specialDamage,
+                            range: player.specialRange,
+                            owner: 'player',
+                            size: 10,
+                            color: '#ff5500'
+                        });
+                    }
+                    projectiles.push(...bullets);
+                }
+                specialCharge = 0;
+                specialReady = false;
+                specialBtn.classList.remove('ready');
+                updateUI();
+            }
+
+            function updateAmmoBars() {
+                if (!ammoHUD || ammoHUD.style.display === 'none') return;
+                ammoBar1.style.width = (ammo >= 1) ? '100%' : '0%';
+                ammoBar2.style.width = (ammo >= 2) ? '100%' : '0%';
+                ammoBar3.style.width = (ammo >= 3) ? '100%' : '0%';
+            }
+
             function addDamageNumber(x, y, amount) { damageNumbers.push({ x, y: y-20, value: amount, life: 60 }); }
             function addCoin(x, y) { coins.push({ x, y, value: 50, life: 300 }); }
             function addEffect(x, y) { effects.push({ x, y, life: 20, maxLife: 20 }); }
+
             function updateUI() {
                 if (!player) return;
                 if (gameMode === 'waves') waveDisplay.innerHTML = `🌊 Welle ${wave}`;
                 scoreDisplay.innerHTML = `🏆 ${score}`;
-                hpCurrent.style.width = (player.hp / player.maxHp * 100) + '%';
+                let percent = (player.hp / player.maxHp) * 100;
+                hpCurrent.style.width = percent + '%';
                 specialBtn.querySelector('.special-charge').innerText = Math.min(100, Math.floor(specialCharge)) + '%';
                 if (specialCharge >= MAX_SPECIAL && !specialReady) {
                     specialReady = true;
@@ -1265,34 +1569,64 @@
                 }
             }
 
-            // KI (stark vereinfacht)
+            // KI für alle Modi (vereinfacht)
             function updateEnemies() {
                 const now = Date.now();
                 enemies.forEach(e => {
                     if (e.hp <= 0) return;
-                    let zoneTarget = (gameMode === 'showdown') ? getZoneSafePoint(e) : null;
+
+                    let zoneTarget = null;
+                    if (gameMode === 'showdown') {
+                        zoneTarget = getZoneSafePoint(e);
+                    }
+
                     let playerVisible = true;
-                    if (isInBush(player.x, player.y)) playerVisible = false;
-                    else if (Math.hypot(player.x - e.x, player.y - e.y) > 300) playerVisible = false;
-                    // einfache Zustandsmaschine
+                    if (isInBush(player.x, player.y)) {
+                        playerVisible = false;
+                    } else {
+                        let distToPlayer = Math.hypot(player.x - e.x, player.y - e.y);
+                        if (distToPlayer > 300) playerVisible = false;
+                    }
+
                     if (e.state === 'patrol') {
-                        let targetX = e.targetX, targetY = e.targetY;
-                        if (zoneTarget) { targetX = zoneTarget.x; targetY = zoneTarget.y; }
+                        let targetX, targetY;
+                        if (zoneTarget) {
+                            targetX = zoneTarget.x;
+                            targetY = zoneTarget.y;
+                        } else {
+                            targetX = e.targetX;
+                            targetY = e.targetY;
+                        }
                         let dx = targetX - e.x, dy = targetY - e.y, len = Math.hypot(dx, dy);
                         if (len < 20) {
-                            e.targetX = e.x + (Math.random()-0.5)*300;
-                            e.targetY = e.y + (Math.random()-0.5)*300;
-                            e.targetX = Math.min(worldWidth-30, Math.max(30, e.targetX));
-                            e.targetY = Math.min(worldWidth-30, Math.max(30, e.targetY));
+                            if (worldWidth > 0) {
+                                e.targetX = e.x + (Math.random()-0.5)*300;
+                                e.targetY = e.y + (Math.random()-0.5)*300;
+                                e.targetX = Math.min(worldWidth-30, Math.max(30, e.targetX));
+                                e.targetY = Math.min(worldWidth-30, Math.max(30, e.targetY));
+                            } else {
+                                e.targetX = e.x + (Math.random()-0.5)*200;
+                                e.targetY = e.y + (Math.random()-0.5)*200;
+                                e.targetX = Math.min(canvas.width-30, Math.max(30, e.targetX));
+                                e.targetY = Math.min(canvas.height-30, Math.max(30, e.targetY));
+                            }
                         }
                         if (len > 0) {
                             let move = findFreeDirection(e, targetX, targetY);
                             moveSmooth(e, move.dx, move.dy);
                         }
-                        if (playerVisible && !zoneTarget) e.state = 'chase';
+                        if (playerVisible && !zoneTarget) {
+                            e.state = 'chase';
+                        }
                     } else if (e.state === 'chase') {
-                        let targetX = player.x, targetY = player.y;
-                        if (zoneTarget) { targetX = zoneTarget.x; targetY = zoneTarget.y; }
+                        let targetX, targetY;
+                        if (zoneTarget) {
+                            targetX = zoneTarget.x;
+                            targetY = zoneTarget.y;
+                        } else {
+                            targetX = player.x;
+                            targetY = player.y;
+                        }
                         let move = findFreeDirection(e, targetX, targetY);
                         moveSmooth(e, move.dx, move.dy);
                         e.lastSeenPlayer = { x: player.x, y: player.y };
@@ -1301,19 +1635,27 @@
                             e.searchTimer = 120;
                         }
                     } else if (e.state === 'search') {
-                        let targetX = e.lastSeenPlayer.x, targetY = e.lastSeenPlayer.y;
-                        if (zoneTarget) { targetX = zoneTarget.x; targetY = zoneTarget.y; }
+                        let targetX, targetY;
+                        if (zoneTarget) {
+                            targetX = zoneTarget.x;
+                            targetY = zoneTarget.y;
+                        } else {
+                            targetX = e.lastSeenPlayer.x;
+                            targetY = e.lastSeenPlayer.y;
+                        }
                         let move = findFreeDirection(e, targetX, targetY);
                         moveSmooth(e, move.dx, move.dy);
                         e.searchTimer--;
                         if (e.searchTimer <= 0 || Math.hypot(e.x - e.lastSeenPlayer.x, e.y - e.lastSeenPlayer.y) < 20) {
                             e.state = 'patrol';
                         }
-                        if (playerVisible && !zoneTarget) e.state = 'chase';
+                        if (playerVisible && !zoneTarget) {
+                            e.state = 'chase';
+                        }
                     }
-                    // schießen
+
                     if (playerVisible && Math.hypot(player.x - e.x, player.y - e.y) < 300 && !zoneTarget) {
-                        if (now - (e.lastShot||0) > 1000) {
+                        if (now - (e.lastShot || 0) > 1000) {
                             e.lastShot = now;
                             let dx = player.x - e.x, dy = player.y - e.y, len = Math.hypot(dx, dy);
                             if (len > 0) {
@@ -1333,23 +1675,26 @@
                         }
                     }
                 });
-                // Nahkampfschaden
+
                 for (let i = 0; i < enemies.length; i++) {
                     let e = enemies[i];
                     let d = Math.hypot(player.x - e.x, player.y - e.y);
-                    if (d < 35 + e.radius && now - e.lastDamageTime > 500) {
-                        player.hp -= e.damage;
-                        addDamageNumber(player.x, player.y, e.damage);
-                        e.lastDamageTime = now;
-                        lastDamageTime = now;
-                        if (player.hp <= 0) {
-                            gameActive = false;
-                            if (score > highScore) highScore = score;
-                            if (wave > maxWave) maxWave = wave;
-                            saveStats();
-                            gameOverDiv.style.display = 'flex';
-                            finalScoreSpan.innerText = 'Punkte: ' + score;
-                            return;
+                    if (d < 35 + e.radius) {
+                        if (now - e.lastDamageTime > 500) {
+                            player.hp -= e.damage;
+                            addDamageNumber(player.x, player.y, e.damage);
+                            addEffect(player.x, player.y);
+                            e.lastDamageTime = now;
+                            lastDamageTime = now;
+                            if (player.hp <= 0) {
+                                gameActive = false;
+                                if (score > highScore) highScore = score;
+                                if (wave > maxWave) maxWave = wave;
+                                saveStats();
+                                gameOverDiv.style.display = 'flex';
+                                finalScoreSpan.innerText = 'Punkte: ' + score;
+                                return;
+                            }
                         }
                     }
                 }
@@ -1374,6 +1719,23 @@
                 updateEnemies();
                 updateZone();
                 applyZoneDamage();
+
+                for (let i = 0; i < enemies.length; i++) {
+                    let e = enemies[i];
+                    for (let k = powerCubes.length-1; k>=0; k--) {
+                        let cube = powerCubes[k];
+                        let d = Math.hypot(e.x - cube.x, e.y - cube.y);
+                        if (d < 40) {
+                            e.powerCubes = (e.powerCubes||0) + 1;
+                            e.maxHp = (e.maxHp || e.hp) + 10;
+                            e.hp += 10;
+                            e.damage += 2;
+                            powerCubes.splice(k,1);
+                            addEffect(cube.x, cube.y);
+                        }
+                    }
+                }
+
                 for (let i = enemies.length-1; i>=0; i--) {
                     let e = enemies[i];
                     if (e.hp <= 0) {
@@ -1384,12 +1746,14 @@
                         enemies.splice(i,1);
                     }
                 }
+
                 if (powerCubes.length < 8) {
                     let toSpawn = Math.min(12 - powerCubes.length, 2);
                     for (let i=0; i<toSpawn; i++) {
                         powerCubes.push({ x: 100 + Math.random()*(WORLD_SIZE-200), y: 100 + Math.random()*(WORLD_SIZE-200), radius:15, color:'#b8860b' });
                     }
                 }
+
                 if (enemies.length === 0) {
                     gameActive = false;
                     gameOverMessage.innerHTML = '🏆 SHOWDOWN SIEG 🏆';
@@ -1407,6 +1771,7 @@
                 enemies = [];
                 spawnEnemies();
             }
+
             function spawnEnemies() {
                 if (!gameActive || gameMode !== 'waves') return;
                 if (enemiesSpawned < enemiesThisWave) {
@@ -1446,10 +1811,11 @@
                 zoneRadius = WORLD_SIZE / 1.5;
                 zoneHUD.style.display = 'flex';
             }
+
             function spawnShowdownEnemies() {
-                if (!gameActive) return;
+                if (!gameActive || gameMode !== 'showdown') return;
                 let count = showdownFinalMode ? 1 : showdownRemainingEnemies;
-                for (let i=0; i<count; i++) {
+                for (let i = 0; i < count; i++) {
                     let x = 100 + Math.random() * (WORLD_SIZE-200);
                     let y = 100 + Math.random() * (WORLD_SIZE-200);
                     enemies.push({
@@ -1471,33 +1837,38 @@
                     });
                 }
             }
+
             function spawnPowerCubes(count) {
-                for (let i=0; i<count; i++) {
+                for (let i = 0; i < count; i++) {
                     let x = 100 + Math.random() * (WORLD_SIZE-200);
                     let y = 100 + Math.random() * (WORLD_SIZE-200);
                     powerCubes.push({ x, y, radius:15, color:'#b8860b' });
                 }
             }
+
             function collectPowerCube(index, collector) {
-                let cube = powerCubes[index];
+                const cube = powerCubes[index];
                 if (!cube) return;
-                collector.powerCubes = (collector.powerCubes||0) + 1;
+                collector.powerCubes = (collector.powerCubes || 0) + 1;
                 collector.maxHp = (collector.maxHp || collector.hp) + 10;
                 collector.hp = Math.min(collector.hp + 10, collector.maxHp);
                 collector.damage = (collector.damage || 8) + 2;
-                powerCubes.splice(index,1);
+                powerCubes.splice(index, 1);
                 addEffect(cube.x, cube.y);
-                if (collector === player) powerCubesCount.textContent = collector.powerCubes;
+                if (collector === player) {
+                    powerCubesCount.textContent = collector.powerCubes;
+                }
             }
 
             // Team-Modus (2vs2, vereinfachte Bot-KI)
             function startTeamMode() {
                 allies = [];
                 enemies = [];
-                for (let i=0; i<1; i++) allies.push(createTeamBot(true));
-                for (let i=0; i<2; i++) enemies.push(createTeamBot(false));
+                for (let i = 0; i < 1; i++) allies.push(createTeamBot(true));
+                for (let i = 0; i < 2; i++) enemies.push(createTeamBot(false));
                 positionTeamMembers();
             }
+
             function createTeamBot(isAlly) {
                 return {
                     name: isAlly ? 'Ally' : 'Enemy',
@@ -1510,6 +1881,7 @@
                     targetX:0,targetY:0, lastSeenPlayer:{x:0,y:0}, searchTimer:0, stuckCounter:0, lastPos:{x:0,y:0}
                 };
             }
+
             function positionTeamMembers() {
                 player.x = 200; player.y = WORLD_SIZE/2 - 50;
                 if (allies[0]) { allies[0].x = 250; allies[0].y = WORLD_SIZE/2 + 50; }
@@ -1524,12 +1896,148 @@
                     bot.lastPos = { x: bot.x, y: bot.y };
                 });
             }
-            function updateTeamBots() { /* ... ähnlich wie vorher, gekürzt */ }
 
-            // Hauptupdate
+            function updateTeamBots() {
+                const now = Date.now();
+
+                // Allies
+                allies.forEach(bot => {
+                    if (bot.hp <= 0) return;
+                    if (Math.hypot(bot.x - bot.lastPos.x, bot.y - bot.lastPos.y) < 1) {
+                        bot.stuckCounter++;
+                        if (bot.stuckCounter > 30) {
+                            bot.targetX = bot.x + (Math.random()-0.5)*300;
+                            bot.targetY = bot.y + (Math.random()-0.5)*300;
+                            bot.stuckCounter = 0;
+                        }
+                    } else {
+                        bot.stuckCounter = 0;
+                    }
+                    bot.lastPos = { x: bot.x, y: bot.y };
+
+                    let target = null;
+                    let minDist = Infinity;
+                    enemies.forEach(e => {
+                        if (e.hp <= 0) return;
+                        let d = Math.hypot(e.x - bot.x, e.y - bot.y);
+                        if (d < minDist) {
+                            minDist = d;
+                            target = e;
+                        }
+                    });
+
+                    if (target) {
+                        let move = findFreeDirection(bot, target.x, target.y);
+                        moveSmooth(bot, move.dx, move.dy);
+                        if (minDist < 300) {
+                            if (now - bot.lastShot > bot.attackCooldown) {
+                                bot.lastShot = now;
+                                let dx = target.x - bot.x, dy = target.y - bot.y, len = Math.hypot(dx, dy);
+                                if (len > 0) {
+                                    let dir = { x: dx/len, y: dy/len };
+                                    let angle = Math.atan2(dir.y, dir.x);
+                                    projectiles.push({
+                                        x: bot.x, y: bot.y,
+                                        vx: Math.cos(angle) * bot.attackSpeed,
+                                        vy: Math.sin(angle) * bot.attackSpeed,
+                                        damage: bot.attackDamage,
+                                        range: 400,
+                                        owner: 'ally',
+                                        size: 6,
+                                        color: '#00ff00'
+                                    });
+                                }
+                            }
+                        }
+                    } else {
+                        let dx = bot.targetX - bot.x, dy = bot.targetY - bot.y, len = Math.hypot(dx, dy);
+                        if (len < 20) {
+                            bot.targetX = bot.x + (Math.random()-0.5)*200;
+                            bot.targetY = bot.y + (Math.random()-0.5)*200;
+                            bot.targetX = Math.min(worldWidth-30, Math.max(30, bot.targetX));
+                            bot.targetY = Math.min(worldWidth-30, Math.max(30, bot.targetY));
+                        }
+                        if (len > 0) {
+                            let move = findFreeDirection(bot, bot.targetX, bot.targetY);
+                            moveSmooth(bot, move.dx, move.dy);
+                        }
+                    }
+                });
+
+                // Gegner
+                enemies.forEach(bot => {
+                    if (bot.hp <= 0) return;
+                    if (Math.hypot(bot.x - bot.lastPos.x, bot.y - bot.lastPos.y) < 1) {
+                        bot.stuckCounter++;
+                        if (bot.stuckCounter > 30) {
+                            bot.targetX = bot.x + (Math.random()-0.5)*300;
+                            bot.targetY = bot.y + (Math.random()-0.5)*300;
+                            bot.stuckCounter = 0;
+                        }
+                    } else {
+                        bot.stuckCounter = 0;
+                    }
+                    bot.lastPos = { x: bot.x, y: bot.y };
+
+                    let targets = [];
+                    if (player.hp > 0) targets.push(player);
+                    allies.forEach(a => { if (a.hp > 0) targets.push(a); });
+
+                    let target = null;
+                    let minDist = Infinity;
+                    targets.forEach(t => {
+                        let d = Math.hypot(t.x - bot.x, t.y - bot.y);
+                        if (d < minDist) {
+                            minDist = d;
+                            target = t;
+                        }
+                    });
+
+                    if (target) {
+                        let move = findFreeDirection(bot, target.x, target.y);
+                        moveSmooth(bot, move.dx, move.dy);
+                        if (minDist < 300) {
+                            if (now - bot.lastShot > bot.attackCooldown) {
+                                bot.lastShot = now;
+                                let dx = target.x - bot.x, dy = target.y - bot.y, len = Math.hypot(dx, dy);
+                                if (len > 0) {
+                                    let dir = { x: dx/len, y: dy/len };
+                                    let angle = Math.atan2(dir.y, dir.x);
+                                    projectiles.push({
+                                        x: bot.x, y: bot.y,
+                                        vx: Math.cos(angle) * bot.attackSpeed,
+                                        vy: Math.sin(angle) * bot.attackSpeed,
+                                        damage: bot.attackDamage,
+                                        range: 400,
+                                        owner: 'enemy',
+                                        size: 6,
+                                        color: '#ff0000'
+                                    });
+                                }
+                            }
+                        }
+                    } else {
+                        let dx = bot.targetX - bot.x, dy = bot.targetY - bot.y, len = Math.hypot(dx, dy);
+                        if (len < 20) {
+                            bot.targetX = bot.x + (Math.random()-0.5)*200;
+                            bot.targetY = bot.y + (Math.random()-0.5)*200;
+                            bot.targetX = Math.min(worldWidth-30, Math.max(30, bot.targetX));
+                            bot.targetY = Math.min(worldWidth-30, Math.max(30, bot.targetY));
+                        }
+                        if (len > 0) {
+                            let move = findFreeDirection(bot, bot.targetX, bot.targetY);
+                            moveSmooth(bot, move.dx, move.dy);
+                        }
+                    }
+                });
+            }
+
+            // ==================== UPDATE ====================
             function update() {
                 if (!gameActive || !player) return;
+
                 applyHealing();
+
                 if (gameMode !== 'waves') {
                     let now = Date.now();
                     if (now - lastReloadTime > AMMO_RELOAD_TIME && ammo < MAX_AMMO) {
@@ -1538,45 +2046,88 @@
                         lastReloadTime = now;
                     }
                 }
+
                 if (leftStick.active) {
                     let dx = leftStick.dir.x * player.speed;
                     let dy = leftStick.dir.y * player.speed;
                     moveSmooth(player, dx, dy);
                 }
+
                 updateCamera();
 
-                if (gameMode === 'waves') updateWaves();
-                else if (gameMode === 'showdown') updateShowdown();
-                else if (gameMode === 'team') updateTeamBots();
+                if (gameMode === 'waves') {
+                    updateWaves();
+                } else if (gameMode === 'showdown') {
+                    updateShowdown();
+                } else if (gameMode === 'team') {
+                    updateTeamBots();
+                    if (player.hp <= 0 && allies.length === 0) {
+                        gameActive = false;
+                        gameOverMessage.innerHTML = '🏆 TEAM VERLOREN 🏆';
+                        gameOverDiv.style.display = 'flex';
+                        finalScoreSpan.innerText = 'Punkte: ' + score;
+                        return;
+                    }
+                    if (enemies.length === 0) {
+                        gameActive = false;
+                        gameOverMessage.innerHTML = '🏆 TEAM SIEG 🏆';
+                        gameOverDiv.style.display = 'flex';
+                        finalScoreSpan.innerText = 'Punkte: ' + score;
+                        totalCoins += 1000;
+                        saveStats();
+                        updateLobbyStats();
+                    }
+                }
 
-                // Projektile (stark vereinfacht)
-                for (let i=projectiles.length-1; i>=0; i--) {
+                // Projektile
+                for (let i = projectiles.length-1; i>=0; i--) {
                     let p = projectiles[i];
                     p.x += p.vx; p.y += p.vy;
-                    if (p.x<0 || p.x>worldWidth || p.y<0 || p.y>worldWidth || collidesWithWall(p.x,p.y,p.size)) {
+                    if (collidesWithWall(p.x, p.y, p.size)) {
                         projectiles.splice(i,1);
                         continue;
                     }
-                    // Kollision mit Gegnern (nur player/ally)
+                    if (worldWidth > 0) {
+                        if (p.x<0 || p.x>worldWidth || p.y<0 || p.y>worldWidth) {
+                            projectiles.splice(i,1);
+                            continue;
+                        }
+                    } else {
+                        if (p.x<0 || p.x>canvas.width || p.y<0 || p.y>canvas.height) {
+                            projectiles.splice(i,1);
+                            continue;
+                        }
+                    }
+
                     if (p.owner === 'player' || p.owner === 'ally') {
-                        for (let j=enemies.length-1; j>=0; j--) {
+                        for (let j = enemies.length-1; j>=0; j--) {
                             let e = enemies[j];
                             if (Math.hypot(p.x-e.x, p.y-e.y) < e.radius+5) {
                                 e.hp -= p.damage;
-                                addDamageNumber(e.x,e.y,p.damage);
-                                if (p.owner === 'player') specialCharge = Math.min(MAX_SPECIAL, specialCharge+10);
+                                addDamageNumber(e.x, e.y, p.damage);
+                                addEffect(p.x, p.y);
+                                if (p.owner === 'player') {
+                                    specialCharge += 10;
+                                    if (specialCharge > MAX_SPECIAL) specialCharge = MAX_SPECIAL;
+                                }
                                 projectiles.splice(i,1);
                                 if (e.hp <= 0) {
-                                    if (p.owner === 'player') { score += 100; specialCharge = Math.min(MAX_SPECIAL, specialCharge+20); }
+                                    if (p.owner === 'player') {
+                                        score += 100;
+                                        specialCharge += 20;
+                                        if (gameMode === 'waves') addCoin(e.x, e.y);
+                                    }
                                     enemies.splice(j,1);
                                 }
                                 break;
                             }
                         }
                     } else if (p.owner === 'enemy') {
-                        if (Math.hypot(p.x-player.x, p.y-player.y) < 35) {
+                        let d = Math.hypot(p.x - player.x, p.y - player.y);
+                        if (d < 35) {
                             player.hp -= p.damage;
-                            addDamageNumber(player.x,player.y,p.damage);
+                            addDamageNumber(player.x, player.y, p.damage);
+                            addEffect(p.x, p.y);
                             lastDamageTime = Date.now();
                             projectiles.splice(i,1);
                             if (player.hp <= 0) {
@@ -1584,42 +2135,66 @@
                                 if (score > highScore) highScore = score;
                                 if (wave > maxWave) maxWave = wave;
                                 saveStats();
+                                gameOverMessage.innerHTML = (gameMode === 'team') ? '🏆 TEAM VERLOREN 🏆' : '💀 GAME OVER 💀';
                                 gameOverDiv.style.display = 'flex';
                                 finalScoreSpan.innerText = 'Punkte: ' + score;
                                 return;
                             }
+                        } else {
+                            for (let j = allies.length-1; j>=0; j--) {
+                                let a = allies[j];
+                                if (a.hp <= 0) continue;
+                                let d2 = Math.hypot(p.x - a.x, p.y - a.y);
+                                if (d2 < 30) {
+                                    a.hp -= p.damage;
+                                    addDamageNumber(a.x, a.y, p.damage);
+                                    addEffect(p.x, p.y);
+                                    projectiles.splice(i,1);
+                                    if (a.hp <= 0) { allies.splice(j,1); }
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
-                // Münzen
-                for (let i=coins.length-1; i>=0; i--) {
+
+                // Münzen einsammeln
+                for (let i = coins.length-1; i>=0; i--) {
                     let c = coins[i];
-                    if (Math.hypot(player.x-c.x, player.y-c.y) < 40+15) {
+                    let d = Math.hypot(player.x - c.x, player.y - c.y);
+                    if (d < 40+15) {
                         score += c.value;
                         totalCoins += c.value;
+                        addEffect(c.x, c.y);
                         coins.splice(i,1);
                         saveStats();
                         updateLobbyStats();
                     }
                 }
+
                 if (gameMode === 'showdown') {
-                    for (let i=powerCubes.length-1; i>=0; i--) {
+                    for (let i = powerCubes.length-1; i>=0; i--) {
                         let c = powerCubes[i];
-                        if (Math.hypot(player.x-c.x, player.y-c.y) < 40+15) collectPowerCube(i, player);
+                        let d = Math.hypot(player.x - c.x, player.y - c.y);
+                        if (d < 40+15) {
+                            collectPowerCube(i, player);
+                        }
                     }
                 }
-                for (let i=effects.length-1; i>=0; i--) {
+
+                for (let i = effects.length-1; i>=0; i--) {
                     effects[i].life--;
                     if (effects[i].life <= 0) effects.splice(i,1);
                 }
-                for (let i=damageNumbers.length-1; i>=0; i--) {
+                for (let i = damageNumbers.length-1; i>=0; i--) {
                     damageNumbers[i].life--;
                     if (damageNumbers[i].life <= 0) damageNumbers.splice(i,1);
                 }
+
                 updateUI();
             }
 
-            // Zeichenfunktionen (stark vereinfacht)
+            // ==================== ZEICHNEN ====================
             function worldToScreenX(wx) { return wx - camera.x; }
             function worldToScreenY(wy) { return wy - camera.y; }
 
@@ -1677,30 +2252,34 @@
                 }
                 // Hindernisse
                 obstacles.forEach(drawObstacle);
-                // PowerCubes, Münzen, Effekte, Projektile, Allies, Gegner, Spieler (stark vereinfacht)
+                // PowerCubes
                 powerCubes.forEach(c => {
                     let sx = worldToScreenX(c.x), sy = worldToScreenY(c.y);
                     ctx.fillStyle = c.color;
                     ctx.beginPath(); ctx.arc(sx, sy, c.radius, 0, 2*Math.PI); ctx.fill();
                     ctx.fillStyle = '#fff'; ctx.font = '20px Arial'; ctx.fillText('📦', sx-12, sy+8);
                 });
+                // Münzen
                 coins.forEach(c => {
                     let sx = worldToScreenX(c.x), sy = worldToScreenY(c.y);
                     ctx.fillStyle = '#FFD700';
                     ctx.beginPath(); ctx.arc(sx, sy, 15, 0, 2*Math.PI); ctx.fill();
                     ctx.fillStyle = '#B8860B'; ctx.font = '20px Arial'; ctx.fillText('💰', sx-12, sy+8);
                 });
+                // Effekte
                 effects.forEach(e => {
                     let sx = worldToScreenX(e.x), sy = worldToScreenY(e.y);
                     let progress = e.life / e.maxLife;
                     ctx.fillStyle = `rgba(255,150,0,${progress})`;
                     ctx.beginPath(); ctx.arc(sx, sy, 30*(1-progress), 0, 2*Math.PI); ctx.fill();
                 });
+                // Projektile
                 projectiles.forEach(p => {
                     let sx = worldToScreenX(p.x), sy = worldToScreenY(p.y);
                     ctx.fillStyle = p.color;
                     ctx.beginPath(); ctx.arc(sx, sy, p.size, 0, 2*Math.PI); ctx.fill();
                 });
+                // Allies
                 allies.forEach(a => {
                     if (a.hp <=0) return;
                     let sx = worldToScreenX(a.x), sy = worldToScreenY(a.y);
@@ -1708,6 +2287,7 @@
                     ctx.beginPath(); ctx.arc(sx, sy, 25, 0, 2*Math.PI); ctx.fill();
                     ctx.fillStyle = 'white'; ctx.font = '20px Arial'; ctx.fillText(a.emoji, sx-12, sy-20);
                 });
+                // Gegner
                 enemies.forEach(e => {
                     if (e.hp <=0) return;
                     let sx = worldToScreenX(e.x), sy = worldToScreenY(e.y);
@@ -1732,7 +2312,7 @@
             function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
             gameLoop();
 
-            // Spielstart
+            // ==================== SPIELSTART ====================
             function startSoloGame() {
                 lobby.style.display = 'none';
                 gameActive = true;
@@ -1740,7 +2320,8 @@
                 gameMode = mapData.mode;
                 obstacles = mapData.obstacles;
                 worldWidth = WORLD_SIZE;
-                wave = 1; score = 0;
+                wave = 1;
+                score = 0;
                 enemies = []; projectiles = []; coins = []; powerCubes = []; effects = []; damageNumbers = [];
                 const b = brawlersList[selectedBrawlerIndex];
                 const skinIndex = selectedSkinIndices[b.name];
@@ -1782,11 +2363,13 @@
             }
 
             playBtn.addEventListener('click', startSoloGame);
+
             restartBtn.addEventListener('click', () => {
                 gameOverDiv.style.display = 'none';
                 lobby.style.display = 'flex';
                 updateLobbyStats();
             });
+
             window.addEventListener('resize', () => {
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
