@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KILL STARS - MULTIPLAYER (PlayPeer)</title>
+    <title>KILL STARS - ULTIMATIVE MIT ZONE</title>
     <style>
         /* ========== ALLE STYLES (unverändert) ========== */
         * {
@@ -608,11 +608,11 @@
             }
         }
     </style>
-    <!-- PlayPeerJS für stabilen Multiplayer -->
-    <script src="https://cdn.jsdelivr.net/npm/playpeerjs@latest/dist/playpeer.min.js"></script>
+    <!-- PeerJS für stabilen Multiplayer -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body>
-    <!-- Lobby -->
+    <!-- Lobby (gleiche Struktur) -->
     <div id="lobby">
         <h1>KILL STARS</h1>
         <div class="player-info">
@@ -633,15 +633,15 @@
             </div>
             <div class="map-btn" data-map="desert" id="mapDesert">
                 <span>🏜️ WÜSTE</span>
-                <span class="map-desc">Showdown (Rand-Spawn)</span>
+                <span class="map-desc">Showdown (Zone)</span>
             </div>
             <div class="map-btn" data-map="ice" id="mapIce">
                 <span>❄️ EIS</span>
-                <span class="map-desc">3vs3 (intelligente Bots)</span>
+                <span class="map-desc">3vs3 (große Map)</span>
             </div>
         </div>
 
-        <!-- Multiplayer-Bereich (PlayPeerJS) -->
+        <!-- Multiplayer-Bereich (PeerJS) -->
         <div class="room-section">
             <div class="room-header">
                 <h2>🎮 Multiplayer-Lobby</h2>
@@ -714,6 +714,7 @@
         </div>
         <div id="score">🏆 0</div>
         <div id="powerCubesHUD" style="display:none;">📦 <span id="powerCubesCount">0</span></div>
+        <div id="zoneHUD" style="display:none;">🔥 <span id="zoneRadius">100%</span></div>
         <div id="ammoHUD" style="display:none;">
             <span>🔫</span>
             <div class="ammo-bars" id="ammoBars">
@@ -767,6 +768,8 @@
             const specialBtn = document.getElementById('specialButton');
             const powerCubesHUD = document.getElementById('powerCubesHUD');
             const powerCubesCount = document.getElementById('powerCubesCount');
+            const zoneHUD = document.getElementById('zoneHUD');
+            const zoneRadiusSpan = document.getElementById('zoneRadius');
             const ammoHUD = document.getElementById('ammoHUD');
             const ammoBar1 = document.getElementById('ammoBar1');
             const ammoBar2 = document.getElementById('ammoBar2');
@@ -820,16 +823,17 @@
                 localStorage.setItem('killStars_playerName', playerName);
             });
 
-            // ==================== MAP-DEFINITION ====================
+            // ==================== MAP-DEFINITION MIT ZONE UND HINDERNISSEN ====================
             const WORLD_SIZE_SHOWDOWN = 2000;
-            const WORLD_SIZE_TEAM = 1500;
+            const WORLD_SIZE_TEAM = 2000; // Eis-Map jetzt auch 2000x2000
 
             const maps = {
                 grass: {
                     id: 'grass', name: 'Grün', bgColor: '#4caf7a', patternColor: '#3d8c5c', lightColor: '#6fb56f',
                     mode: 'waves',
-                    worldWidth: 0,
+                    worldWidth: 0, // Bildschirmgröße
                     obstacles: [
+                        // Hecken (Wände)
                         { x: 200, y: 150, w: 80, h: 80, type: 'wall', color: '#2d5a2d' },
                         { x: 400, y: 300, w: 60, h: 60, type: 'wall', color: '#2d5a2d' },
                         { x: 600, y: 450, w: 100, h: 40, type: 'wall', color: '#2d5a2d' },
@@ -847,6 +851,7 @@
                     mode: 'showdown',
                     worldWidth: WORLD_SIZE_SHOWDOWN,
                     obstacles: [
+                        // Felsen (Wände) über die ganze Map verteilt
                         { x: 300, y: 250, w: 100, h: 100, type: 'wall', color: '#8b5a2b' },
                         { x: 700, y: 600, w: 80, h: 80, type: 'wall', color: '#8b5a2b' },
                         { x: 1100, y: 400, w: 120, h: 60, type: 'wall', color: '#8b5a2b' },
@@ -854,13 +859,25 @@
                         { x: 500, y: 900, w: 90, h: 90, type: 'wall', color: '#8b5a2b' },
                         { x: 1300, y: 200, w: 100, h: 80, type: 'wall', color: '#8b5a2b' },
                         { x: 1800, y: 500, w: 110, h: 70, type: 'wall', color: '#8b5a2b' },
+                        { x: 200, y: 1200, w: 120, h: 80, type: 'wall', color: '#8b5a2b' },
+                        { x: 900, y: 1500, w: 100, h: 100, type: 'wall', color: '#8b5a2b' },
+                        { x: 1600, y: 1300, w: 90, h: 90, type: 'wall', color: '#8b5a2b' },
+                        { x: 400, y: 1600, w: 80, h: 120, type: 'wall', color: '#8b5a2b' },
+                        { x: 1200, y: 1800, w: 100, h: 80, type: 'wall', color: '#8b5a2b' },
+                        { x: 1800, y: 1700, w: 110, h: 70, type: 'wall', color: '#8b5a2b' },
+                        // Kakteen (Büsche)
                         { x: 400, y: 150, w: 40, h: 80, type: 'bush', color: '#5d8c4a' },
                         { x: 800, y: 800, w: 50, h: 50, type: 'bush', color: '#5d8c4a' },
                         { x: 1200, y: 350, w: 60, h: 60, type: 'bush', color: '#5d8c4a' },
                         { x: 1600, y: 550, w: 70, h: 70, type: 'bush', color: '#5d8c4a' },
                         { x: 600, y: 450, w: 50, h: 90, type: 'bush', color: '#5d8c4a' },
                         { x: 1400, y: 750, w: 60, h: 60, type: 'bush', color: '#5d8c4a' },
-                        { x: 1900, y: 300, w: 80, h: 40, type: 'bush', color: '#5d8c4a' }
+                        { x: 1900, y: 300, w: 80, h: 40, type: 'bush', color: '#5d8c4a' },
+                        { x: 300, y: 1100, w: 50, h: 50, type: 'bush', color: '#5d8c4a' },
+                        { x: 700, y: 1300, w: 60, h: 60, type: 'bush', color: '#5d8c4a' },
+                        { x: 1100, y: 900, w: 70, h: 70, type: 'bush', color: '#5d8c4a' },
+                        { x: 1500, y: 1400, w: 80, h: 50, type: 'bush', color: '#5d8c4a' },
+                        { x: 1700, y: 1000, w: 60, h: 60, type: 'bush', color: '#5d8c4a' }
                     ]
                 },
                 ice: {
@@ -868,18 +885,32 @@
                     mode: 'team',
                     worldWidth: WORLD_SIZE_TEAM,
                     obstacles: [
+                        // Eissäulen (Wände) – keine zentrale Mauer mehr
                         { x: 200, y: 200, w: 50, h: 100, type: 'wall', color: '#b0e0ff' },
                         { x: 400, y: 500, w: 70, h: 70, type: 'wall', color: '#b0e0ff' },
                         { x: 600, y: 300, w: 90, h: 90, type: 'wall', color: '#b0e0ff' },
                         { x: 800, y: 700, w: 60, h: 120, type: 'wall', color: '#b0e0ff' },
                         { x: 1000, y: 400, w: 80, h: 80, type: 'wall', color: '#b0e0ff' },
                         { x: 1200, y: 600, w: 100, h: 50, type: 'wall', color: '#b0e0ff' },
+                        { x: 1400, y: 800, w: 70, h: 70, type: 'wall', color: '#b0e0ff' },
+                        { x: 1600, y: 500, w: 80, h: 80, type: 'wall', color: '#b0e0ff' },
+                        { x: 1800, y: 700, w: 90, h: 90, type: 'wall', color: '#b0e0ff' },
+                        { x: 300, y: 1000, w: 100, h: 60, type: 'wall', color: '#b0e0ff' },
+                        { x: 700, y: 1200, w: 80, h: 80, type: 'wall', color: '#b0e0ff' },
+                        { x: 1100, y: 1400, w: 70, h: 100, type: 'wall', color: '#b0e0ff' },
+                        // Schneewehen (Büsche)
                         { x: 250, y: 350, w: 80, h: 40, type: 'bush', color: '#ffffff' },
                         { x: 550, y: 550, w: 60, h: 60, type: 'bush', color: '#ffffff' },
                         { x: 750, y: 250, w: 70, h: 70, type: 'bush', color: '#ffffff' },
                         { x: 950, y: 500, w: 50, h: 80, type: 'bush', color: '#ffffff' },
                         { x: 1150, y: 650, w: 90, h: 50, type: 'bush', color: '#ffffff' },
-                        { x: 1350, y: 400, w: 60, h: 60, type: 'bush', color: '#ffffff' }
+                        { x: 1350, y: 400, w: 60, h: 60, type: 'bush', color: '#ffffff' },
+                        { x: 1550, y: 750, w: 70, h: 70, type: 'bush', color: '#ffffff' },
+                        { x: 1750, y: 550, w: 80, h: 40, type: 'bush', color: '#ffffff' },
+                        { x: 450, y: 850, w: 60, h: 60, type: 'bush', color: '#ffffff' },
+                        { x: 850, y: 950, w: 70, h: 70, type: 'bush', color: '#ffffff' },
+                        { x: 1250, y: 1100, w: 80, h: 50, type: 'bush', color: '#ffffff' },
+                        { x: 1650, y: 900, w: 60, h: 60, type: 'bush', color: '#ffffff' }
                     ]
                 }
             };
@@ -904,7 +935,7 @@
             });
             mapGrass.classList.add('selected');
 
-            // ==================== SKIN-DATEN ====================
+            // ==================== SKIN-DATEN (unverändert) ====================
             const skinData = {
                 Shelly: [
                     { name: 'Standard', emoji: '🔫', color: '#e67e22', hat: '🧢', price: 0 },
@@ -1018,7 +1049,7 @@
             prevSkinBtn.addEventListener('click', (e) => { e.preventDefault(); cycleSkin(-1); });
             nextSkinBtn.addEventListener('click', (e) => { e.preventDefault(); cycleSkin(1); });
 
-            // Shop
+            // ==================== SHOP ====================
             function openShop() {
                 shopOverlay.style.display = 'flex';
                 renderShop();
@@ -1113,9 +1144,14 @@
                         }
                     }
                 }
+                // Weltgrenzen (auch für Wellen-Modus)
                 if (worldWidth > 0) {
                     entity.x = Math.min(worldWidth - (entity.radius||25), Math.max((entity.radius||25), entity.x));
                     entity.y = Math.min(worldWidth - (entity.radius||25), Math.max((entity.radius||25), entity.y));
+                } else {
+                    // Begrenzung auf Canvas für Wellen-Modus
+                    entity.x = Math.min(canvas.width - (entity.radius||25), Math.max((entity.radius||25), entity.x));
+                    entity.y = Math.min(canvas.height - (entity.radius||25), Math.max((entity.radius||25), entity.y));
                 }
             }
 
@@ -1144,6 +1180,73 @@
                 return { dx: 0, dy: 0 };
             }
 
+            // ==================== ZONEN-MECHANIK FÜR SHOWDOWN ====================
+            let zoneCenter = { x: WORLD_SIZE_SHOWDOWN / 2, y: WORLD_SIZE_SHOWDOWN / 2 };
+            let zoneRadius = WORLD_SIZE_SHOWDOWN / 1.5; // Startradius etwas kleiner als die halbe Welt
+            const ZONE_SHRINK_RATE = 0.5; // pro Frame
+            const ZONE_DAMAGE = 2; // Schaden pro Frame außerhalb
+
+            function updateZone() {
+                if (gameMode !== 'showdown') return;
+                // Radius verkleinern
+                zoneRadius = Math.max(100, zoneRadius - ZONE_SHRINK_RATE);
+                // Prozentsatz im HUD anzeigen
+                let percent = Math.floor((zoneRadius / (WORLD_SIZE_SHOWDOWN / 1.5)) * 100);
+                zoneRadiusSpan.textContent = percent + '%';
+            }
+
+            function applyZoneDamage() {
+                if (gameMode !== 'showdown') return;
+                let distToCenter = Math.hypot(player.x - zoneCenter.x, player.y - zoneCenter.y);
+                if (distToCenter > zoneRadius) {
+                    player.hp -= ZONE_DAMAGE;
+                    addDamageNumber(player.x, player.y, ZONE_DAMAGE);
+                    if (player.hp <= 0) {
+                        gameActive = false;
+                        gameOverMessage.innerHTML = '💀 ZONE GAME OVER 💀';
+                        gameOverDiv.style.display = 'flex';
+                        finalScoreSpan.innerText = 'Punkte: ' + score;
+                    }
+                }
+                enemies.forEach(e => {
+                    let dist = Math.hypot(e.x - zoneCenter.x, e.y - zoneCenter.y);
+                    if (dist > zoneRadius) {
+                        e.hp -= ZONE_DAMAGE;
+                        if (e.hp <= 0) {
+                            // Power-Cubes droppen
+                            let cubesToDrop = Math.floor((e.powerCubes||0)/2);
+                            for (let c=0; c<cubesToDrop; c++) {
+                                powerCubes.push({
+                                    x: e.x + (Math.random()-0.5)*50,
+                                    y: e.y + (Math.random()-0.5)*50,
+                                    radius: 15,
+                                    color: '#b8860b'
+                                });
+                            }
+                        }
+                    }
+                });
+                enemies = enemies.filter(e => e.hp > 0);
+            }
+
+            // KI muss Zone beachten
+            function getZoneSafePoint(entity) {
+                // Wenn innerhalb Zone, Ziel ist Spieler
+                if (Math.hypot(entity.x - zoneCenter.x, entity.y - zoneCenter.y) <= zoneRadius) {
+                    return null; // kein Ziel
+                }
+                // Sonst bewege zum nächsten Punkt auf dem Kreis
+                let dx = zoneCenter.x - entity.x;
+                let dy = zoneCenter.y - entity.y;
+                let len = Math.hypot(dx, dy);
+                if (len > 0) {
+                    let targetX = zoneCenter.x - (dx / len) * zoneRadius;
+                    let targetY = zoneCenter.y - (dy / len) * zoneRadius;
+                    return { x: targetX, y: targetY };
+                }
+                return zoneCenter;
+            }
+
             // ==================== KAMERA ====================
             let camera = { x: 0, y: 0 };
 
@@ -1159,172 +1262,86 @@
                 camera.y = Math.max(0, Math.min(camera.y, worldSize - canvas.height));
             }
 
-            // ==================== MULTIPLAYER MIT PLAYPEERJS ====================
-            let room = null;
+            // ==================== MULTIPLAYER MIT PEERJS ====================
+            let peer = null;
+            let conn = null;
             let playersInRoom = {};
             let isHost = false;
+            let roomId = null;
 
-            createRoomBtn.addEventListener('click', async () => {
+            createRoomBtn.addEventListener('click', () => {
                 const roomName = prompt("Raumname eingeben (z.B. 'killstars-123'):");
                 if (!roomName) return;
-
                 roomStatus.innerText = `Erstelle Raum...`;
-
                 try {
-                    const peer = new PlayPeer(playerId, {
-                        config: {
-                            'iceServers': [
-                                { urls: "stun:stun.l.google.com:19302" },
-                                { urls: "stun:stun1.l.google.com:19302" }
-                            ]
-                        }
-                    });
-
-                    peer.onEvent('incomingPeerConnected', (peerId) => {
-                        addChatMessage({ name: 'System', message: `Spieler ${peerId} ist beigetreten.` });
-                    });
-
-                    peer.onEvent('incomingPeerDisconnected', (peerId) => {
-                        addChatMessage({ name: 'System', message: `Spieler ${peerId} hat verlassen.` });
-                        delete playersInRoom[peerId];
-                        updateSlots();
-                    });
-
-                    peer.onEvent('message', (msg) => {
-                        if (msg.type === 'chat') {
-                            addChatMessage({ name: msg.from, message: msg.text });
-                        } else if (msg.type === 'startGame') {
-                            lobby.style.display = 'none';
-                            startSoloGame();
-                        }
-                    });
-
-                    await peer.init();
-                    const hostId = await peer.createRoom({
-                        players: {
-                            [playerId]: {
-                                name: playerName,
-                                emoji: brawlerEmoji.textContent
-                            }
-                        }
-                    });
-
-                    room = peer;
-                    isHost = true;
-                    roomStatus.innerText = `Raum: ${roomName} (Host)`;
-                    startMultiplayerBtn.style.display = 'inline-block';
-
-                    playersInRoom[playerId] = {
-                        name: playerName,
-                        emoji: brawlerEmoji.textContent
-                    };
-                    updateSlots();
-
-                } catch (e) {
-                    console.error("Fehler:", e);
-                    roomStatus.innerText = `Fehler: ${e.message}`;
-                }
-            });
-
-            joinRoomBtn.addEventListener('click', async () => {
-                const hostId = prompt("Gib die Host-ID ein (vom Host):");
-                if (!hostId) return;
-
-                roomStatus.innerText = `Verbinde...`;
-
-                try {
-                    const peer = new PlayPeer(playerId, {
-                        config: {
-                            'iceServers': [
-                                { urls: "stun:stun.l.google.com:19302" },
-                                { urls: "stun:stun1.l.google.com:19302" }
-                            ]
-                        }
-                    });
-
-                    peer.onEvent('message', (msg) => {
-                        if (msg.type === 'chat') {
-                            addChatMessage({ name: msg.from, message: msg.text });
-                        } else if (msg.type === 'startGame') {
-                            lobby.style.display = 'none';
-                            startSoloGame();
-                        }
-                    });
-
-                    peer.onEvent('outgoingPeerDisconnected', () => {
-                        addChatMessage({ name: 'System', message: `Verbindung zum Host verloren.` });
-                    });
-
-                    await peer.init();
-                    await peer.joinRoom(hostId);
-
-                    room = peer;
-                    isHost = false;
-                    roomStatus.innerText = `Verbunden mit Host`;
-
-                    // Eigene Daten an Host senden (als Nachricht)
-                    peer.sendTo(hostId, {
-                        type: 'playerData',
-                        data: {
-                            id: playerId,
+                    peer = new Peer(playerId + '-' + Date.now());
+                    peer.on('open', (id) => {
+                        roomId = id;
+                        roomStatus.innerText = `Raum: ${roomName} (Host) - ID: ${id}`;
+                        startMultiplayerBtn.style.display = 'inline-block';
+                        isHost = true;
+                        playersInRoom[playerId] = {
                             name: playerName,
                             emoji: brawlerEmoji.textContent
-                        }
+                        };
+                        updateSlots();
                     });
-
-                    playersInRoom[playerId] = {
-                        name: playerName,
-                        emoji: brawlerEmoji.textContent
-                    };
-                    updateSlots();
-
+                    peer.on('connection', (newConn) => {
+                        conn = newConn;
+                        conn.on('data', (data) => {
+                            if (data.type === 'playerData') {
+                                playersInRoom[data.id] = data;
+                                updateSlots();
+                            } else if (data.type === 'chat') {
+                                addChatMessage({ name: data.from, message: data.text });
+                            } else if (data.type === 'startGame') {
+                                lobby.style.display = 'none';
+                                startSoloGame();
+                            }
+                        });
+                        conn.on('close', () => {
+                            // Entferne Spieler
+                            // Wir müssten wissen, welcher Spieler das war – vereinfacht: neu laden
+                        });
+                    });
                 } catch (e) {
-                    console.error("Fehler:", e);
                     roomStatus.innerText = `Fehler: ${e.message}`;
                 }
             });
 
-            // Empfange playerData-Nachrichten (nur Host)
-            // Wir müssen einen globalen Listener haben – das machen wir später, sobald room existiert.
-            // Da wir room erst nach dem Verbinden haben, müssen wir onMessage setzen.
-            // Besser: Wir setzen den Listener vor dem Verbinden.
-            // (bereits in den jeweiligen Blöcken geschehen)
-
-            // Zusätzlicher Listener für playerData beim Host
-            // (kann nicht vorher gesetzt werden, da room erst später existiert)
-            // Wir setzen ihn im createRoom-Block nach dem Erstellen.
-
-            // Funktion zum Senden von Nachrichten
-            function sendMessage(type, data) {
-                if (room) {
-                    if (isHost) {
-                        // Host sendet an alle
-                        room.sendToAll({ type, ...data });
-                    } else {
-                        // Gast sendet an Host
-                        room.sendTo(room.hostId, { type, ...data });
-                    }
-                }
-            }
-
-            sendChatBtn.addEventListener('click', () => {
-                const msg = chatInput.value.trim();
-                if (msg && room) {
-                    if (isHost) {
-                        room.sendToAll({ type: 'chat', from: playerName, text: msg });
-                    } else {
-                        room.sendTo(room.hostId, { type: 'chat', from: playerName, text: msg });
-                    }
-                    addChatMessage({ name: playerName, message: msg });
-                    chatInput.value = '';
-                }
-            });
-
-            startMultiplayerBtn.addEventListener('click', () => {
-                if (room && isHost) {
-                    room.sendToAll({ type: 'startGame' });
-                    lobby.style.display = 'none';
-                    startSoloGame();
+            joinRoomBtn.addEventListener('click', () => {
+                const hostId = prompt("Gib die Host-ID ein:");
+                if (!hostId) return;
+                roomStatus.innerText = `Verbinde...`;
+                try {
+                    peer = new Peer(playerId + '-' + Date.now());
+                    peer.on('open', () => {
+                        conn = peer.connect(hostId);
+                        conn.on('open', () => {
+                            roomStatus.innerText = `Verbunden mit Host`;
+                            conn.send({
+                                type: 'playerData',
+                                id: playerId,
+                                name: playerName,
+                                emoji: brawlerEmoji.textContent
+                            });
+                            playersInRoom[playerId] = {
+                                name: playerName,
+                                emoji: brawlerEmoji.textContent
+                            };
+                            updateSlots();
+                        });
+                        conn.on('data', (data) => {
+                            if (data.type === 'chat') {
+                                addChatMessage({ name: data.from, message: data.text });
+                            } else if (data.type === 'startGame') {
+                                lobby.style.display = 'none';
+                                startSoloGame();
+                            }
+                        });
+                    });
+                } catch (e) {
+                    roomStatus.innerText = `Fehler: ${e.message}`;
                 }
             });
 
@@ -1348,6 +1365,26 @@
                 chatMessages.innerHTML += `<div><b>${msg.name}:</b> ${msg.message}</div>`;
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }
+
+            sendChatBtn.addEventListener('click', () => {
+                const msg = chatInput.value.trim();
+                if (msg && conn) {
+                    conn.send({ type: 'chat', from: playerName, text: msg });
+                    addChatMessage({ name: playerName, message: msg });
+                    chatInput.value = '';
+                } else if (msg && peer && isHost) {
+                    // Host hat keine Verbindung zu allen, müsste broadcasten – einfacher: nur an einzelne Verbindung
+                    // Für den Moment: Nur wenn Verbindung existiert.
+                }
+            });
+
+            startMultiplayerBtn.addEventListener('click', () => {
+                if (conn && isHost) {
+                    conn.send({ type: 'startGame' });
+                    lobby.style.display = 'none';
+                    startSoloGame();
+                }
+            });
 
             // ==================== SPIELVARIABLEN ====================
             let gameActive = false;
@@ -1560,7 +1597,7 @@
                 specialDir = { x: 0, y: 0 };
             });
 
-            // Schießen und Spezial
+            // Schießen und Spezial (unverändert)
             function autoShoot() {
                 if (!player || !gameActive) return;
                 let closest = null;
@@ -1733,7 +1770,7 @@
                 }
             }
 
-            // ==================== KI FÜR ALLE MODI ====================
+            // ==================== KI FÜR ALLE MODI (mit Zone) ====================
             function updateEnemies() {
                 const now = Date.now();
                 enemies.forEach(e => {
@@ -1747,9 +1784,25 @@
                         if (distToPlayer > 300) playerVisible = false;
                     }
 
+                    // Zonen-Ziel (nur für Showdown)
+                    let zoneTarget = null;
+                    if (gameMode === 'showdown') {
+                        zoneTarget = getZoneSafePoint(e);
+                    }
+
+                    // Zustandsmaschine
                     if (e.state === 'patrol') {
-                        let dx = e.targetX - e.x;
-                        let dy = e.targetY - e.y;
+                        let targetX, targetY;
+                        if (zoneTarget) {
+                            // Wenn außerhalb Zone, gehe zur Zone
+                            targetX = zoneTarget.x;
+                            targetY = zoneTarget.y;
+                        } else {
+                            targetX = e.targetX;
+                            targetY = e.targetY;
+                        }
+                        let dx = targetX - e.x;
+                        let dy = targetY - e.y;
                         let len = Math.hypot(dx, dy);
                         if (len < 20) {
                             if (worldWidth > 0) {
@@ -1765,32 +1818,49 @@
                             }
                         }
                         if (len > 0) {
-                            let move = findFreeDirection(e, e.targetX, e.targetY);
+                            let move = findFreeDirection(e, targetX, targetY);
                             moveSmooth(e, move.dx, move.dy);
                         }
-                        if (playerVisible) {
+                        if (playerVisible && !zoneTarget) {
                             e.state = 'chase';
                         }
                     } else if (e.state === 'chase') {
-                        let move = findFreeDirection(e, player.x, player.y);
+                        let targetX, targetY;
+                        if (zoneTarget) {
+                            targetX = zoneTarget.x;
+                            targetY = zoneTarget.y;
+                        } else {
+                            targetX = player.x;
+                            targetY = player.y;
+                        }
+                        let move = findFreeDirection(e, targetX, targetY);
                         moveSmooth(e, move.dx, move.dy);
                         e.lastSeenPlayer = { x: player.x, y: player.y };
-                        if (!playerVisible) {
+                        if (!playerVisible && !zoneTarget) {
                             e.state = 'search';
                             e.searchTimer = 120;
                         }
                     } else if (e.state === 'search') {
-                        let move = findFreeDirection(e, e.lastSeenPlayer.x, e.lastSeenPlayer.y);
+                        let targetX, targetY;
+                        if (zoneTarget) {
+                            targetX = zoneTarget.x;
+                            targetY = zoneTarget.y;
+                        } else {
+                            targetX = e.lastSeenPlayer.x;
+                            targetY = e.lastSeenPlayer.y;
+                        }
+                        let move = findFreeDirection(e, targetX, targetY);
                         moveSmooth(e, move.dx, move.dy);
                         e.searchTimer--;
                         if (e.searchTimer <= 0 || (Math.hypot(e.x - e.lastSeenPlayer.x, e.y - e.lastSeenPlayer.y) < 20)) {
                             e.state = 'patrol';
                         }
-                        if (playerVisible) {
+                        if (playerVisible && !zoneTarget) {
                             e.state = 'chase';
                         }
                     }
 
+                    // Schießen, wenn Spieler sichtbar und nah genug
                     if (playerVisible && Math.hypot(player.x - e.x, player.y - e.y) < 300) {
                         if (now - (e.lastShot || 0) > 1000) {
                             e.lastShot = now;
@@ -1857,6 +1927,8 @@
 
             function updateShowdown() {
                 updateEnemies();
+                updateZone();
+                applyZoneDamage();
 
                 for (let i = 0; i < enemies.length; i++) {
                     let e = enemies[i];
@@ -1955,6 +2027,9 @@
                 showdownFinalMode = false;
                 spawnShowdownEnemies();
                 spawnPowerCubes(12);
+                zoneCenter = { x: WORLD_SIZE_SHOWDOWN / 2, y: WORLD_SIZE_SHOWDOWN / 2 };
+                zoneRadius = WORLD_SIZE_SHOWDOWN / 1.5;
+                zoneHUD.style.display = 'flex';
             }
 
             function spawnShowdownEnemies() {
@@ -2183,6 +2258,7 @@
                     }
                 }
 
+                // Projektile (mit Wandkollision)
                 for (let i = projectiles.length-1; i>=0; i--) {
                     let p = projectiles[i];
                     p.x += p.vx; p.y += p.vy;
@@ -2231,7 +2307,7 @@
                             player.hp -= p.damage;
                             addDamageNumber(player.x, player.y, p.damage);
                             addEffect(p.x, p.y);
-                            lastDamageTime = Date.now(); // für Heilung
+                            lastDamageTime = Date.now();
                             projectiles.splice(i,1);
                             if (player.hp <= 0) {
                                 gameActive = false;
@@ -2296,7 +2372,7 @@
                 updateUI();
             }
 
-            // ==================== ZEICHNEN ====================
+            // ==================== ZEICHNEN (mit Zone) ====================
             function worldToScreenX(wx) { return worldWidth > 0 ? wx - camera.x : wx; }
             function worldToScreenY(wy) { return worldWidth > 0 ? wy - camera.y : wy; }
 
@@ -2357,6 +2433,18 @@
                     for (let i=0;i<worldWidth;i+=200) {
                         let sy = worldToScreenY(i);
                         if (sy>=0 && sy<=canvas.height) { ctx.beginPath(); ctx.moveTo(0,sy); ctx.lineTo(canvas.width,sy); ctx.stroke(); }
+                    }
+
+                    // Zeichne Zone (Showdown)
+                    if (gameMode === 'showdown') {
+                        ctx.save();
+                        ctx.strokeStyle = 'rgba(255,0,0,0.8)';
+                        ctx.lineWidth = 5;
+                        ctx.setLineDash([10, 10]);
+                        ctx.beginPath();
+                        ctx.arc(worldToScreenX(zoneCenter.x), worldToScreenY(zoneCenter.y), zoneRadius, 0, 2*Math.PI);
+                        ctx.stroke();
+                        ctx.restore();
                     }
                 } else {
                     ctx.fillStyle = map.bgColor;
@@ -2463,17 +2551,6 @@
                 ctx.fillText(player.emoji,sx-20,sy-80);
                 ctx.restore();
 
-                for (let id in playersInRoom) {
-                    if (id === playerId) continue;
-                    let p = playersInRoom[id];
-                    if (!p.x) p = { ...p, x: 0, y: 0 }; // nur für Anzeige (wenn keine Position)
-                    let psx = worldToScreenX(p.x), psy = worldToScreenY(p.y);
-                    ctx.fillStyle = '#3498db';
-                    ctx.beginPath(); ctx.arc(psx, psy, 25, 0, 2*Math.PI); ctx.fill();
-                    ctx.fillStyle = 'white'; ctx.font = '20px Arial';
-                    ctx.fillText(p.emoji || '👤', psx-15, psy-30);
-                }
-
                 ctx.save(); ctx.font='bold 26px Arial'; ctx.textAlign='center';
                 damageNumbers.forEach(d => {
                     let dsx=worldToScreenX(d.x), dsy=worldToScreenY(d.y);
@@ -2576,6 +2653,7 @@
 
                 if (gameMode === 'waves') {
                     ammo = Infinity; ammoHUD.style.display = 'none';
+                    zoneHUD.style.display = 'none';
                     startWave();
                 } else if (gameMode === 'showdown') {
                     let side = Math.floor(Math.random() * 4);
@@ -2595,11 +2673,13 @@
                     }
                     ammo = MAX_AMMO; ammoHUD.style.display = 'flex'; ammo = MAX_AMMO; updateAmmoBars();
                     powerCubesHUD.style.display = 'flex';
+                    zoneHUD.style.display = 'flex';
                     startShowdown();
                 } else if (gameMode === 'team') {
                     player.x = 200;
                     player.y = worldWidth / 2 + (Math.random() - 0.5) * 200;
                     ammo = MAX_AMMO; ammoHUD.style.display = 'flex'; ammo = MAX_AMMO; updateAmmoBars();
+                    zoneHUD.style.display = 'none';
                     startTeamMode();
                 }
                 waveDisplay.style.display = (gameMode==='waves')?'inline-block':'none';
