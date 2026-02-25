@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KILL STARS - ULTIMATIVE MIT ZONE & INTELLIGENTER KI</title>
+    <title>KILL STARS - 2vs2 + INTELLIGENTE BOTS</title>
     <style>
-        /* ========== ALLE STYLES (unverändert) ========== */
+        /* ========== ALLE STYLES ========== */
         * {
             box-sizing: border-box;
             user-select: none;
@@ -517,6 +517,7 @@
             background: #ffaa00;
             transition: width 0.1s;
         }
+        /* Joysticks - höher positioniert */
         .joystick {
             position: absolute;
             width: min(130px, 28vw);
@@ -530,11 +531,11 @@
             box-shadow: 0 0 30px black;
         }
         #leftJoystick {
-            bottom: max(30px, 6vh);
+            bottom: max(100px, 12vh);  /* höher */
             left: max(20px, 4vw);
         }
         #rightJoystick {
-            bottom: max(30px, 6vh);
+            bottom: max(100px, 12vh);  /* höher */
             right: max(150px, 22vw);
         }
         .joystickKnob {
@@ -616,11 +617,9 @@
             }
         }
     </style>
-    <!-- PeerJS für stabilen Multiplayer -->
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body>
-    <!-- Lobby (gleiche Struktur) -->
+    <!-- Lobby -->
     <div id="lobby">
         <h1>KILL STARS</h1>
         <div class="player-info">
@@ -645,33 +644,13 @@
             </div>
             <div class="map-btn" data-map="ice" id="mapIce">
                 <span>❄️ EIS</span>
-                <span class="map-desc">3vs3 (intelligente Bots)</span>
+                <span class="map-desc">2vs2 (intelligente Bots)</span>
             </div>
         </div>
 
-        <!-- Multiplayer-Bereich (PeerJS) -->
-        <div class="room-section">
-            <div class="room-header">
-                <h2>🎮 Multiplayer-Lobby</h2>
-                <div class="room-actions">
-                    <button id="createRoomBtn">Raum erstellen</button>
-                    <button id="joinRoomBtn">Raum beitreten</button>
-                </div>
-            </div>
-            <div id="roomStatus">Kein Raum. Erstelle einen oder tritt einem bei.</div>
-            <div class="player-slots" id="playerSlots">
-                <div class="slot" id="slot1"><div class="emoji" id="slot1Emoji">🤔</div><div class="name" id="slot1Name">--</div></div>
-                <div class="slot" id="slot2"><div class="emoji" id="slot2Emoji">🤔</div><div class="name" id="slot2Name">--</div></div>
-                <div class="slot" id="slot3"><div class="emoji" id="slot3Emoji">🤔</div><div class="name" id="slot3Name">--</div></div>
-            </div>
-            <div class="chat-box">
-                <div class="chat-messages" id="chatMessages"></div>
-                <div class="chat-input">
-                    <input type="text" id="chatInput" placeholder="Nachricht...">
-                    <button id="sendChatBtn">Senden</button>
-                </div>
-            </div>
-            <button id="startMultiplayerBtn" class="play-button" style="margin-top:10px; display:none;">Spiel starten (für alle)</button>
+        <!-- Hinweis: Multiplayer deaktiviert -->
+        <div style="background: #c0392b; color: white; padding: 10px; border-radius: 30px; margin-bottom: 10px;">
+            ⚠️ Multiplayer aktuell nicht verfügbar – spiele solo!
         </div>
 
         <!-- Brawler-Auswahl -->
@@ -795,24 +774,12 @@
             const leftKnob = document.getElementById('leftKnob');
             const rightKnob = document.getElementById('rightKnob');
 
-            // Multiplayer-Elemente
+            // Multiplayer-Elemente (deaktiviert)
             const playerNameInput = document.getElementById('playerNameInput');
             const playerIdDisplay = document.getElementById('playerIdDisplay');
-            const createRoomBtn = document.getElementById('createRoomBtn');
-            const joinRoomBtn = document.getElementById('joinRoomBtn');
-            const roomStatus = document.getElementById('roomStatus');
-            const slot1Emoji = document.getElementById('slot1Emoji');
-            const slot1Name = document.getElementById('slot1Name');
-            const slot2Emoji = document.getElementById('slot2Emoji');
-            const slot2Name = document.getElementById('slot2Name');
-            const slot3Emoji = document.getElementById('slot3Emoji');
-            const slot3Name = document.getElementById('slot3Name');
-            const chatMessages = document.getElementById('chatMessages');
-            const chatInput = document.getElementById('chatInput');
-            const sendChatBtn = document.getElementById('sendChatBtn');
-            const startMultiplayerBtn = document.getElementById('startMultiplayerBtn');
+            // Keine PeerJS-Initialisierung
 
-            // ==================== SPIELER-ID & NAME ====================
+            // ==================== SPIELER-ID & NAME (nur für Anzeige) ====================
             let playerId = localStorage.getItem('killStars_playerId');
             if (!playerId) {
                 playerId = 'P' + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -833,7 +800,7 @@
 
             // ==================== MAP-DEFINITION MIT ZONE UND HINDERNISSEN ====================
             const WORLD_SIZE_SHOWDOWN = 2000;
-            const WORLD_SIZE_TEAM = 2000; // Eis-Map jetzt auch 2000x2000
+            const WORLD_SIZE_TEAM = 2000; // 2vs2 große Welt
 
             const maps = {
                 grass: {
@@ -893,7 +860,7 @@
                     mode: 'team',
                     worldWidth: WORLD_SIZE_TEAM,
                     obstacles: [
-                        // Eissäulen (Wände) – keine zentrale Mauer mehr
+                        // Eissäulen (Wände) – verteilt
                         { x: 200, y: 200, w: 50, h: 100, type: 'wall', color: '#b0e0ff' },
                         { x: 400, y: 500, w: 70, h: 70, type: 'wall', color: '#b0e0ff' },
                         { x: 600, y: 300, w: 90, h: 90, type: 'wall', color: '#b0e0ff' },
@@ -943,7 +910,7 @@
             });
             mapGrass.classList.add('selected');
 
-            // ==================== SKIN-DATEN (unverändert) ====================
+            // ==================== SKIN-DATEN ====================
             const skinData = {
                 Shelly: [
                     { name: 'Standard', emoji: '🔫', color: '#e67e22', hat: '🧢', price: 0 },
@@ -1152,12 +1119,12 @@
                         }
                     }
                 }
-                // Weltgrenzen (auch für Wellen-Modus)
+                // Weltgrenzen
                 if (worldWidth > 0) {
                     entity.x = Math.min(worldWidth - (entity.radius||25), Math.max((entity.radius||25), entity.x));
                     entity.y = Math.min(worldWidth - (entity.radius||25), Math.max((entity.radius||25), entity.y));
                 } else {
-                    // Begrenzung auf Canvas für Wellen-Modus
+                    // Wellen-Modus auf Bildschirm begrenzt
                     entity.x = Math.min(canvas.width - (entity.radius||25), Math.max((entity.radius||25), entity.x));
                     entity.y = Math.min(canvas.height - (entity.radius||25), Math.max((entity.radius||25), entity.y));
                 }
@@ -1190,15 +1157,13 @@
 
             // ==================== ZONEN-MECHANIK FÜR SHOWDOWN ====================
             let zoneCenter = { x: WORLD_SIZE_SHOWDOWN / 2, y: WORLD_SIZE_SHOWDOWN / 2 };
-            let zoneRadius = WORLD_SIZE_SHOWDOWN / 1.5; // Startradius etwas kleiner als die halbe Welt
-            const ZONE_SHRINK_RATE = 0.5; // pro Frame
-            const ZONE_DAMAGE = 2; // Schaden pro Frame außerhalb
+            let zoneRadius = WORLD_SIZE_SHOWDOWN / 1.5;
+            const ZONE_SHRINK_RATE = 0.5;
+            const ZONE_DAMAGE = 2;
 
             function updateZone() {
                 if (gameMode !== 'showdown') return;
-                // Radius verkleinern
                 zoneRadius = Math.max(100, zoneRadius - ZONE_SHRINK_RATE);
-                // Prozentsatz im HUD anzeigen
                 let percent = Math.floor((zoneRadius / (WORLD_SIZE_SHOWDOWN / 1.5)) * 100);
                 zoneRadiusSpan.textContent = percent + '%';
             }
@@ -1221,7 +1186,6 @@
                     if (dist > zoneRadius) {
                         e.hp -= ZONE_DAMAGE;
                         if (e.hp <= 0) {
-                            // Power-Cubes droppen
                             let cubesToDrop = Math.floor((e.powerCubes||0)/2);
                             for (let c=0; c<cubesToDrop; c++) {
                                 powerCubes.push({
@@ -1237,13 +1201,10 @@
                 enemies = enemies.filter(e => e.hp > 0);
             }
 
-            // KI muss Zone beachten
             function getZoneSafePoint(entity) {
-                // Wenn innerhalb Zone, Ziel ist null (keine Priorität)
                 if (Math.hypot(entity.x - zoneCenter.x, entity.y - zoneCenter.y) <= zoneRadius) {
-                    return null; // kein Ziel
+                    return null;
                 }
-                // Sonst bewege zum nächsten Punkt auf dem Kreis
                 let dx = zoneCenter.x - entity.x;
                 let dy = zoneCenter.y - entity.y;
                 let len = Math.hypot(dx, dy);
@@ -1269,130 +1230,6 @@
                 camera.x = Math.max(0, Math.min(camera.x, worldSize - canvas.width));
                 camera.y = Math.max(0, Math.min(camera.y, worldSize - canvas.height));
             }
-
-            // ==================== MULTIPLAYER MIT PEERJS ====================
-            let peer = null;
-            let conn = null;
-            let playersInRoom = {};
-            let isHost = false;
-            let roomId = null;
-
-            createRoomBtn.addEventListener('click', () => {
-                const roomName = prompt("Raumname eingeben (z.B. 'killstars-123'):");
-                if (!roomName) return;
-                roomStatus.innerText = `Erstelle Raum...`;
-                try {
-                    peer = new Peer(playerId + '-' + Date.now());
-                    peer.on('open', (id) => {
-                        roomId = id;
-                        roomStatus.innerText = `Raum: ${roomName} (Host) - ID: ${id}`;
-                        startMultiplayerBtn.style.display = 'inline-block';
-                        isHost = true;
-                        playersInRoom[playerId] = {
-                            name: playerName,
-                            emoji: brawlerEmoji.textContent
-                        };
-                        updateSlots();
-                    });
-                    peer.on('connection', (newConn) => {
-                        conn = newConn;
-                        conn.on('data', (data) => {
-                            if (data.type === 'playerData') {
-                                playersInRoom[data.id] = data;
-                                updateSlots();
-                            } else if (data.type === 'chat') {
-                                addChatMessage({ name: data.from, message: data.text });
-                            } else if (data.type === 'startGame') {
-                                lobby.style.display = 'none';
-                                startSoloGame();
-                            }
-                        });
-                        conn.on('close', () => {
-                            // Entferne Spieler
-                            // Wir müssten wissen, welcher Spieler das war – vereinfacht: neu laden
-                        });
-                    });
-                } catch (e) {
-                    roomStatus.innerText = `Fehler: ${e.message}`;
-                }
-            });
-
-            joinRoomBtn.addEventListener('click', () => {
-                const hostId = prompt("Gib die Host-ID ein:");
-                if (!hostId) return;
-                roomStatus.innerText = `Verbinde...`;
-                try {
-                    peer = new Peer(playerId + '-' + Date.now());
-                    peer.on('open', () => {
-                        conn = peer.connect(hostId);
-                        conn.on('open', () => {
-                            roomStatus.innerText = `Verbunden mit Host`;
-                            conn.send({
-                                type: 'playerData',
-                                id: playerId,
-                                name: playerName,
-                                emoji: brawlerEmoji.textContent
-                            });
-                            playersInRoom[playerId] = {
-                                name: playerName,
-                                emoji: brawlerEmoji.textContent
-                            };
-                            updateSlots();
-                        });
-                        conn.on('data', (data) => {
-                            if (data.type === 'chat') {
-                                addChatMessage({ name: data.from, message: data.text });
-                            } else if (data.type === 'startGame') {
-                                lobby.style.display = 'none';
-                                startSoloGame();
-                            }
-                        });
-                    });
-                } catch (e) {
-                    roomStatus.innerText = `Fehler: ${e.message}`;
-                }
-            });
-
-            function updateSlots() {
-                const slots = [slot1Emoji, slot1Name, slot2Emoji, slot2Name, slot3Emoji, slot3Name];
-                for (let i = 0; i < 3; i++) {
-                    slots[i*2].textContent = '🤔';
-                    slots[i*2+1].textContent = '--';
-                }
-                let index = 0;
-                for (let id in playersInRoom) {
-                    if (index >= 3) break;
-                    const p = playersInRoom[id];
-                    slots[index*2].textContent = p.emoji || '🤔';
-                    slots[index*2+1].textContent = p.name || id.substring(0,6);
-                    index++;
-                }
-            }
-
-            function addChatMessage(msg) {
-                chatMessages.innerHTML += `<div><b>${msg.name}:</b> ${msg.message}</div>`;
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }
-
-            sendChatBtn.addEventListener('click', () => {
-                const msg = chatInput.value.trim();
-                if (msg && conn) {
-                    conn.send({ type: 'chat', from: playerName, text: msg });
-                    addChatMessage({ name: playerName, message: msg });
-                    chatInput.value = '';
-                } else if (msg && peer && isHost) {
-                    // Host hat keine Verbindung zu allen, müsste broadcasten – einfacher: nur an einzelne Verbindung
-                    // Für den Moment: Nur wenn Verbindung existiert.
-                }
-            });
-
-            startMultiplayerBtn.addEventListener('click', () => {
-                if (conn && isHost) {
-                    conn.send({ type: 'startGame' });
-                    lobby.style.display = 'none';
-                    startSoloGame();
-                }
-            });
 
             // ==================== SPIELVARIABLEN ====================
             let gameActive = false;
@@ -1423,8 +1260,8 @@
 
             // Heilungs-Timer
             let lastDamageTime = 0;
-            const HEAL_DELAY = 5000; // 5 Sekunden
-            const HEAL_RATE = 0.1; // pro Frame (~6 HP/s bei 60fps)
+            const HEAL_DELAY = 5000;
+            const HEAL_RATE = 0.1;
 
             // Joystick-Zustände
             let leftStick = { active: false, id: null, dir: { x: 0, y: 0 } };
@@ -1435,7 +1272,7 @@
             let specialTap = false;
             let specialTouchId = null;
 
-            // Joystick-Listener (wie gehabt)
+            // Joystick-Listener
             function handleTouchStart(e, isRight) {
                 e.preventDefault();
                 const touches = e.changedTouches;
@@ -1605,7 +1442,7 @@
                 specialDir = { x: 0, y: 0 };
             });
 
-            // Schießen und Spezial (unverändert)
+            // Schießen und Spezial
             function autoShoot() {
                 if (!player || !gameActive) return;
                 let closest = null;
@@ -1778,7 +1615,7 @@
                 }
             }
 
-            // ==================== KI FÜR ALLE MODI (mit Zone) ====================
+            // ==================== KI FÜR ALLE MODI ====================
             function updateEnemies() {
                 const now = Date.now();
                 enemies.forEach(e => {
@@ -1788,7 +1625,6 @@
                     let zoneTarget = null;
                     if (gameMode === 'showdown') {
                         if (Math.hypot(e.x - zoneCenter.x, e.y - zoneCenter.y) > zoneRadius) {
-                            // außerhalb Zone: Ziel ist nächster Punkt auf dem Kreis
                             let dx = zoneCenter.x - e.x;
                             let dy = zoneCenter.y - e.y;
                             let len = Math.hypot(dx, dy);
@@ -1803,6 +1639,7 @@
                         }
                     }
 
+                    // Spieler sichtbar?
                     let playerVisible = true;
                     if (isInBush(player.x, player.y)) {
                         playerVisible = false;
@@ -1880,9 +1717,9 @@
                         }
                     }
 
-                    // Schießen, wenn Spieler sichtbar und nah genug
+                    // Schießen – nur wenn Spieler sichtbar und nicht zu weit weg
                     if (playerVisible && Math.hypot(player.x - e.x, player.y - e.y) < 300 && !zoneTarget) {
-                        if (now - (e.lastShot || 0) > 1000) {
+                        if (now - (e.lastShot || 0) > 1000) { // 1 Sekunde Cooldown
                             e.lastShot = now;
                             let dx = player.x - e.x;
                             let dy = player.y - e.y;
@@ -1905,6 +1742,7 @@
                     }
                 });
 
+                // Nahkampfschaden
                 for (let i = 0; i < enemies.length; i++) {
                     let e = enemies[i];
                     let d = Math.hypot(player.x - e.x, player.y - e.y);
@@ -1914,7 +1752,7 @@
                             addDamageNumber(player.x, player.y, e.damage);
                             addEffect(player.x, player.y);
                             e.lastDamageTime = now;
-                            lastDamageTime = now; // für Heilung
+                            lastDamageTime = now;
                             if (player.hp <= 0) {
                                 gameActive = false;
                                 if (score > highScore) highScore = score;
@@ -1950,6 +1788,7 @@
                 updateZone();
                 applyZoneDamage();
 
+                // Power-Cubes einsammeln durch Gegner
                 for (let i = 0; i < enemies.length; i++) {
                     let e = enemies[i];
                     for (let k = powerCubes.length-1; k>=0; k--) {
@@ -1966,6 +1805,7 @@
                     }
                 }
 
+                // Power-Cubes droppen bei Tod
                 for (let i = enemies.length-1; i>=0; i--) {
                     let e = enemies[i];
                     if (e.hp <= 0) {
@@ -1982,6 +1822,7 @@
                     }
                 }
 
+                // Power-Cubes nachspawnen
                 if (powerCubes.length < 8) {
                     let toSpawn = Math.min(12 - powerCubes.length, 2);
                     for (let i=0; i<toSpawn; i++) {
@@ -1994,6 +1835,7 @@
                     }
                 }
 
+                // Siegbedingung
                 if (enemies.length === 0) {
                     gameActive = false;
                     gameOverMessage.innerHTML = '🏆 SHOWDOWN SIEG 🏆';
@@ -2104,11 +1946,14 @@
                 }
             }
 
+            // ==================== 2vs2 TEAM-MODUS ====================
             function startTeamMode() {
                 allies = [];
                 enemies = [];
-                for (let i = 0; i < 2; i++) allies.push(createTeamBot(true));
-                for (let i = 0; i < 3; i++) enemies.push(createTeamBot(false));
+                // Team A: Spieler + 1 KI (statt 2)
+                for (let i = 0; i < 1; i++) allies.push(createTeamBot(true));
+                // Team B: 2 KI
+                for (let i = 0; i < 2; i++) enemies.push(createTeamBot(false));
                 positionTeamMembers();
             }
 
@@ -2136,7 +1981,10 @@
                     lastDamageTime: 0,
                     isAlly: isAlly,
                     radius: 25,
-                    state: 'chase'
+                    state: 'chase',
+                    searchTimer: 0,
+                    targetX: 0, targetY: 0,
+                    lastSeenPlayer: { x: 0, y: 0 }
                 };
             }
 
@@ -2146,17 +1994,26 @@
                 player.x = startX;
                 player.y = startY - 50;
                 if (allies[0]) { allies[0].x = startX + 50; allies[0].y = startY + 50; }
-                if (allies[1]) { allies[1].x = startX + 100; allies[1].y = startY - 30; }
                 let enemyStartX = WORLD_SIZE_TEAM - 200;
                 enemies.forEach((e, i) => {
                     e.x = enemyStartX - i * 60;
-                    e.y = startY + (i - 1) * 50;
+                    e.y = startY + (i - 0.5) * 50;
+                });
+                // Setze Patrol-Ziele für Bots
+                [...allies, ...enemies].forEach(bot => {
+                    bot.targetX = bot.x + (Math.random()-0.5)*200;
+                    bot.targetY = bot.y + (Math.random()-0.5)*200;
+                    bot.state = 'patrol';
                 });
             }
 
             function updateTeamBots() {
+                const now = Date.now();
+                // Allies
                 allies.forEach(bot => {
                     if (bot.hp <= 0) return;
+
+                    // Gegner als Ziel
                     let target = null;
                     let minDist = Infinity;
                     enemies.forEach(e => {
@@ -2164,10 +2021,42 @@
                         let d = Math.hypot(e.x - bot.x, e.y - bot.y);
                         if (d < minDist) { minDist = d; target = e; }
                     });
+
+                    // Zustandsmaschine (vereinfacht, da Team-Modus)
                     if (target) {
+                        // Wenn Ziel in Sichtweite, jagen
+                        if (minDist < 300) {
+                            bot.state = 'chase';
+                        } else if (bot.state === 'chase') {
+                            bot.state = 'patrol';
+                        }
+                    } else {
+                        bot.state = 'patrol';
+                    }
+
+                    // Bewegung
+                    if (bot.state === 'chase' && target) {
                         let move = findFreeDirection(bot, target.x, target.y);
                         moveSmooth(bot, move.dx, move.dy);
-                        let now = Date.now();
+                    } else {
+                        // Patrol
+                        let dx = bot.targetX - bot.x;
+                        let dy = bot.targetY - bot.y;
+                        let len = Math.hypot(dx, dy);
+                        if (len < 20) {
+                            bot.targetX = bot.x + (Math.random()-0.5)*200;
+                            bot.targetY = bot.y + (Math.random()-0.5)*200;
+                            bot.targetX = Math.min(worldWidth-30, Math.max(30, bot.targetX));
+                            bot.targetY = Math.min(worldWidth-30, Math.max(30, bot.targetY));
+                        }
+                        if (len > 0) {
+                            let move = findFreeDirection(bot, bot.targetX, bot.targetY);
+                            moveSmooth(bot, move.dx, move.dy);
+                        }
+                    }
+
+                    // Schießen, wenn Ziel nah
+                    if (target && Math.hypot(target.x - bot.x, target.y - bot.y) < 300) {
                         if (now - bot.lastShot > bot.attackCooldown) {
                             bot.lastShot = now;
                             let dx = target.x - bot.x;
@@ -2190,22 +2079,53 @@
                         }
                     }
                 });
+
+                // Gegner-Bots (analog)
                 enemies.forEach(bot => {
                     if (bot.hp <= 0) return;
+
+                    // Ziele: Spieler oder Allies
                     let targets = [];
                     if (player.hp > 0) targets.push(player);
                     allies.forEach(a => { if (a.hp > 0) targets.push(a); });
-                    if (targets.length === 0) return;
+
                     let target = null;
                     let minDist = Infinity;
                     targets.forEach(t => {
                         let d = Math.hypot(t.x - bot.x, t.y - bot.y);
                         if (d < minDist) { minDist = d; target = t; }
                     });
+
                     if (target) {
+                        if (minDist < 300) {
+                            bot.state = 'chase';
+                        } else if (bot.state === 'chase') {
+                            bot.state = 'patrol';
+                        }
+                    } else {
+                        bot.state = 'patrol';
+                    }
+
+                    if (bot.state === 'chase' && target) {
                         let move = findFreeDirection(bot, target.x, target.y);
                         moveSmooth(bot, move.dx, move.dy);
-                        let now = Date.now();
+                    } else {
+                        let dx = bot.targetX - bot.x;
+                        let dy = bot.targetY - bot.y;
+                        let len = Math.hypot(dx, dy);
+                        if (len < 20) {
+                            bot.targetX = bot.x + (Math.random()-0.5)*200;
+                            bot.targetY = bot.y + (Math.random()-0.5)*200;
+                            bot.targetX = Math.min(worldWidth-30, Math.max(30, bot.targetX));
+                            bot.targetY = Math.min(worldWidth-30, Math.max(30, bot.targetY));
+                        }
+                        if (len > 0) {
+                            let move = findFreeDirection(bot, bot.targetX, bot.targetY);
+                            moveSmooth(bot, move.dx, move.dy);
+                        }
+                    }
+
+                    if (target && Math.hypot(target.x - bot.x, target.y - bot.y) < 300) {
                         if (now - bot.lastShot > bot.attackCooldown) {
                             bot.lastShot = now;
                             let dx = target.x - bot.x;
@@ -2357,6 +2277,7 @@
                     }
                 }
 
+                // Münzen einsammeln
                 for (let i = coins.length-1; i>=0; i--) {
                     let c = coins[i];
                     let d = Math.hypot(player.x - c.x, player.y - c.y);
@@ -2392,7 +2313,7 @@
                 updateUI();
             }
 
-            // ==================== ZEICHNEN (mit Zone) ====================
+            // ==================== ZEICHNEN ====================
             function worldToScreenX(wx) { return worldWidth > 0 ? wx - camera.x : wx; }
             function worldToScreenY(wy) { return worldWidth > 0 ? wy - camera.y : wy; }
 
@@ -2486,6 +2407,7 @@
 
                 if (!gameActive || !player) return;
 
+                // Zielhilfe
                 if (rightStick.active && (rightStick.dir.x!==0||rightStick.dir.y!==0)) {
                     drawAim(player, rightStick.dir, player.attackRange, player.attackSpread, 'rgba(255,255,255,0.5)');
                 }
