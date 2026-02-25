@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KILL STARS - FINAL</title>
+    <title>KILL STARS - FUNKTIONIERT</title>
     <style>
-        /* ========== BASIS-STYLES ========== */
         * {
             box-sizing: border-box;
             user-select: none;
@@ -30,7 +29,7 @@
             background: #4caf7a;
             touch-action: none;
         }
-        /* ========== LOBBY ========== */
+        /* Lobby */
         #lobby {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -423,7 +422,7 @@
             margin: 30px;
             cursor: pointer;
         }
-        /* ========== HUD ========== */
+        /* HUD */
         #hud {
             position: absolute;
             top: 15px;
@@ -503,9 +502,11 @@
             background: #ffaa00;
             transition: width 0.1s;
         }
-        /* ========== JOYSTICKS ========== */
+        /* Joysticks */
         .joystick {
             position: absolute;
+            width: min(120px, 28vw);
+            height: min(120px, 28vw);
             background: rgba(30,30,30,0.7);
             border-radius: 50%;
             touch-action: none;
@@ -513,6 +514,14 @@
             backdrop-filter: blur(8px);
             border: 4px solid rgba(255,215,0,0.8);
             box-shadow: 0 0 30px black;
+        }
+        #leftJoystick {
+            bottom: max(30px, 6vh);
+            left: max(20px, 4vw);
+        }
+        #rightJoystick {
+            bottom: max(30px, 6vh);
+            right: max(140px, 20vw);
         }
         .joystickKnob {
             position: absolute;
@@ -529,11 +538,16 @@
         }
         #specialButton {
             position: absolute;
+            bottom: max(180px, 24vh);
+            right: max(30px, 5vw);
+            width: min(100px, 22vw);
+            height: min(100px, 22vw);
             border-radius: 50%;
             background: #444;
             border: 5px solid #fff;
             color: white;
             font-weight: bold;
+            font-size: min(16px, 3.5vw);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -543,6 +557,10 @@
             flex-direction: column;
             text-shadow: 2px 2px 0 #000;
             transition: 0.1s;
+        }
+        #specialButton .special-charge {
+            font-size: min(26px, 6vw);
+            font-weight: bold;
         }
         #specialButton.ready {
             background: #ff7b00;
@@ -577,7 +595,7 @@
             font-weight: bold;
             touch-action: manipulation;
         }
-        /* ========== ROTATE WARNING ========== */
+        /* Rotate Warning */
         #rotateWarning {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -596,7 +614,6 @@
             font-size: 60px;
             margin-bottom: 20px;
         }
-        /* ========== HANDY (max 768px) ========== */
         @media (max-width: 768px) and (orientation: portrait) {
             #rotateWarning {
                 display: flex;
@@ -644,7 +661,6 @@
                 height: 16px;
             }
         }
-        /* ========== iPAD & GRÖSSERE GERÄTE ========== */
         @media (min-width: 769px) {
             #rotateWarning {
                 display: none;
@@ -769,10 +785,11 @@
 
     <script>
         (function() {
+            // ==================== GRUNDSETUP ====================
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d');
 
-            // Lobby-Referenzen
+            // Lobby-Elemente
             const lobby = document.getElementById('lobby');
             const prevBrawlerBtn = document.getElementById('prevBrawler');
             const nextBrawlerBtn = document.getElementById('nextBrawler');
@@ -845,7 +862,7 @@
             const ZONE_SHRINK_RATE = 0.5;
             const ZONE_DAMAGE = 2;
 
-            // Map-Definitionen mit vielen Hindernissen (für Performance reduziert, aber noch viele)
+            // Map-Definitionen
             const maps = {
                 grass: {
                     id: 'grass', name: 'Grün', bgColor: '#4caf7a', patternColor: '#3d8c5c', lightColor: '#6fb56f',
@@ -1124,7 +1141,6 @@
                         if (!collidesWithWall(entity.x, entity.y + stepY, entity.radius)) entity.y += stepY;
                     }
                 }
-                // Weltbegrenzung
                 entity.x = Math.min(worldWidth - (entity.radius||25), Math.max((entity.radius||25), entity.x));
                 entity.y = Math.min(worldWidth - (entity.radius||25), Math.max((entity.radius||25), entity.y));
             }
@@ -1226,7 +1242,7 @@
             let rightStick = { active: false, id: null, dir: { x:0, y:0 }, tap: false, startX:0, startY:0 };
             let specialAiming = false, specialDir = { x:0, y:0 }, specialStartPos = { x:0, y:0 }, specialTap = false, specialTouchId = null;
 
-            // Joystick-Listener
+            // Joystick-Listener (vollständig)
             function handleTouchStart(e, isRight) {
                 e.preventDefault();
                 const touches = e.changedTouches;
@@ -1569,7 +1585,7 @@
                 }
             }
 
-            // KI für alle Modi (vereinfacht)
+            // KI für alle Modi
             function updateEnemies() {
                 const now = Date.now();
                 enemies.forEach(e => {
@@ -1860,7 +1876,7 @@
                 }
             }
 
-            // Team-Modus (2vs2, vereinfachte Bot-KI)
+            // Team-Modus (2vs2)
             function startTeamMode() {
                 allies = [];
                 enemies = [];
@@ -1900,7 +1916,6 @@
             function updateTeamBots() {
                 const now = Date.now();
 
-                // Allies
                 allies.forEach(bot => {
                     if (bot.hp <= 0) return;
                     if (Math.hypot(bot.x - bot.lastPos.x, bot.y - bot.lastPos.y) < 1) {
@@ -1964,7 +1979,6 @@
                     }
                 });
 
-                // Gegner
                 enemies.forEach(bot => {
                     if (bot.hp <= 0) return;
                     if (Math.hypot(bot.x - bot.lastPos.x, bot.y - bot.lastPos.y) < 1) {
@@ -2158,7 +2172,7 @@
                     }
                 }
 
-                // Münzen einsammeln
+                // Münzen
                 for (let i = coins.length-1; i>=0; i--) {
                     let c = coins[i];
                     let d = Math.hypot(player.x - c.x, player.y - c.y);
@@ -2194,7 +2208,7 @@
                 updateUI();
             }
 
-            // ==================== ZEICHNEN ====================
+            // Zeichnen (vereinfacht)
             function worldToScreenX(wx) { return wx - camera.x; }
             function worldToScreenY(wy) { return wy - camera.y; }
 
@@ -2214,7 +2228,6 @@
                 const map = maps[selectedMap];
                 ctx.fillStyle = map.bgColor;
                 ctx.fillRect(0,0,canvas.width,canvas.height);
-                // Grasflecken
                 ctx.fillStyle = map.lightColor;
                 for (let i=0;i<40;i++) {
                     let wx = Math.random() * worldWidth;
@@ -2228,7 +2241,6 @@
                     }
                 }
                 ctx.globalAlpha = 1;
-                // Raster
                 ctx.strokeStyle = map.patternColor;
                 ctx.lineWidth = 2;
                 for (let i=0; i<worldWidth; i+=200) {
@@ -2239,7 +2251,6 @@
                     let sy = worldToScreenY(i);
                     if (sy>=0 && sy<=canvas.height) { ctx.beginPath(); ctx.moveTo(0,sy); ctx.lineTo(canvas.width,sy); ctx.stroke(); }
                 }
-                // Zone
                 if (gameMode === 'showdown') {
                     ctx.save();
                     ctx.strokeStyle = 'rgba(255,0,0,0.8)';
@@ -2250,36 +2261,30 @@
                     ctx.stroke();
                     ctx.restore();
                 }
-                // Hindernisse
                 obstacles.forEach(drawObstacle);
-                // PowerCubes
                 powerCubes.forEach(c => {
                     let sx = worldToScreenX(c.x), sy = worldToScreenY(c.y);
                     ctx.fillStyle = c.color;
                     ctx.beginPath(); ctx.arc(sx, sy, c.radius, 0, 2*Math.PI); ctx.fill();
                     ctx.fillStyle = '#fff'; ctx.font = '20px Arial'; ctx.fillText('📦', sx-12, sy+8);
                 });
-                // Münzen
                 coins.forEach(c => {
                     let sx = worldToScreenX(c.x), sy = worldToScreenY(c.y);
                     ctx.fillStyle = '#FFD700';
                     ctx.beginPath(); ctx.arc(sx, sy, 15, 0, 2*Math.PI); ctx.fill();
                     ctx.fillStyle = '#B8860B'; ctx.font = '20px Arial'; ctx.fillText('💰', sx-12, sy+8);
                 });
-                // Effekte
                 effects.forEach(e => {
                     let sx = worldToScreenX(e.x), sy = worldToScreenY(e.y);
                     let progress = e.life / e.maxLife;
                     ctx.fillStyle = `rgba(255,150,0,${progress})`;
                     ctx.beginPath(); ctx.arc(sx, sy, 30*(1-progress), 0, 2*Math.PI); ctx.fill();
                 });
-                // Projektile
                 projectiles.forEach(p => {
                     let sx = worldToScreenX(p.x), sy = worldToScreenY(p.y);
                     ctx.fillStyle = p.color;
                     ctx.beginPath(); ctx.arc(sx, sy, p.size, 0, 2*Math.PI); ctx.fill();
                 });
-                // Allies
                 allies.forEach(a => {
                     if (a.hp <=0) return;
                     let sx = worldToScreenX(a.x), sy = worldToScreenY(a.y);
@@ -2287,20 +2292,17 @@
                     ctx.beginPath(); ctx.arc(sx, sy, 25, 0, 2*Math.PI); ctx.fill();
                     ctx.fillStyle = 'white'; ctx.font = '20px Arial'; ctx.fillText(a.emoji, sx-12, sy-20);
                 });
-                // Gegner
                 enemies.forEach(e => {
                     if (e.hp <=0) return;
                     let sx = worldToScreenX(e.x), sy = worldToScreenY(e.y);
                     ctx.fillStyle = e.color;
                     ctx.beginPath(); ctx.arc(sx, sy, e.radius, 0, 2*Math.PI); ctx.fill();
                 });
-                // Spieler
                 let sx = worldToScreenX(player.x), sy = worldToScreenY(player.y);
                 ctx.fillStyle = player.color;
                 ctx.beginPath(); ctx.arc(sx, sy, 30, 0, 2*Math.PI); ctx.fill();
                 ctx.fillStyle = 'white'; ctx.font = '30px Arial';
                 ctx.fillText(player.emoji, sx-20, sy-40);
-                // Schadenszahlen
                 damageNumbers.forEach(d => {
                     let dsx = worldToScreenX(d.x), dsy = worldToScreenY(d.y);
                     ctx.fillStyle = 'red';
@@ -2312,7 +2314,7 @@
             function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
             gameLoop();
 
-            // ==================== SPIELSTART ====================
+            // Spielstart
             function startSoloGame() {
                 lobby.style.display = 'none';
                 gameActive = true;
