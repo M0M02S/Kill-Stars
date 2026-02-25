@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KILL STARS - ULTIMATIVE MIT ZONE</title>
+    <title>KILL STARS - ULTIMATIVE MIT ZONE & INTELLIGENTER KI</title>
     <style>
         /* ========== ALLE STYLES (unverändert) ========== */
         * {
@@ -482,6 +482,14 @@
             align-items: center;
             gap: 5px;
         }
+        #zoneHUD {
+            background: #c0392b;
+            padding: 8px 20px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
         #ammoHUD {
             background: #2c3e50;
             padding: 8px 20px;
@@ -637,7 +645,7 @@
             </div>
             <div class="map-btn" data-map="ice" id="mapIce">
                 <span>❄️ EIS</span>
-                <span class="map-desc">3vs3 (große Map)</span>
+                <span class="map-desc">3vs3 (intelligente Bots)</span>
             </div>
         </div>
 
@@ -1231,7 +1239,7 @@
 
             // KI muss Zone beachten
             function getZoneSafePoint(entity) {
-                // Wenn innerhalb Zone, Ziel ist Spieler
+                // Wenn innerhalb Zone, Ziel ist null (keine Priorität)
                 if (Math.hypot(entity.x - zoneCenter.x, entity.y - zoneCenter.y) <= zoneRadius) {
                     return null; // kein Ziel
                 }
@@ -1776,6 +1784,25 @@
                 enemies.forEach(e => {
                     if (e.hp <= 0) return;
 
+                    // Zonen-Ziel (nur für Showdown)
+                    let zoneTarget = null;
+                    if (gameMode === 'showdown') {
+                        if (Math.hypot(e.x - zoneCenter.x, e.y - zoneCenter.y) > zoneRadius) {
+                            // außerhalb Zone: Ziel ist nächster Punkt auf dem Kreis
+                            let dx = zoneCenter.x - e.x;
+                            let dy = zoneCenter.y - e.y;
+                            let len = Math.hypot(dx, dy);
+                            if (len > 0) {
+                                zoneTarget = {
+                                    x: zoneCenter.x - (dx / len) * zoneRadius,
+                                    y: zoneCenter.y - (dy / len) * zoneRadius
+                                };
+                            } else {
+                                zoneTarget = zoneCenter;
+                            }
+                        }
+                    }
+
                     let playerVisible = true;
                     if (isInBush(player.x, player.y)) {
                         playerVisible = false;
@@ -1784,17 +1811,10 @@
                         if (distToPlayer > 300) playerVisible = false;
                     }
 
-                    // Zonen-Ziel (nur für Showdown)
-                    let zoneTarget = null;
-                    if (gameMode === 'showdown') {
-                        zoneTarget = getZoneSafePoint(e);
-                    }
-
                     // Zustandsmaschine
                     if (e.state === 'patrol') {
                         let targetX, targetY;
                         if (zoneTarget) {
-                            // Wenn außerhalb Zone, gehe zur Zone
                             targetX = zoneTarget.x;
                             targetY = zoneTarget.y;
                         } else {
@@ -1861,7 +1881,7 @@
                     }
 
                     // Schießen, wenn Spieler sichtbar und nah genug
-                    if (playerVisible && Math.hypot(player.x - e.x, player.y - e.y) < 300) {
+                    if (playerVisible && Math.hypot(player.x - e.x, player.y - e.y) < 300 && !zoneTarget) {
                         if (now - (e.lastShot || 0) > 1000) {
                             e.lastShot = now;
                             let dx = player.x - e.x;
