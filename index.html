@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KILL STARS - ULTIMATIVE + HEILUNG + MULTIPLAYER FIX</title>
+    <title>KILL STARS - ULTIMATIVE + MULTIPLAYER FIX</title>
     <style>
         /* ========== ALLE STYLES (wie gehabt) ========== */
         * {
@@ -1166,17 +1166,22 @@
             const SERVER_URL = "wss://vanilla-party.luizbills.com";
             const APP_NAME = "kill-stars-multi";
 
+            // Funktion zum Verbinden und Erstellen eines Raums
             createRoomBtn.addEventListener('click', async () => {
                 const roomName = prompt("Raumname eingeben (z.B. 'meinRaum123'):");
                 if (!roomName) return;
                 roomStatus.innerText = `Verbinde...`;
                 try {
+                    // Verbindung zum Server herstellen
                     const party = await partyConnect(SERVER_URL, APP_NAME, roomName);
+                    if (!party) throw new Error("Verbindung fehlgeschlagen");
+                    // Raum erstellen
                     room = await party.createRoom();
                     isHost = true;
                     roomStatus.innerText = `Raum: ${roomName} (Host)`;
                     startMultiplayerBtn.style.display = 'inline-block';
 
+                    // Event-Listener
                     room.onPeerJoin = (peerId) => {
                         addChatMessage({ name: 'System', message: `Spieler ${peerId} ist beigetreten.` });
                     };
@@ -1197,12 +1202,14 @@
                         }
                     };
 
+                    // Eigene Daten eintragen
                     playersInRoom[playerId] = {
                         name: playerName,
                         emoji: brawlerEmoji.textContent
                     };
                     updateSlots();
                 } catch (e) {
+                    console.error("Fehler beim Erstellen des Raums:", e);
                     roomStatus.innerText = `Fehler: ${e.message}`;
                 }
             });
@@ -1213,6 +1220,7 @@
                 roomStatus.innerText = `Verbinde...`;
                 try {
                     const party = await partyConnect(SERVER_URL, APP_NAME, roomName);
+                    if (!party) throw new Error("Verbindung fehlgeschlagen");
                     room = await party.joinRoom();
                     isHost = false;
                     roomStatus.innerText = `Raum: ${roomName} (Gast)`;
@@ -1234,7 +1242,7 @@
                         updateSlots();
                     };
 
-                    // Eigene Daten an alle senden
+                    // Eigene Daten senden
                     room.send({
                         type: 'playerData',
                         data: {
@@ -1250,6 +1258,7 @@
                     };
                     updateSlots();
                 } catch (e) {
+                    console.error("Fehler beim Beitreten:", e);
                     roomStatus.innerText = `Fehler: ${e.message}`;
                 }
             });
