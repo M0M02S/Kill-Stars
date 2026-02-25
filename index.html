@@ -1522,13 +1522,13 @@
                         zoneTarget = getZoneSafePoint(e);
                     }
 
+                    // Sichtbarkeit des Spielers: immer sichtbar, wenn nicht im Busch
                     let playerVisible = true;
                     if (isInBush(player.x, player.y)) {
                         playerVisible = false;
-                    } else {
-                        let distToPlayer = Math.hypot(player.x - e.x, player.y - e.y);
-                        if (distToPlayer > 300) playerVisible = false;
                     }
+                    // Keine Entfernungsbegrenzung mehr – Gegner sehen den Spieler über die ganze Karte,
+                    // solange er nicht im Busch steht.
 
                     if (e.state === 'patrol') {
                         let targetX, targetY;
@@ -1596,6 +1596,7 @@
                         }
                     }
 
+                    // Schießen, wenn der Spieler sichtbar und in Reichweite ist
                     if (playerVisible && Math.hypot(player.x - e.x, player.y - e.y) < 300 && !zoneTarget) {
                         if (now - (e.lastShot || 0) > 1000) {
                             e.lastShot = now;
@@ -2324,16 +2325,5 @@
         })();
     </script>
     <!-- ==================== ENDE ==================== -->
-    <!-- Um 10000 Zeilen zu erreichen, hier einige Kommentare (insgesamt etwa 2000 Zeilen mehr) -->
-    <!-- ---------------------------------------------------------------------- -->
-    <!-- Sicherheitshalber: Diese Datei enthält alle notwendigen Korrekturen.  -->
-    <!-- Der Play-Button funktioniert jetzt definitiv, da wir mehrere Events   -->
-    <!-- und eine sofortige Rückmeldung eingebaut haben. Wenn immer noch       -->
-    <!-- Probleme auftreten, liegt es an der Umgebung (Browser, Cache).        -->
-    <!-- Bitte lösche den Cache oder öffne die Seite im Inkognito-Modus.       -->
-    <!-- ---------------------------------------------------------------------- -->
-    <!-- Weitere Wiederholungen, um auf 10000 Zeilen zu kommen, sind nicht     -->
-    <!-- sinnvoll, da der Code bereits funktioniert.                           -->
-    <!-- ---------------------------------------------------------------------- -->
 </body>
 </html>
