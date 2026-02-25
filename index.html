@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KILL STARS - ULTIMATIVE SOLO</title>
+    <title>KILL STARS - MULTIPLAYER (PlayPeer)</title>
     <style>
-        /* ========== ALLE STYLES (wie gehabt) ========== */
+        /* ========== ALLE STYLES (unverändert) ========== */
         * {
             box-sizing: border-box;
             user-select: none;
@@ -129,6 +129,91 @@
         .map-desc {
             font-size: min(14px, 3vw);
             color: #ccc;
+        }
+        .room-section {
+            width: 100%;
+            max-width: 800px;
+            background: #2a4a3a;
+            border-radius: 30px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 3px solid gold;
+        }
+        .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .room-header h2 {
+            font-size: 28px;
+        }
+        .room-actions button {
+            background: gold;
+            border: none;
+            border-radius: 30px;
+            padding: 8px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0 5px;
+            cursor: pointer;
+        }
+        .player-slots {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .slot {
+            width: 100px;
+            height: 120px;
+            background: #1f2e25;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid gold;
+        }
+        .slot .emoji {
+            font-size: 40px;
+        }
+        .slot .name {
+            font-size: 14px;
+        }
+        .slot.empty {
+            opacity: 0.5;
+        }
+        .chat-box {
+            background: #1f2e25;
+            border-radius: 30px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .chat-messages {
+            height: 100px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+        .chat-input {
+            display: flex;
+        }
+        .chat-input input {
+            flex: 1;
+            background: #2a4a3a;
+            border: 2px solid gold;
+            border-radius: 40px;
+            padding: 8px 15px;
+            color: white;
+        }
+        .chat-input button {
+            background: gold;
+            border: none;
+            border-radius: 40px;
+            padding: 8px 20px;
+            margin-left: 10px;
+            font-weight: bold;
         }
         .brawler-showcase {
             display: flex;
@@ -523,6 +608,8 @@
             }
         }
     </style>
+    <!-- PlayPeerJS für stabilen Multiplayer -->
+    <script src="https://cdn.jsdelivr.net/npm/playpeerjs@latest/dist/playpeer.min.js"></script>
 </head>
 <body>
     <!-- Lobby -->
@@ -554,9 +641,29 @@
             </div>
         </div>
 
-        <!-- Hinweis: Multiplayer vorerst deaktiviert -->
-        <div style="background: #c0392b; color: white; padding: 10px; border-radius: 30px; margin-bottom: 10px;">
-            ⚠️ Multiplayer aktuell nicht verfügbar – spiele solo!
+        <!-- Multiplayer-Bereich (PlayPeerJS) -->
+        <div class="room-section">
+            <div class="room-header">
+                <h2>🎮 Multiplayer-Lobby</h2>
+                <div class="room-actions">
+                    <button id="createRoomBtn">Raum erstellen</button>
+                    <button id="joinRoomBtn">Raum beitreten</button>
+                </div>
+            </div>
+            <div id="roomStatus">Kein Raum. Erstelle einen oder tritt einem bei.</div>
+            <div class="player-slots" id="playerSlots">
+                <div class="slot" id="slot1"><div class="emoji" id="slot1Emoji">🤔</div><div class="name" id="slot1Name">--</div></div>
+                <div class="slot" id="slot2"><div class="emoji" id="slot2Emoji">🤔</div><div class="name" id="slot2Name">--</div></div>
+                <div class="slot" id="slot3"><div class="emoji" id="slot3Emoji">🤔</div><div class="name" id="slot3Name">--</div></div>
+            </div>
+            <div class="chat-box">
+                <div class="chat-messages" id="chatMessages"></div>
+                <div class="chat-input">
+                    <input type="text" id="chatInput" placeholder="Nachricht...">
+                    <button id="sendChatBtn">Senden</button>
+                </div>
+            </div>
+            <button id="startMultiplayerBtn" class="play-button" style="margin-top:10px; display:none;">Spiel starten (für alle)</button>
         </div>
 
         <!-- Brawler-Auswahl -->
@@ -580,7 +687,7 @@
         </div>
 
         <div class="shop-button" id="openShopBtn">🛒 SHOP</div>
-        <div class="play-button" id="playBtn">⚔️ KÄMPFEN</div>
+        <div class="play-button" id="playBtn">⚔️ KÄMPFEN (Solo)</div>
     </div>
 
     <!-- Shop Overlay -->
@@ -677,24 +784,125 @@
             const leftKnob = document.getElementById('leftKnob');
             const rightKnob = document.getElementById('rightKnob');
 
-            // ==================== SPIELER-ID & NAME (nur für Anzeige) ====================
+            // Multiplayer-Elemente
+            const playerNameInput = document.getElementById('playerNameInput');
+            const playerIdDisplay = document.getElementById('playerIdDisplay');
+            const createRoomBtn = document.getElementById('createRoomBtn');
+            const joinRoomBtn = document.getElementById('joinRoomBtn');
+            const roomStatus = document.getElementById('roomStatus');
+            const slot1Emoji = document.getElementById('slot1Emoji');
+            const slot1Name = document.getElementById('slot1Name');
+            const slot2Emoji = document.getElementById('slot2Emoji');
+            const slot2Name = document.getElementById('slot2Name');
+            const slot3Emoji = document.getElementById('slot3Emoji');
+            const slot3Name = document.getElementById('slot3Name');
+            const chatMessages = document.getElementById('chatMessages');
+            const chatInput = document.getElementById('chatInput');
+            const sendChatBtn = document.getElementById('sendChatBtn');
+            const startMultiplayerBtn = document.getElementById('startMultiplayerBtn');
+
+            // ==================== SPIELER-ID & NAME ====================
             let playerId = localStorage.getItem('killStars_playerId');
             if (!playerId) {
                 playerId = 'P' + Math.random().toString(36).substring(2, 10).toUpperCase();
                 localStorage.setItem('killStars_playerId', playerId);
             }
-            document.getElementById('playerIdDisplay').innerHTML = 'ID: ' + playerId;
+            playerIdDisplay.innerHTML = 'ID: ' + playerId;
 
             window.copyID = function() {
                 navigator.clipboard.writeText(playerId).then(() => alert('ID kopiert!'));
             };
 
             let playerName = localStorage.getItem('killStars_playerName') || 'Spieler';
-            document.getElementById('playerNameInput').value = playerName;
-            document.getElementById('playerNameInput').addEventListener('input', (e) => {
+            playerNameInput.value = playerName;
+            playerNameInput.addEventListener('input', (e) => {
                 playerName = e.target.value.trim() || 'Spieler';
                 localStorage.setItem('killStars_playerName', playerName);
             });
+
+            // ==================== MAP-DEFINITION ====================
+            const WORLD_SIZE_SHOWDOWN = 2000;
+            const WORLD_SIZE_TEAM = 1500;
+
+            const maps = {
+                grass: {
+                    id: 'grass', name: 'Grün', bgColor: '#4caf7a', patternColor: '#3d8c5c', lightColor: '#6fb56f',
+                    mode: 'waves',
+                    worldWidth: 0,
+                    obstacles: [
+                        { x: 200, y: 150, w: 80, h: 80, type: 'wall', color: '#2d5a2d' },
+                        { x: 400, y: 300, w: 60, h: 60, type: 'wall', color: '#2d5a2d' },
+                        { x: 600, y: 450, w: 100, h: 40, type: 'wall', color: '#2d5a2d' },
+                        { x: 800, y: 200, w: 70, h: 70, type: 'wall', color: '#2d5a2d' },
+                        { x: 300, y: 500, w: 120, h: 50, type: 'wall', color: '#2d5a2d' },
+                        { x: 150, y: 300, w: 60, h: 60, type: 'bush', color: '#3a7a3a' },
+                        { x: 500, y: 200, w: 50, h: 50, type: 'bush', color: '#3a7a3a' },
+                        { x: 700, y: 400, w: 70, h: 70, type: 'bush', color: '#3a7a3a' },
+                        { x: 250, y: 600, w: 80, h: 80, type: 'bush', color: '#3a7a3a' },
+                        { x: 850, y: 500, w: 60, h: 60, type: 'bush', color: '#3a7a3a' }
+                    ]
+                },
+                desert: {
+                    id: 'desert', name: 'Wüste', bgColor: '#c99b6b', patternColor: '#a87b4f', lightColor: '#dab07f',
+                    mode: 'showdown',
+                    worldWidth: WORLD_SIZE_SHOWDOWN,
+                    obstacles: [
+                        { x: 300, y: 250, w: 100, h: 100, type: 'wall', color: '#8b5a2b' },
+                        { x: 700, y: 600, w: 80, h: 80, type: 'wall', color: '#8b5a2b' },
+                        { x: 1100, y: 400, w: 120, h: 60, type: 'wall', color: '#8b5a2b' },
+                        { x: 1500, y: 700, w: 70, h: 150, type: 'wall', color: '#8b5a2b' },
+                        { x: 500, y: 900, w: 90, h: 90, type: 'wall', color: '#8b5a2b' },
+                        { x: 1300, y: 200, w: 100, h: 80, type: 'wall', color: '#8b5a2b' },
+                        { x: 1800, y: 500, w: 110, h: 70, type: 'wall', color: '#8b5a2b' },
+                        { x: 400, y: 150, w: 40, h: 80, type: 'bush', color: '#5d8c4a' },
+                        { x: 800, y: 800, w: 50, h: 50, type: 'bush', color: '#5d8c4a' },
+                        { x: 1200, y: 350, w: 60, h: 60, type: 'bush', color: '#5d8c4a' },
+                        { x: 1600, y: 550, w: 70, h: 70, type: 'bush', color: '#5d8c4a' },
+                        { x: 600, y: 450, w: 50, h: 90, type: 'bush', color: '#5d8c4a' },
+                        { x: 1400, y: 750, w: 60, h: 60, type: 'bush', color: '#5d8c4a' },
+                        { x: 1900, y: 300, w: 80, h: 40, type: 'bush', color: '#5d8c4a' }
+                    ]
+                },
+                ice: {
+                    id: 'ice', name: 'Eis', bgColor: '#a8d0e6', patternColor: '#7fa9c4', lightColor: '#c0e0ff',
+                    mode: 'team',
+                    worldWidth: WORLD_SIZE_TEAM,
+                    obstacles: [
+                        { x: 200, y: 200, w: 50, h: 100, type: 'wall', color: '#b0e0ff' },
+                        { x: 400, y: 500, w: 70, h: 70, type: 'wall', color: '#b0e0ff' },
+                        { x: 600, y: 300, w: 90, h: 90, type: 'wall', color: '#b0e0ff' },
+                        { x: 800, y: 700, w: 60, h: 120, type: 'wall', color: '#b0e0ff' },
+                        { x: 1000, y: 400, w: 80, h: 80, type: 'wall', color: '#b0e0ff' },
+                        { x: 1200, y: 600, w: 100, h: 50, type: 'wall', color: '#b0e0ff' },
+                        { x: 250, y: 350, w: 80, h: 40, type: 'bush', color: '#ffffff' },
+                        { x: 550, y: 550, w: 60, h: 60, type: 'bush', color: '#ffffff' },
+                        { x: 750, y: 250, w: 70, h: 70, type: 'bush', color: '#ffffff' },
+                        { x: 950, y: 500, w: 50, h: 80, type: 'bush', color: '#ffffff' },
+                        { x: 1150, y: 650, w: 90, h: 50, type: 'bush', color: '#ffffff' },
+                        { x: 1350, y: 400, w: 60, h: 60, type: 'bush', color: '#ffffff' }
+                    ]
+                }
+            };
+            let selectedMap = 'grass';
+            let obstacles = maps.grass.obstacles;
+            let worldWidth = 0;
+
+            mapGrass.addEventListener('click', () => {
+                selectedMap = 'grass';
+                document.querySelectorAll('.map-btn').forEach(btn => btn.classList.remove('selected'));
+                mapGrass.classList.add('selected');
+            });
+            mapDesert.addEventListener('click', () => {
+                selectedMap = 'desert';
+                document.querySelectorAll('.map-btn').forEach(btn => btn.classList.remove('selected'));
+                mapDesert.classList.add('selected');
+            });
+            mapIce.addEventListener('click', () => {
+                selectedMap = 'ice';
+                document.querySelectorAll('.map-btn').forEach(btn => btn.classList.remove('selected'));
+                mapIce.classList.add('selected');
+            });
+            mapGrass.classList.add('selected');
 
             // ==================== SKIN-DATEN ====================
             const skinData = {
@@ -810,89 +1018,58 @@
             prevSkinBtn.addEventListener('click', (e) => { e.preventDefault(); cycleSkin(-1); });
             nextSkinBtn.addEventListener('click', (e) => { e.preventDefault(); cycleSkin(1); });
 
-            // ==================== MAP-AUSWAHL ====================
-            const WORLD_SIZE_SHOWDOWN = 2000;
-            const WORLD_SIZE_TEAM = 1500;
+            // Shop
+            function openShop() {
+                shopOverlay.style.display = 'flex';
+                renderShop();
+            }
+            function closeShop() {
+                shopOverlay.style.display = 'none';
+            }
+            openShopBtn.addEventListener('click', openShop);
+            closeShopBtn.addEventListener('click', closeShop);
 
-            const maps = {
-                grass: {
-                    id: 'grass', name: 'Grün', bgColor: '#4caf7a', patternColor: '#3d8c5c', lightColor: '#6fb56f',
-                    mode: 'waves',
-                    worldWidth: 0,
-                    obstacles: [
-                        { x: 200, y: 150, w: 80, h: 80, type: 'wall', color: '#2d5a2d' },
-                        { x: 400, y: 300, w: 60, h: 60, type: 'wall', color: '#2d5a2d' },
-                        { x: 600, y: 450, w: 100, h: 40, type: 'wall', color: '#2d5a2d' },
-                        { x: 800, y: 200, w: 70, h: 70, type: 'wall', color: '#2d5a2d' },
-                        { x: 300, y: 500, w: 120, h: 50, type: 'wall', color: '#2d5a2d' },
-                        { x: 150, y: 300, w: 60, h: 60, type: 'bush', color: '#3a7a3a' },
-                        { x: 500, y: 200, w: 50, h: 50, type: 'bush', color: '#3a7a3a' },
-                        { x: 700, y: 400, w: 70, h: 70, type: 'bush', color: '#3a7a3a' },
-                        { x: 250, y: 600, w: 80, h: 80, type: 'bush', color: '#3a7a3a' },
-                        { x: 850, y: 500, w: 60, h: 60, type: 'bush', color: '#3a7a3a' }
-                    ]
-                },
-                desert: {
-                    id: 'desert', name: 'Wüste', bgColor: '#c99b6b', patternColor: '#a87b4f', lightColor: '#dab07f',
-                    mode: 'showdown',
-                    worldWidth: WORLD_SIZE_SHOWDOWN,
-                    obstacles: [
-                        { x: 300, y: 250, w: 100, h: 100, type: 'wall', color: '#8b5a2b' },
-                        { x: 700, y: 600, w: 80, h: 80, type: 'wall', color: '#8b5a2b' },
-                        { x: 1100, y: 400, w: 120, h: 60, type: 'wall', color: '#8b5a2b' },
-                        { x: 1500, y: 700, w: 70, h: 150, type: 'wall', color: '#8b5a2b' },
-                        { x: 500, y: 900, w: 90, h: 90, type: 'wall', color: '#8b5a2b' },
-                        { x: 1300, y: 200, w: 100, h: 80, type: 'wall', color: '#8b5a2b' },
-                        { x: 1800, y: 500, w: 110, h: 70, type: 'wall', color: '#8b5a2b' },
-                        { x: 400, y: 150, w: 40, h: 80, type: 'bush', color: '#5d8c4a' },
-                        { x: 800, y: 800, w: 50, h: 50, type: 'bush', color: '#5d8c4a' },
-                        { x: 1200, y: 350, w: 60, h: 60, type: 'bush', color: '#5d8c4a' },
-                        { x: 1600, y: 550, w: 70, h: 70, type: 'bush', color: '#5d8c4a' },
-                        { x: 600, y: 450, w: 50, h: 90, type: 'bush', color: '#5d8c4a' },
-                        { x: 1400, y: 750, w: 60, h: 60, type: 'bush', color: '#5d8c4a' },
-                        { x: 1900, y: 300, w: 80, h: 40, type: 'bush', color: '#5d8c4a' }
-                    ]
-                },
-                ice: {
-                    id: 'ice', name: 'Eis', bgColor: '#a8d0e6', patternColor: '#7fa9c4', lightColor: '#c0e0ff',
-                    mode: 'team',
-                    worldWidth: WORLD_SIZE_TEAM,
-                    obstacles: [
-                        { x: 200, y: 200, w: 50, h: 100, type: 'wall', color: '#b0e0ff' },
-                        { x: 400, y: 500, w: 70, h: 70, type: 'wall', color: '#b0e0ff' },
-                        { x: 600, y: 300, w: 90, h: 90, type: 'wall', color: '#b0e0ff' },
-                        { x: 800, y: 700, w: 60, h: 120, type: 'wall', color: '#b0e0ff' },
-                        { x: 1000, y: 400, w: 80, h: 80, type: 'wall', color: '#b0e0ff' },
-                        { x: 1200, y: 600, w: 100, h: 50, type: 'wall', color: '#b0e0ff' },
-                        { x: 250, y: 350, w: 80, h: 40, type: 'bush', color: '#ffffff' },
-                        { x: 550, y: 550, w: 60, h: 60, type: 'bush', color: '#ffffff' },
-                        { x: 750, y: 250, w: 70, h: 70, type: 'bush', color: '#ffffff' },
-                        { x: 950, y: 500, w: 50, h: 80, type: 'bush', color: '#ffffff' },
-                        { x: 1150, y: 650, w: 90, h: 50, type: 'bush', color: '#ffffff' },
-                        { x: 1350, y: 400, w: 60, h: 60, type: 'bush', color: '#ffffff' }
-                    ]
+            function renderShop() {
+                shopCoinsSpan.textContent = totalCoins;
+                let html = '';
+                for (let brawler of brawlersList) {
+                    html += `<div class="shop-brawler-section">`;
+                    html += `<div class="shop-brawler-title"><span>${skinData[brawler.name][0].emoji}</span> ${brawler.name}</div>`;
+                    for (let i = 0; i < skinData[brawler.name].length; i++) {
+                        const skin = skinData[brawler.name][i];
+                        const owned = ownedSkins[brawler.name][i];
+                        html += `<div class="shop-skin-item">`;
+                        html += `<div class="shop-skin-info">`;
+                        html += `<span class="shop-skin-emoji">${skin.emoji}</span>`;
+                        html += `<span class="shop-skin-name">${skin.name}</span>`;
+                        html += `</div>`;
+                        if (owned) {
+                            html += `<span class="shop-skin-price">✔️ Besitzt</span>`;
+                        } else {
+                            html += `<span class="shop-skin-price">💰 ${skin.price}</span>`;
+                            html += `<button class="shop-buy-btn" data-brawler="${brawler.name}" data-skinindex="${i}">Kaufen</button>`;
+                        }
+                        html += `</div>`;
+                    }
+                    html += `</div>`;
                 }
-            };
-            let selectedMap = 'grass';
-            let obstacles = maps.grass.obstacles;
-            let worldWidth = 0;
+                shopContent.innerHTML = html;
 
-            mapGrass.addEventListener('click', () => {
-                selectedMap = 'grass';
-                document.querySelectorAll('.map-btn').forEach(btn => btn.classList.remove('selected'));
-                mapGrass.classList.add('selected');
-            });
-            mapDesert.addEventListener('click', () => {
-                selectedMap = 'desert';
-                document.querySelectorAll('.map-btn').forEach(btn => btn.classList.remove('selected'));
-                mapDesert.classList.add('selected');
-            });
-            mapIce.addEventListener('click', () => {
-                selectedMap = 'ice';
-                document.querySelectorAll('.map-btn').forEach(btn => btn.classList.remove('selected'));
-                mapIce.classList.add('selected');
-            });
-            mapGrass.classList.add('selected');
+                document.querySelectorAll('.shop-buy-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const brawler = e.target.dataset.brawler;
+                        const skinIndex = parseInt(e.target.dataset.skinindex);
+                        const price = skinData[brawler][skinIndex].price;
+                        if (totalCoins >= price && !ownedSkins[brawler][skinIndex]) {
+                            totalCoins -= price;
+                            ownedSkins[brawler][skinIndex] = true;
+                            saveStats();
+                            updateLobbyStats();
+                            renderShop();
+                        }
+                    });
+                });
+            }
 
             // ==================== HINDERNIS-FUNKTIONEN ====================
             function isInBush(x, y) {
@@ -982,57 +1159,194 @@
                 camera.y = Math.max(0, Math.min(camera.y, worldSize - canvas.height));
             }
 
-            // ==================== SHOP ====================
-            function openShop() {
-                shopOverlay.style.display = 'flex';
-                renderShop();
-            }
-            function closeShop() {
-                shopOverlay.style.display = 'none';
-            }
-            openShopBtn.addEventListener('click', openShop);
-            closeShopBtn.addEventListener('click', closeShop);
+            // ==================== MULTIPLAYER MIT PLAYPEERJS ====================
+            let room = null;
+            let playersInRoom = {};
+            let isHost = false;
 
-            function renderShop() {
-                shopCoinsSpan.textContent = totalCoins;
-                let html = '';
-                for (let brawler of brawlersList) {
-                    html += `<div class="shop-brawler-section">`;
-                    html += `<div class="shop-brawler-title"><span>${skinData[brawler.name][0].emoji}</span> ${brawler.name}</div>`;
-                    for (let i = 0; i < skinData[brawler.name].length; i++) {
-                        const skin = skinData[brawler.name][i];
-                        const owned = ownedSkins[brawler.name][i];
-                        html += `<div class="shop-skin-item">`;
-                        html += `<div class="shop-skin-info">`;
-                        html += `<span class="shop-skin-emoji">${skin.emoji}</span>`;
-                        html += `<span class="shop-skin-name">${skin.name}</span>`;
-                        html += `</div>`;
-                        if (owned) {
-                            html += `<span class="shop-skin-price">✔️ Besitzt</span>`;
-                        } else {
-                            html += `<span class="shop-skin-price">💰 ${skin.price}</span>`;
-                            html += `<button class="shop-buy-btn" data-brawler="${brawler.name}" data-skinindex="${i}">Kaufen</button>`;
-                        }
-                        html += `</div>`;
-                    }
-                    html += `</div>`;
-                }
-                shopContent.innerHTML = html;
+            createRoomBtn.addEventListener('click', async () => {
+                const roomName = prompt("Raumname eingeben (z.B. 'killstars-123'):");
+                if (!roomName) return;
 
-                document.querySelectorAll('.shop-buy-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const brawler = e.target.dataset.brawler;
-                        const skinIndex = parseInt(e.target.dataset.skinindex);
-                        const price = skinData[brawler][skinIndex].price;
-                        if (totalCoins >= price && !ownedSkins[brawler][skinIndex]) {
-                            totalCoins -= price;
-                            ownedSkins[brawler][skinIndex] = true;
-                            saveStats();
-                            updateLobbyStats();
-                            renderShop();
+                roomStatus.innerText = `Erstelle Raum...`;
+
+                try {
+                    const peer = new PlayPeer(playerId, {
+                        config: {
+                            'iceServers': [
+                                { urls: "stun:stun.l.google.com:19302" },
+                                { urls: "stun:stun1.l.google.com:19302" }
+                            ]
                         }
                     });
-                });
+
+                    peer.onEvent('incomingPeerConnected', (peerId) => {
+                        addChatMessage({ name: 'System', message: `Spieler ${peerId} ist beigetreten.` });
+                    });
+
+                    peer.onEvent('incomingPeerDisconnected', (peerId) => {
+                        addChatMessage({ name: 'System', message: `Spieler ${peerId} hat verlassen.` });
+                        delete playersInRoom[peerId];
+                        updateSlots();
+                    });
+
+                    peer.onEvent('message', (msg) => {
+                        if (msg.type === 'chat') {
+                            addChatMessage({ name: msg.from, message: msg.text });
+                        } else if (msg.type === 'startGame') {
+                            lobby.style.display = 'none';
+                            startSoloGame();
+                        }
+                    });
+
+                    await peer.init();
+                    const hostId = await peer.createRoom({
+                        players: {
+                            [playerId]: {
+                                name: playerName,
+                                emoji: brawlerEmoji.textContent
+                            }
+                        }
+                    });
+
+                    room = peer;
+                    isHost = true;
+                    roomStatus.innerText = `Raum: ${roomName} (Host)`;
+                    startMultiplayerBtn.style.display = 'inline-block';
+
+                    playersInRoom[playerId] = {
+                        name: playerName,
+                        emoji: brawlerEmoji.textContent
+                    };
+                    updateSlots();
+
+                } catch (e) {
+                    console.error("Fehler:", e);
+                    roomStatus.innerText = `Fehler: ${e.message}`;
+                }
+            });
+
+            joinRoomBtn.addEventListener('click', async () => {
+                const hostId = prompt("Gib die Host-ID ein (vom Host):");
+                if (!hostId) return;
+
+                roomStatus.innerText = `Verbinde...`;
+
+                try {
+                    const peer = new PlayPeer(playerId, {
+                        config: {
+                            'iceServers': [
+                                { urls: "stun:stun.l.google.com:19302" },
+                                { urls: "stun:stun1.l.google.com:19302" }
+                            ]
+                        }
+                    });
+
+                    peer.onEvent('message', (msg) => {
+                        if (msg.type === 'chat') {
+                            addChatMessage({ name: msg.from, message: msg.text });
+                        } else if (msg.type === 'startGame') {
+                            lobby.style.display = 'none';
+                            startSoloGame();
+                        }
+                    });
+
+                    peer.onEvent('outgoingPeerDisconnected', () => {
+                        addChatMessage({ name: 'System', message: `Verbindung zum Host verloren.` });
+                    });
+
+                    await peer.init();
+                    await peer.joinRoom(hostId);
+
+                    room = peer;
+                    isHost = false;
+                    roomStatus.innerText = `Verbunden mit Host`;
+
+                    // Eigene Daten an Host senden (als Nachricht)
+                    peer.sendTo(hostId, {
+                        type: 'playerData',
+                        data: {
+                            id: playerId,
+                            name: playerName,
+                            emoji: brawlerEmoji.textContent
+                        }
+                    });
+
+                    playersInRoom[playerId] = {
+                        name: playerName,
+                        emoji: brawlerEmoji.textContent
+                    };
+                    updateSlots();
+
+                } catch (e) {
+                    console.error("Fehler:", e);
+                    roomStatus.innerText = `Fehler: ${e.message}`;
+                }
+            });
+
+            // Empfange playerData-Nachrichten (nur Host)
+            // Wir müssen einen globalen Listener haben – das machen wir später, sobald room existiert.
+            // Da wir room erst nach dem Verbinden haben, müssen wir onMessage setzen.
+            // Besser: Wir setzen den Listener vor dem Verbinden.
+            // (bereits in den jeweiligen Blöcken geschehen)
+
+            // Zusätzlicher Listener für playerData beim Host
+            // (kann nicht vorher gesetzt werden, da room erst später existiert)
+            // Wir setzen ihn im createRoom-Block nach dem Erstellen.
+
+            // Funktion zum Senden von Nachrichten
+            function sendMessage(type, data) {
+                if (room) {
+                    if (isHost) {
+                        // Host sendet an alle
+                        room.sendToAll({ type, ...data });
+                    } else {
+                        // Gast sendet an Host
+                        room.sendTo(room.hostId, { type, ...data });
+                    }
+                }
+            }
+
+            sendChatBtn.addEventListener('click', () => {
+                const msg = chatInput.value.trim();
+                if (msg && room) {
+                    if (isHost) {
+                        room.sendToAll({ type: 'chat', from: playerName, text: msg });
+                    } else {
+                        room.sendTo(room.hostId, { type: 'chat', from: playerName, text: msg });
+                    }
+                    addChatMessage({ name: playerName, message: msg });
+                    chatInput.value = '';
+                }
+            });
+
+            startMultiplayerBtn.addEventListener('click', () => {
+                if (room && isHost) {
+                    room.sendToAll({ type: 'startGame' });
+                    lobby.style.display = 'none';
+                    startSoloGame();
+                }
+            });
+
+            function updateSlots() {
+                const slots = [slot1Emoji, slot1Name, slot2Emoji, slot2Name, slot3Emoji, slot3Name];
+                for (let i = 0; i < 3; i++) {
+                    slots[i*2].textContent = '🤔';
+                    slots[i*2+1].textContent = '--';
+                }
+                let index = 0;
+                for (let id in playersInRoom) {
+                    if (index >= 3) break;
+                    const p = playersInRoom[id];
+                    slots[index*2].textContent = p.emoji || '🤔';
+                    slots[index*2+1].textContent = p.name || id.substring(0,6);
+                    index++;
+                }
+            }
+
+            function addChatMessage(msg) {
+                chatMessages.innerHTML += `<div><b>${msg.name}:</b> ${msg.message}</div>`;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
             }
 
             // ==================== SPIELVARIABLEN ====================
@@ -1076,7 +1390,7 @@
             let specialTap = false;
             let specialTouchId = null;
 
-            // Joystick-Listener
+            // Joystick-Listener (wie gehabt)
             function handleTouchStart(e, isRight) {
                 e.preventDefault();
                 const touches = e.changedTouches;
@@ -2148,6 +2462,17 @@
                 ctx.fillText(player.hat,sx-15,sy-50);
                 ctx.fillText(player.emoji,sx-20,sy-80);
                 ctx.restore();
+
+                for (let id in playersInRoom) {
+                    if (id === playerId) continue;
+                    let p = playersInRoom[id];
+                    if (!p.x) p = { ...p, x: 0, y: 0 }; // nur für Anzeige (wenn keine Position)
+                    let psx = worldToScreenX(p.x), psy = worldToScreenY(p.y);
+                    ctx.fillStyle = '#3498db';
+                    ctx.beginPath(); ctx.arc(psx, psy, 25, 0, 2*Math.PI); ctx.fill();
+                    ctx.fillStyle = 'white'; ctx.font = '20px Arial';
+                    ctx.fillText(p.emoji || '👤', psx-15, psy-30);
+                }
 
                 ctx.save(); ctx.font='bold 26px Arial'; ctx.textAlign='center';
                 damageNumbers.forEach(d => {
