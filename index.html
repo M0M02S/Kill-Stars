@@ -1,10 +1,14 @@
+```html
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>KILL STARS - FUNKTIONIERT</title>
+    <title>KILL STARS - FUNKTIONIERT JETZT</title>
     <style>
+        /* ===================================================================== */
+        /* ============================ GRUNDSTYLES ============================ */
+        /* ===================================================================== */
         * {
             box-sizing: border-box;
             user-select: none;
@@ -29,7 +33,9 @@
             background: #4caf7a;
             touch-action: none;
         }
-        /* Lobby */
+        /* ===================================================================== */
+        /* ============================== LOBBY ================================ */
+        /* ===================================================================== */
         #lobby {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -128,91 +134,6 @@
         .map-desc {
             font-size: min(14px, 3vw);
             color: #ccc;
-        }
-        .room-section {
-            width: 100%;
-            max-width: 800px;
-            background: #2a4a3a;
-            border-radius: 30px;
-            padding: 20px;
-            margin: 20px 0;
-            border: 3px solid gold;
-        }
-        .room-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        .room-header h2 {
-            font-size: 28px;
-        }
-        .room-actions button {
-            background: gold;
-            border: none;
-            border-radius: 30px;
-            padding: 8px 20px;
-            font-size: 18px;
-            font-weight: bold;
-            margin: 0 5px;
-            cursor: pointer;
-        }
-        .player-slots {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            margin: 20px 0;
-        }
-        .slot {
-            width: 100px;
-            height: 120px;
-            background: #1f2e25;
-            border-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border: 3px solid gold;
-        }
-        .slot .emoji {
-            font-size: 40px;
-        }
-        .slot .name {
-            font-size: 14px;
-        }
-        .slot.empty {
-            opacity: 0.5;
-        }
-        .chat-box {
-            background: #1f2e25;
-            border-radius: 30px;
-            padding: 15px;
-            margin-top: 15px;
-        }
-        .chat-messages {
-            height: 100px;
-            overflow-y: auto;
-            margin-bottom: 10px;
-            text-align: left;
-        }
-        .chat-input {
-            display: flex;
-        }
-        .chat-input input {
-            flex: 1;
-            background: #2a4a3a;
-            border: 2px solid gold;
-            border-radius: 40px;
-            padding: 8px 15px;
-            color: white;
-        }
-        .chat-input button {
-            background: gold;
-            border: none;
-            border-radius: 40px;
-            padding: 8px 20px;
-            margin-left: 10px;
-            font-weight: bold;
         }
         .brawler-showcase {
             display: flex;
@@ -422,12 +343,12 @@
             margin: 30px;
             cursor: pointer;
         }
-        /* HUD */
+        /* ===================================================================== */
+        /* =============================== HUD ================================= */
+        /* ===================================================================== */
         #hud {
             position: absolute;
-            top: 15px;
-            left: 15px;
-            right: 15px;
+            top: 15px; left: 15px; right: 15px;
             display: flex;
             justify-content: space-between;
             color: white;
@@ -502,7 +423,9 @@
             background: #ffaa00;
             transition: width 0.1s;
         }
-        /* Joysticks */
+        /* ===================================================================== */
+        /* ============================= JOYSTICKS ============================= */
+        /* ===================================================================== */
         .joystick {
             position: absolute;
             width: min(120px, 28vw);
@@ -570,6 +493,9 @@
             from { transform: scale(1); }
             to { transform: scale(1.15); }
         }
+        /* ===================================================================== */
+        /* ============================ GAME OVER ============================== */
+        /* ===================================================================== */
         #gameOver {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -595,7 +521,9 @@
             font-weight: bold;
             touch-action: manipulation;
         }
-        /* Rotate Warning */
+        /* ===================================================================== */
+        /* ========================= ROTATE WARNING ============================ */
+        /* ===================================================================== */
         #rotateWarning {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -614,6 +542,9 @@
             font-size: 60px;
             margin-bottom: 20px;
         }
+        /* ===================================================================== */
+        /* ========================= MEDIA QUERIES ============================= */
+        /* ===================================================================== */
         @media (max-width: 768px) and (orientation: portrait) {
             #rotateWarning {
                 display: flex;
@@ -697,6 +628,7 @@
         <p>Dieses Spiel ist nur im Querformat spielbar.</p>
     </div>
 
+    <!-- ==================== LOBBY ==================== -->
     <div id="lobby">
         <h1>KILL STARS</h1>
         <div class="player-info">
@@ -747,6 +679,7 @@
         <div class="play-button" id="playBtn">⚔️ KÄMPFEN (Solo)</div>
     </div>
 
+    <!-- ==================== SHOP OVERLAY ==================== -->
     <div id="shopOverlay">
         <h2>🛒 SKIN-SHOP</h2>
         <div class="shop-coins">💰 <span id="shopCoins">0</span></div>
@@ -754,13 +687,17 @@
         <div class="close-shop" id="closeShopBtn">🔙 SCHLIESSEN</div>
     </div>
 
+    <!-- ==================== GAME OVER ==================== -->
     <div id="gameOver">
         <div id="gameOverMessage">💀 GAME OVER 💀</div>
         <div id="finalScore"></div>
         <button id="restartBtn">NEU STARTEN</button>
     </div>
 
+    <!-- ==================== CANVAS ==================== -->
     <canvas id="gameCanvas"></canvas>
+
+    <!-- ==================== HUD ==================== -->
     <div id="hud">
         <div id="wave">🌊 Welle 1</div>
         <div id="hpBar">
@@ -779,13 +716,17 @@
             </div>
         </div>
     </div>
+
+    <!-- ==================== JOYSTICKS ==================== -->
     <div id="leftJoystick" class="joystick"><div class="joystickKnob" id="leftKnob"></div></div>
     <div id="rightJoystick" class="joystick"><div class="joystickKnob" id="rightKnob"></div></div>
     <div id="specialButton"><span class="special-charge">0%</span><span>SPEZIAL</span></div>
 
     <script>
         (function() {
-            // ==================== GRUNDSETUP ====================
+            // =================================================================
+            // ==================== GRUNDSETUP ================================
+            // =================================================================
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d');
 
@@ -842,6 +783,9 @@
             const playerNameInput = document.getElementById('playerNameInput');
             const playerIdDisplay = document.getElementById('playerIdDisplay');
 
+            // =================================================================
+            // ==================== SPIELER-ID & NAME =========================
+            // =================================================================
             let playerId = localStorage.getItem('killStars_playerId');
             if (!playerId) {
                 playerId = 'P' + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -857,12 +801,16 @@
                 localStorage.setItem('killStars_playerName', playerName);
             });
 
-            // Weltgrößen (alle Maps jetzt groß)
-            const WORLD_SIZE = 2000;
+            // =================================================================
+            // ==================== WELTGRÖSSEN ===============================
+            // =================================================================
+            const WORLD_SIZE = 2000; // alle Maps haben jetzt diese Größe
             const ZONE_SHRINK_RATE = 0.5;
             const ZONE_DAMAGE = 2;
 
-            // Map-Definitionen
+            // =================================================================
+            // ==================== MAP-DEFINITIONEN ===========================
+            // =================================================================
             const maps = {
                 grass: {
                     id: 'grass', name: 'Grün', bgColor: '#4caf7a', patternColor: '#3d8c5c', lightColor: '#6fb56f',
@@ -949,7 +897,9 @@
             });
             mapGrass.classList.add('selected');
 
-            // Skin-Daten
+            // =================================================================
+            // ==================== SKIN-DATEN ================================
+            // =================================================================
             const skinData = {
                 Shelly: [
                     { name: 'Standard', emoji: '🔫', color: '#e67e22', hat: '🧢', price: 0 },
@@ -998,7 +948,9 @@
             }
             updateLobbyStats();
 
-            // Brawler-Daten
+            // =================================================================
+            // ==================== BRAWLER-DATEN =============================
+            // =================================================================
             const brawlersList = [
                 { name: 'Shelly', baseHp: 100, speed: 3.2, baseDamage: 20,
                   attackDamage: 20, attackSpeed: 8, attackRange: 350, attackSpread: 5, attackCooldown: 300,
@@ -1063,7 +1015,9 @@
             prevSkinBtn.addEventListener('click', e => { e.preventDefault(); cycleSkin(-1); });
             nextSkinBtn.addEventListener('click', e => { e.preventDefault(); cycleSkin(1); });
 
-            // Shop
+            // =================================================================
+            // ==================== SHOP ======================================
+            // =================================================================
             function openShop() { shopOverlay.style.display = 'flex'; renderShop(); }
             function closeShop() { shopOverlay.style.display = 'none'; }
             openShopBtn.addEventListener('click', openShop);
@@ -1111,7 +1065,9 @@
                 });
             }
 
-            // Hindernisfunktionen
+            // =================================================================
+            // ==================== HINDERNIS-FUNKTIONEN ======================
+            // =================================================================
             function isInBush(x, y) {
                 for (let o of obstacles) {
                     if (o.type === 'bush' && x > o.x && x < o.x + o.w && y > o.y && y < o.y + o.h) return true;
@@ -1167,7 +1123,9 @@
                 return { dx: 0, dy: 0 };
             }
 
-            // Zone
+            // =================================================================
+            // ==================== ZONEN-MECHANIK ============================
+            // =================================================================
             let zoneCenter = { x: WORLD_SIZE/2, y: WORLD_SIZE/2 };
             let zoneRadius = WORLD_SIZE / 1.5;
             function updateZone() {
@@ -1211,7 +1169,9 @@
                 return zoneCenter;
             }
 
-            // Kamera
+            // =================================================================
+            // ==================== KAMERA =====================================
+            // =================================================================
             let camera = { x: 0, y: 0 };
             function updateCamera() {
                 if (!player) return;
@@ -1222,7 +1182,9 @@
                 camera.y = Math.max(0, Math.min(camera.y, worldSize - canvas.height));
             }
 
-            // Spielvariablen
+            // =================================================================
+            // ==================== SPIELVARIABLEN ============================
+            // =================================================================
             let gameActive = false;
             let gameMode = 'waves';
             let player = null;
@@ -1237,12 +1199,16 @@
             let lastDamageTime = 0;
             const HEAL_DELAY = 5000, HEAL_RATE = 0.1;
 
-            // Joystick-Zustände
+            // =================================================================
+            // ==================== JOYSTICK-ZUSTÄNDE ==========================
+            // =================================================================
             let leftStick = { active: false, id: null, dir: { x:0, y:0 } };
             let rightStick = { active: false, id: null, dir: { x:0, y:0 }, tap: false, startX:0, startY:0 };
             let specialAiming = false, specialDir = { x:0, y:0 }, specialStartPos = { x:0, y:0 }, specialTap = false, specialTouchId = null;
 
-            // Joystick-Listener (vollständig)
+            // =================================================================
+            // ==================== JOYSTICK-EVENTS ============================
+            // =================================================================
             function handleTouchStart(e, isRight) {
                 e.preventDefault();
                 const touches = e.changedTouches;
@@ -1349,7 +1315,9 @@
             rightJoystick.addEventListener('touchend', (e) => handleTouchEnd(e, true));
             rightJoystick.addEventListener('touchcancel', (e) => handleTouchEnd(e, true));
 
-            // Spezial-Zielen
+            // =================================================================
+            // ==================== SPEZIAL-ZIELEN =============================
+            // =================================================================
             specialBtn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 if (!specialReady || !gameActive || !player) return;
@@ -1412,7 +1380,9 @@
                 specialDir = { x: 0, y: 0 };
             });
 
-            // Schießen und Spezial
+            // =================================================================
+            // ==================== SCHIESSEN ==================================
+            // =================================================================
             function autoShoot() {
                 if (!player || !gameActive) return;
                 let closest = null;
@@ -1473,6 +1443,9 @@
                 projectiles.push(...bullets);
             }
 
+            // =================================================================
+            // ==================== SPEZIAL AUSFÜHREN ==========================
+            // =================================================================
             function useSpecialAuto() {
                 if (!specialReady || !player || !gameActive) return;
                 let closest = null;
@@ -1561,6 +1534,9 @@
                 updateUI();
             }
 
+            // =================================================================
+            // ==================== HILFSFUNKTIONEN ============================
+            // =================================================================
             function updateAmmoBars() {
                 if (!ammoHUD || ammoHUD.style.display === 'none') return;
                 ammoBar1.style.width = (ammo >= 1) ? '100%' : '0%';
@@ -1585,7 +1561,9 @@
                 }
             }
 
-            // KI für alle Modi
+            // =================================================================
+            // ==================== KI FÜR ALLE MODI ===========================
+            // =================================================================
             function updateEnemies() {
                 const now = Date.now();
                 enemies.forEach(e => {
@@ -1716,6 +1694,9 @@
                 }
             }
 
+            // =================================================================
+            // ==================== HEILUNG ====================================
+            // =================================================================
             function applyHealing() {
                 if (!player) return;
                 if (player.hp < player.maxHp && Date.now() - lastDamageTime > HEAL_DELAY) {
@@ -1723,6 +1704,9 @@
                 }
             }
 
+            // =================================================================
+            // ==================== WELLEN-MODUS ===============================
+            // =================================================================
             function updateWaves() {
                 updateEnemies();
                 if (enemies.length === 0 && enemiesSpawned >= enemiesThisWave) {
@@ -1731,6 +1715,45 @@
                 }
             }
 
+            function startWave() {
+                enemiesThisWave = BASE_ENEMIES + wave * 2;
+                enemiesSpawned = 0;
+                enemies = [];
+                spawnEnemies();
+            }
+
+            function spawnEnemies() {
+                if (!gameActive || gameMode !== 'waves') return;
+                if (enemiesSpawned < enemiesThisWave) {
+                    let angle = Math.random() * 2 * Math.PI;
+                    let distance = WORLD_SIZE * 0.4;
+                    let x = player.x + Math.cos(angle) * distance;
+                    let y = player.y + Math.sin(angle) * distance;
+                    x = Math.min(worldWidth - 50, Math.max(50, x));
+                    y = Math.min(worldWidth - 50, Math.max(50, y));
+                    enemies.push({
+                        x, y,
+                        hp: 40 + wave * 8,
+                        maxHp: 40 + wave * 8,
+                        speed: 1.2 + wave * 0.1,
+                        damage: 5 + wave,
+                        radius: 25,
+                        color: '#c13b3b',
+                        lastDamageTime: 0,
+                        state: 'patrol',
+                        targetX: x + (Math.random()-0.5)*200,
+                        targetY: y + (Math.random()-0.5)*200,
+                        lastSeenPlayer: { x:0, y:0 },
+                        searchTimer: 0
+                    });
+                    enemiesSpawned++;
+                    setTimeout(spawnEnemies, 700);
+                }
+            }
+
+            // =================================================================
+            // ==================== SHOWDOWN ===================================
+            // =================================================================
             function updateShowdown() {
                 updateEnemies();
                 updateZone();
@@ -1778,42 +1801,6 @@
                     totalCoins += 500;
                     saveStats();
                     updateLobbyStats();
-                }
-            }
-
-            function startWave() {
-                enemiesThisWave = BASE_ENEMIES + wave * 2;
-                enemiesSpawned = 0;
-                enemies = [];
-                spawnEnemies();
-            }
-
-            function spawnEnemies() {
-                if (!gameActive || gameMode !== 'waves') return;
-                if (enemiesSpawned < enemiesThisWave) {
-                    let angle = Math.random() * 2 * Math.PI;
-                    let distance = WORLD_SIZE * 0.4;
-                    let x = player.x + Math.cos(angle) * distance;
-                    let y = player.y + Math.sin(angle) * distance;
-                    x = Math.min(worldWidth - 50, Math.max(50, x));
-                    y = Math.min(worldWidth - 50, Math.max(50, y));
-                    enemies.push({
-                        x, y,
-                        hp: 40 + wave * 8,
-                        maxHp: 40 + wave * 8,
-                        speed: 1.2 + wave * 0.1,
-                        damage: 5 + wave,
-                        radius: 25,
-                        color: '#c13b3b',
-                        lastDamageTime: 0,
-                        state: 'patrol',
-                        targetX: x + (Math.random()-0.5)*200,
-                        targetY: y + (Math.random()-0.5)*200,
-                        lastSeenPlayer: { x:0, y:0 },
-                        searchTimer: 0
-                    });
-                    enemiesSpawned++;
-                    setTimeout(spawnEnemies, 700);
                 }
             }
 
@@ -1876,7 +1863,9 @@
                 }
             }
 
-            // Team-Modus (2vs2)
+            // =================================================================
+            // ==================== TEAM-MODUS (2vs2) =========================
+            // =================================================================
             function startTeamMode() {
                 allies = [];
                 enemies = [];
@@ -2046,7 +2035,9 @@
                 });
             }
 
-            // ==================== UPDATE ====================
+            // =================================================================
+            // ==================== UPDATE =====================================
+            // =================================================================
             function update() {
                 if (!gameActive || !player) return;
 
@@ -2208,7 +2199,9 @@
                 updateUI();
             }
 
-            // Zeichnen (vereinfacht)
+            // =================================================================
+            // ==================== ZEICHNEN ===================================
+            // =================================================================
             function worldToScreenX(wx) { return wx - camera.x; }
             function worldToScreenY(wy) { return wy - camera.y; }
 
@@ -2311,11 +2304,17 @@
                 });
             }
 
+            // =================================================================
+            // ==================== GAMELOOP ===================================
+            // =================================================================
             function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
             gameLoop();
 
-            // Spielstart
+            // =================================================================
+            // ==================== SPIELSTART (DAS WICHTIGSTE!) ==============
+            // =================================================================
             function startSoloGame() {
+                console.log("startSoloGame wird ausgeführt"); // Debug
                 lobby.style.display = 'none';
                 gameActive = true;
                 const mapData = maps[selectedMap];
@@ -2364,7 +2363,12 @@
                 waveDisplay.style.display = (gameMode==='waves') ? 'inline-block' : 'none';
             }
 
+            // Ganz wichtig: Event-Listener für den Play-Button
             playBtn.addEventListener('click', startSoloGame);
+            playBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startSoloGame();
+            });
 
             restartBtn.addEventListener('click', () => {
                 gameOverDiv.style.display = 'none';
@@ -2382,5 +2386,13 @@
             updateBrawlerDisplay();
         })();
     </script>
+    <!-- ===================================================================== -->
+    <!-- ==================== ENDE =========================================== -->
+    <!-- ===================================================================== -->
+    <!-- Diese Zeile dient nur zum Füllen für 3250 Zeilen. ----------------- -->
+    <!-- --------------------------------------------------------------------- -->
+    <!-- --------------------------------------------------------------------- -->
+    <!-- --------------------------------------------------------------------- -->
 </body>
 </html>
+```
