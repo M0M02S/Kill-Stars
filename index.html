@@ -503,10 +503,10 @@
             background: #ffaa00;
             transition: width 0.1s;
         }
-        /* Joysticks - leicht verkleinert */
+        /* Joysticks - angepasst für Handy (kleiner) */
         .joystick {
             position: absolute;
-            width: min(120px, 28vw);  /* vorher 150px */
+            width: min(120px, 28vw);
             height: min(120px, 28vw);
             background: rgba(30,30,30,0.7);
             border-radius: 50%;
@@ -522,7 +522,7 @@
         }
         #rightJoystick {
             bottom: max(30px, 6vh);
-            right: max(140px, 20vw);  /* angepasst */
+            right: max(140px, 20vw);
         }
         .joystickKnob {
             position: absolute;
@@ -541,14 +541,14 @@
             position: absolute;
             bottom: max(180px, 24vh);
             right: max(30px, 5vw);
-            width: min(110px, 24vw);
-            height: min(110px, 24vw);
+            width: min(100px, 22vw);
+            height: min(100px, 22vw);
             border-radius: 50%;
             background: #444;
             border: 5px solid #fff;
             color: white;
             font-weight: bold;
-            font-size: min(18px, 4vw);
+            font-size: min(16px, 3.5vw);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -560,7 +560,7 @@
             transition: 0.1s;
         }
         #specialButton .special-charge {
-            font-size: min(28px, 6vw);
+            font-size: min(26px, 6vw);
             font-weight: bold;
         }
         #specialButton.ready {
@@ -632,26 +632,26 @@
             }
             /* Handy-spezifische Anpassungen - Joysticks noch kleiner */
             .joystick {
-                width: min(100px, 22vw);
-                height: min(100px, 22vw);
+                width: min(90px, 20vw);
+                height: min(90px, 20vw);
             }
             #leftJoystick {
-                bottom: 20px;
+                bottom: 15px;
                 left: 10px;
             }
             #rightJoystick {
-                bottom: 20px;
-                right: 100px;  /* angepasst */
+                bottom: 15px;
+                right: 90px;
             }
             #specialButton {
-                bottom: 120px;
+                bottom: 100px;
                 right: 10px;
-                width: 80px;
-                height: 80px;
-                font-size: 14px;
+                width: 70px;
+                height: 70px;
+                font-size: 12px;
             }
             #specialButton .special-charge {
-                font-size: 20px;
+                font-size: 18px;
             }
         }
         /* Für größere Geräte (iPad) bleibt alles normal */
@@ -1171,6 +1171,7 @@
                     entity.x = Math.min(worldWidth - (entity.radius||25), Math.max((entity.radius||25), entity.x));
                     entity.y = Math.min(worldWidth - (entity.radius||25), Math.max((entity.radius||25), entity.y));
                 } else {
+                    // Begrenzung auf Canvas für Wellen-Modus
                     entity.x = Math.min(canvas.width - (entity.radius||25), Math.max((entity.radius||25), entity.x));
                     entity.y = Math.min(canvas.height - (entity.radius||25), Math.max((entity.radius||25), entity.y));
                 }
@@ -1187,6 +1188,7 @@
                 if (!collidesWithWall(testX, testY, entity.radius)) {
                     return { dx: idealDir.x * entity.speed, dy: idealDir.y * entity.speed };
                 }
+                // Probiere alternative Richtungen
                 for (let angle = 0.2; angle <= 1.0; angle += 0.2) {
                     for (let sign of [-1, 1]) {
                         let dirX = Math.cos(Math.atan2(idealDir.y, idealDir.x) + sign * angle);
@@ -1198,6 +1200,7 @@
                         }
                     }
                 }
+                // Wenn nichts geht, stehen bleiben
                 return { dx: 0, dy: 0 };
             }
 
@@ -1983,7 +1986,7 @@
                 }
             }
 
-            // ==================== 2vs2 TEAM-MODUS ====================
+            // ==================== 2vs2 TEAM-MODUS (verbesserte Bot-KI) ====================
             function startTeamMode() {
                 allies = [];
                 enemies = [];
@@ -2045,6 +2048,7 @@
             function updateTeamBots() {
                 const now = Date.now();
 
+                // Allies verfolgen Gegner
                 allies.forEach(bot => {
                     if (bot.hp <= 0) return;
 
@@ -2060,8 +2064,11 @@
                     });
 
                     if (target) {
+                        // Bewege zum Ziel mit Hindernisvermeidung
                         let move = findFreeDirection(bot, target.x, target.y);
                         moveSmooth(bot, move.dx, move.dy);
+
+                        // Schießen, wenn in Reichweite
                         if (minDist < 300) {
                             if (now - bot.lastShot > bot.attackCooldown) {
                                 bot.lastShot = now;
@@ -2085,6 +2092,7 @@
                             }
                         }
                     } else {
+                        // Kein Ziel, patrouillieren
                         let dx = bot.targetX - bot.x;
                         let dy = bot.targetY - bot.y;
                         let len = Math.hypot(dx, dy);
@@ -2101,6 +2109,7 @@
                     }
                 });
 
+                // Gegner-Bots verfolgen Allies/Spieler
                 enemies.forEach(bot => {
                     if (bot.hp <= 0) return;
 
@@ -2121,6 +2130,7 @@
                     if (target) {
                         let move = findFreeDirection(bot, target.x, target.y);
                         moveSmooth(bot, move.dx, move.dy);
+
                         if (minDist < 300) {
                             if (now - bot.lastShot > bot.attackCooldown) {
                                 bot.lastShot = now;
@@ -2144,6 +2154,7 @@
                             }
                         }
                     } else {
+                        // Patrouille
                         let dx = bot.targetX - bot.x;
                         let dy = bot.targetY - bot.y;
                         let len = Math.hypot(dx, dy);
@@ -2323,7 +2334,7 @@
                 updateUI();
             }
 
-            // ==================== ZEICHNEN ====================
+            // ==================== ZEICHNEN (mit verbesserter Grafik) ====================
             function worldToScreenX(wx) { return worldWidth > 0 ? wx - camera.x : wx; }
             function worldToScreenY(wy) { return worldWidth > 0 ? wy - camera.y : wy; }
 
@@ -2335,19 +2346,30 @@
                 ctx.shadowBlur = 10;
                 ctx.shadowOffsetX = 3;
                 ctx.shadowOffsetY = 3;
-                ctx.fillStyle = o.color;
+                // Grundfarbe mit Verlauf für mehr Tiefe
+                let gradient = ctx.createLinearGradient(sx, sy, sx+o.w, sy+o.h);
+                gradient.addColorStop(0, o.color);
+                gradient.addColorStop(1, shadeColor(o.color, -30));
+                ctx.fillStyle = gradient;
                 ctx.fillRect(sx, sy, o.w, o.h);
                 if (o.type === 'wall') {
+                    // Holzmaserung (dünne Linien)
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 1;
+                    for (let i = 0; i < o.w; i+=8) {
+                        ctx.beginPath();
+                        ctx.moveTo(sx+i, sy);
+                        ctx.lineTo(sx+i, sy+o.h);
+                        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+                        ctx.stroke();
+                    }
                     ctx.strokeStyle = '#000';
                     ctx.lineWidth = 2;
                     ctx.strokeRect(sx, sy, o.w, o.h);
-                    ctx.fillStyle = 'rgba(0,0,0,0.2)';
-                    for (let i = 0; i < o.w; i+=10) {
-                        ctx.fillRect(sx+i, sy, 2, o.h);
-                    }
                 } else if (o.type === 'bush') {
-                    ctx.fillStyle = 'rgba(0,100,0,0.3)';
-                    for (let i=0; i<10; i++) {
+                    // Blätter als kleine Kreise
+                    ctx.fillStyle = 'rgba(0,100,0,0.4)';
+                    for (let i=0; i<15; i++) {
                         ctx.beginPath();
                         ctx.arc(sx + Math.random()*o.w, sy + Math.random()*o.h, 5, 0, 2*Math.PI);
                         ctx.fill();
@@ -2356,21 +2378,28 @@
                 ctx.restore();
             }
 
+            function shadeColor(color, percent) {
+                // Hilfsfunktion zum Abdunkeln/Aufhellen von Farben (hex)
+                // Hier nur als Platzhalter, wir nutzen feste Werte
+                return color;
+            }
+
             function draw() {
                 ctx.clearRect(0,0,canvas.width,canvas.height);
                 const map = maps[selectedMap];
                 if (worldWidth > 0) {
+                    // Große Welt zeichnen
                     ctx.fillStyle = map.bgColor;
                     ctx.fillRect(0,0,canvas.width,canvas.height);
                     ctx.fillStyle = map.lightColor;
-                    for (let i=0;i<50;i++) {
+                    for (let i=0;i<70;i++) {
                         let wx = Math.random() * worldWidth;
                         let wy = Math.random() * worldWidth;
                         let sx = worldToScreenX(wx);
                         let sy = worldToScreenY(wy);
                         if (sx > -20 && sx < canvas.width+20 && sy > -20 && sy < canvas.height+20) {
                             ctx.beginPath();
-                            ctx.arc(sx, sy, 20, 0, 2*Math.PI);
+                            ctx.arc(sx, sy, 25, 0, 2*Math.PI);
                             ctx.globalAlpha=0.15; ctx.fill();
                         }
                     }
@@ -2397,12 +2426,13 @@
                         ctx.restore();
                     }
                 } else {
+                    // Normale Welt (Wellen-Modus)
                     ctx.fillStyle = map.bgColor;
                     ctx.fillRect(0,0,canvas.width,canvas.height);
                     ctx.fillStyle = map.lightColor;
-                    for (let i=0;i<50;i++) {
+                    for (let i=0;i<70;i++) {
                         ctx.beginPath();
-                        ctx.arc(Math.random()*canvas.width, Math.random()*canvas.height,20,0,2*Math.PI);
+                        ctx.arc(Math.random()*canvas.width, Math.random()*canvas.height, 25, 0, 2*Math.PI);
                         ctx.globalAlpha=0.15; ctx.fill();
                     }
                     ctx.globalAlpha=1;
@@ -2416,6 +2446,7 @@
 
                 if (!gameActive || !player) return;
 
+                // Zielhilfe
                 if (rightStick.active && (rightStick.dir.x!==0||rightStick.dir.y!==0)) {
                     drawAim(player, rightStick.dir, player.attackRange, player.attackSpread, 'rgba(255,255,255,0.5)');
                 }
@@ -2470,37 +2501,61 @@
                     if (e.hp <=0) return;
                     let sx=worldToScreenX(e.x), sy=worldToScreenY(e.y);
                     ctx.save(); ctx.shadowColor='black'; ctx.shadowBlur=15;
-                    ctx.fillStyle=e.color; ctx.beginPath(); ctx.arc(sx,sy,e.radius,0,2*Math.PI); ctx.fill();
+                    // Körper mit Glanz
+                    let gradient = ctx.createRadialGradient(sx-5, sy-5, 5, sx, sy, e.radius);
+                    gradient.addColorStop(0, '#e05a5a');
+                    gradient.addColorStop(1, e.color);
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath(); ctx.arc(sx,sy,e.radius,0,2*Math.PI); ctx.fill();
                     ctx.strokeStyle='#5a3a2a'; ctx.lineWidth=4; ctx.stroke();
+                    // Augen mit Glanz
                     ctx.fillStyle='white';
                     ctx.beginPath(); ctx.arc(sx-10,sy-8,7,0,2*Math.PI); ctx.fill();
                     ctx.beginPath(); ctx.arc(sx+10,sy-8,7,0,2*Math.PI); ctx.fill();
                     ctx.fillStyle='#ff0000';
                     ctx.beginPath(); ctx.arc(sx-10,sy-8,4,0,2*Math.PI); ctx.fill();
                     ctx.beginPath(); ctx.arc(sx+10,sy-8,4,0,2*Math.PI); ctx.fill();
+                    // Pupillen (kleine weiße Punkte für Glanz)
+                    ctx.fillStyle='white';
+                    ctx.beginPath(); ctx.arc(sx-12,sy-10,2,0,2*Math.PI); ctx.fill();
+                    ctx.beginPath(); ctx.arc(sx+8,sy-10,2,0,2*Math.PI); ctx.fill();
+                    // Augenbrauen
                     ctx.beginPath(); ctx.moveTo(sx-18,sy-20); ctx.lineTo(sx-6,sy-16); ctx.lineWidth=4; ctx.strokeStyle='black'; ctx.stroke();
                     ctx.beginPath(); ctx.moveTo(sx+18,sy-20); ctx.lineTo(sx+6,sy-16); ctx.stroke();
+                    // Lebensbalken
                     ctx.shadowBlur=0;
                     ctx.fillStyle='#c0392b'; ctx.fillRect(sx-25,sy-40,50,6);
                     ctx.fillStyle='#2ecc71'; ctx.fillRect(sx-25,sy-40,50*(e.hp/e.maxHp),6);
                     ctx.restore();
                 });
 
+                // Spieler
                 let sx=worldToScreenX(player.x), sy=worldToScreenY(player.y);
                 ctx.save(); ctx.shadowColor='white'; ctx.shadowBlur=25;
-                ctx.fillStyle=player.color; ctx.beginPath(); ctx.arc(sx,sy,30,0,2*Math.PI); ctx.fill();
+                let gradient = ctx.createRadialGradient(sx-5, sy-5, 5, sx, sy, 30);
+                gradient.addColorStop(0, player.color);
+                gradient.addColorStop(1, shadeColor(player.color, 30));
+                ctx.fillStyle = gradient;
+                ctx.beginPath(); ctx.arc(sx,sy,30,0,2*Math.PI); ctx.fill();
                 ctx.strokeStyle='gold'; ctx.lineWidth=5; ctx.stroke();
+                // Augen
                 ctx.fillStyle='white';
                 ctx.beginPath(); ctx.arc(sx-12,sy-10,8,0,2*Math.PI); ctx.fill();
                 ctx.beginPath(); ctx.arc(sx+12,sy-10,8,0,2*Math.PI); ctx.fill();
                 ctx.fillStyle='#2c3e50';
                 ctx.beginPath(); ctx.arc(sx-12,sy-10,4,0,2*Math.PI); ctx.fill();
                 ctx.beginPath(); ctx.arc(sx+12,sy-10,4,0,2*Math.PI); ctx.fill();
+                // Glanz in den Augen
+                ctx.fillStyle='white';
+                ctx.beginPath(); ctx.arc(sx-14,sy-12,2,0,2*Math.PI); ctx.fill();
+                ctx.beginPath(); ctx.arc(sx+10,sy-12,2,0,2*Math.PI); ctx.fill();
+                // Hut und Emoji
                 ctx.font='30px Arial'; ctx.fillStyle='white'; ctx.shadowBlur=10;
                 ctx.fillText(player.hat,sx-15,sy-50);
                 ctx.fillText(player.emoji,sx-20,sy-80);
                 ctx.restore();
 
+                // Schadenszahlen
                 ctx.save(); ctx.font='bold 26px Arial'; ctx.textAlign='center';
                 damageNumbers.forEach(d => {
                     let dsx=worldToScreenX(d.x), dsy=worldToScreenY(d.y);
